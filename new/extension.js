@@ -40,7 +40,7 @@
 
     // Initialize background automation worker
     const timer = setupAutomationTimer({
-        onTick: (count, time) => {
+        onTick: (count, time, logs) => {
             console.log(`[Checking] - ${time}`);
         }
     });

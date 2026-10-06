@@ -5,7 +5,7 @@ function createAutomationWorker(onTick, onComplete) {
     const workerCode = `
     let timerId = null;
     self.onmessage = function (e) {
-      const { action, interval = 300, initialDelay = 5000 } = e.data;
+      const { action, interval = 300, initialDelay = 5000, logs = true } = e.data;
       
       if (action === 'START') {
         if (timerId) clearInterval(timerId);
@@ -14,7 +14,7 @@ function createAutomationWorker(onTick, onComplete) {
           let count = 0;
           timerId = setInterval(() => {
             count++;
-            self.postMessage({ type: 'TICK', count: count });
+            self.postMessage({ type: 'TICK', count: count, logs: logs });
           }, interval);
         }, initialDelay);
       }
@@ -32,7 +32,7 @@ function createAutomationWorker(onTick, onComplete) {
 
     worker.onmessage = function (e) {
         if (e.data.type === 'TICK' && onTick) {
-            onTick(e.data.count);
+            onTick(e.data.count, e.data.logs);
         }
         if (e.data.type === 'STOPPED' && onComplete) {
             onComplete();
@@ -51,10 +51,14 @@ function setupAutomationTimer(callbacks = {}) {
     const { onTick, onComplete } = callbacks;
 
     return createAutomationWorker(
-        (count) => {
+        (count, logs = true) => {
             const time = moment().tz("Asia/Karachi").format('hh:mm:ss A');
-            // console.log(`[Checking] - ${time}`);
-            if (typeof onTick === 'function') onTick(count, time);
+
+            if (logs) {
+                console.log(`[${count}] - ${time}`);
+            }
+
+            if (typeof onTick === 'function') onTick(count, time, logs);
         },
         () => {
             console.log("Worker Completed Execution.");
