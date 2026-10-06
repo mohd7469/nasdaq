@@ -3,12 +3,41 @@
 (function () {
     'use strict';
 
-    let processedHistory = new Set();
+    let processedHistory = new Map();
 
     function isWeekend() {
         const currentDay = moment().tz("Asia/Karachi").day();
         // 0 = Sunday, 6 = Saturday
         return currentDay === 0 || currentDay === 6;
+    }
+
+    function isFromYesterdayOrToday(timestamp) {
+        if (!timestamp) return false;
+
+        const logTime = moment(timestamp).tz("Asia/Karachi");
+        if (!logTime.isValid()) return false;
+
+        // Kal ke din ka start (00:00:00 AM)
+        const yesterdayStart = moment().tz("Asia/Karachi").subtract(1, 'day').startOf('day');
+        return logTime.isSameOrAfter(yesterdayStart);
+    }
+
+    function cleanupProcessedHistory() {
+        const yesterdayStart = moment().tz("Asia/Karachi").subtract(1, 'day').startOf('day');
+
+        // Kal se pehle ke purane hashes memory se remove karain
+        for (const [id, timestamp] of processedHistory.entries()) {
+            const logTime = moment(timestamp).tz("Asia/Karachi");
+            if (!logTime.isValid() || logTime.isBefore(yesterdayStart)) {
+                processedHistory.delete(id);
+            }
+        }
+
+        // Safety cap agar kisi din bohot zyada logs hon
+        while (processedHistory.size > 50) {
+            const oldestHash = processedHistory.keys().next().value;
+            processedHistory.delete(oldestHash);
+        }
     }
 
     function sendAlert(customMsg = 'Test Alert') {
@@ -67,7 +96,8 @@
 
         // Date extraction [ISO_TIMESTAMP]
         const dateMatch = rawData.match(/\[(.*?)\]/);
-        const isoDateString = dateMatch ? dateMatch[1] : null;
+        if (!dateMatch) return null; // Date na mile to aage na jayein
+        const isoDateString = dateMatch[1];
 
         // Action Matching: LONG_ENTRY, SHORT_ENTRY, LONG_EXIT, SHORT_EXIT
         const actionMatch = rawData.match(/(LONG|SHORT)_(ENTRY|EXIT):\s*([\d\.]+)/);
@@ -115,32 +145,23 @@
         // Aakhri 2 elements ka reference lein taake instant multi-log skip na ho
         const recentLogs = Array.from(allLogElements).slice(-2);
 
-        recentLogs.forEach((logEl) => {
+        for (const logEl of recentLogs) {
             const rawData = (logEl.innerText || logEl.textContent || "").trim();
-            if (!rawData) return;
+            if (!rawData) continue;
 
             // Parse clean object using rawData
             const jsonOutput = parseLogData(rawData);
 
-            if (jsonOutput) {
-                // Duplicate Hash Check
-                if (!processedHistory.has(jsonOutput.id)) {
-                    processedHistory.add(jsonOutput.id);
+            if (jsonOutput && isFromYesterdayOrToday(jsonOutput.timestamp) && !processedHistory.has(jsonOutput.id)) {
+                processedHistory.set(jsonOutput.id, jsonOutput.timestamp);
 
-                    // Memory Cleanup (Max 50 Hashes)
-                    if (processedHistory.size > 50) {
-                        const oldestHash = processedHistory.values().next().value;
-                        processedHistory.delete(oldestHash);
-                    }
+                console.log(JSON.stringify(jsonOutput, null, 1));
 
-                    console.log(JSON.stringify(jsonOutput, null, 1));
-
-                    // Clean Verified Output
-                    const { id, ...cleanData } = jsonOutput;
-                    sendAlert(`<pre><code>${JSON.stringify(cleanData, null, 1)}</code></pre>`);
-                }
+                // Clean Verified Output
+                const { id, ...cleanData } = jsonOutput;
+                sendAlert(`<pre><code>${JSON.stringify(cleanData, null, 1)}</code></pre>`);
             }
-        });
+        }
     }
 
     // Initialize background automation worker
@@ -156,6 +177,7 @@
             processPineLogs();
 
             if (count % 30 === 0) {
+                cleanupProcessedHistory();
                 sendLog(`Ping: ${time}`);
             }
         }
