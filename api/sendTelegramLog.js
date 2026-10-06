@@ -42,5 +42,5 @@ export default async function handler(req, res) {
     }
   }
 
-  return res.status(200).json({ status: "Telegram Log Endpoint Active" });
+  return res.status(200).json({ status: "Serverless Endpoint Active" });
 }
