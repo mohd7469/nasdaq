@@ -55,7 +55,7 @@ function setupAutomationTimer(callbacks = {}) {
             const time = moment().tz("Asia/Karachi").format('hh:mm:ss A');
 
             if (logs) {
-                console.log(`[${count}] - ${time}`);
+                console.log(`[Worker] - ${time}`);
             }
 
             if (typeof onTick === 'function') onTick(count, time, logs);
