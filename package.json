@@ -1,4 +1,5 @@
 {
+  "url": "https://app-nasdaq.vercel.app/api",
   "dependencies": {
     "moment": "^2.31.0"
   }
