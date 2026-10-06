@@ -18,9 +18,9 @@ export default async function handler(req, res) {
   }
 
   if (req.method === 'POST') {
-    const { text, botToken, userId } = req.body || {};
+    const { text, userId, botToken } = req.body || {};
 
-    if (!text || !botToken || !userId) {
+    if (!text || !userId || !botToken) {
       return res.status(400).json({ success: false, error: "Missing: text | userId | botToken" });
     }
 
