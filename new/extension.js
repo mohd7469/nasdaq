@@ -3,6 +3,14 @@
 (function () {
     'use strict';
 
+    let processedHistory = new Set();
+
+    function isWeekend() {
+        const currentDay = moment().tz("Asia/Karachi").day();
+        // 0 = Sunday, 6 = Saturday
+        return currentDay === 0 || currentDay === 6;
+    }
+
     function sendAlert(customMsg = 'Test Alert') {
         axios.post('https://app-nasdaq.vercel.app/api/sendAlert', {
             text: customMsg,
@@ -31,14 +39,123 @@
             });
     }
 
+    function waitScrollToBottom(container) {
+        return new Promise((resolve) => {
+            if (!container) {
+                resolve();
+                return;
+            }
+
+            const scrollBtn = container.querySelector('button');
+            if (scrollBtn) {
+                scrollBtn.click();
+            } else {
+                container.scrollTop = container.scrollHeight;
+            }
+
+            setTimeout(() => {
+                resolve();
+            }, 200);
+        });
+    }
+
+    function parseLogData(rawData) {
+        if (!rawData || !rawData.trim()) return null;
+
+        // Date extraction [ISO_TIMESTAMP]
+        const dateMatch = rawData.match(/\[(.*?)\]/);
+        const isoDateString = dateMatch ? dateMatch[1] : null;
+
+        // Action Matching: LONG_ENTRY, SHORT_ENTRY, LONG_EXIT, SHORT_EXIT
+        const actionMatch = rawData.match(/(LONG|SHORT)_(ENTRY|EXIT):\s*([\d\.]+)/);
+        if (!actionMatch) return null;
+
+        const side = actionMatch[1];                                           // "LONG" | "SHORT"
+        const action = actionMatch[2];                                         // "ENTRY" | "EXIT"
+        const triggerPrice = parseFloat(actionMatch[3]);                       // Entry or Exit Price
+
+        // Optional TP & SL values
+        const tpMatch = rawData.match(/TP:\s*([\d\.]+)/);
+        const slMatch = rawData.match(/SL:\s*([\d\.]+)/);
+
+        const tpValue = tpMatch ? parseFloat(tpMatch[1]) : null;
+        const slValue = slMatch ? parseFloat(slMatch[1]) : null;
+
+        // Dynamic Hash generation for 'id'
+        const generatedHash = `${side}_${action}_${triggerPrice}_${isoDateString}`;
+
+        return {
+            id: generatedHash,
+            timestamp: isoDateString,
+            side: side,                                                        // "LONG" | "SHORT"
+            action: action,                                                    // "ENTRY" | "EXIT"
+            price: triggerPrice,
+            tp: tpValue,
+            sl: slValue
+        };
+    }
+
+    async function processPineLogs() {
+        const CONTAINER_SELECTOR = '[data-test-id-widget-type="pine_logs"] [class*="logsList-"]';
+        const LOG_ITEM_SELECTOR = 'div[data-index]';
+
+        const logsContainer = document.querySelector(CONTAINER_SELECTOR);
+        if (!logsContainer) {
+            console.log('Waiting for data..');
+            return;
+        }
+
+        // Task 1: Scroll button click karna
+        await waitScrollToBottom(logsContainer);
+
+        // Task 2: Sub div[data-index] elements pick karain
+        const allLogElements = logsContainer.querySelectorAll(LOG_ITEM_SELECTOR);
+        if (!allLogElements || allLogElements.length === 0) return;
+
+        // Aakhri 2 elements ka reference lein taake instant multi-log skip na ho
+        const recentLogs = Array.from(allLogElements).slice(-2);
+
+        recentLogs.forEach((logEl) => {
+            const rawData = (logEl.innerText || logEl.textContent || "").trim();
+            if (!rawData) return;
+
+            // Parse clean object using rawData
+            const jsonOutput = parseLogData(rawData);
+
+            if (jsonOutput) {
+                // Duplicate Hash Check
+                if (!processedHistory.has(jsonOutput.id)) {
+                    processedHistory.add(jsonOutput.id);
+
+                    // Memory Cleanup (Max 50 Hashes)
+                    if (processedHistory.size > 50) {
+                        const oldestHash = processedHistory.values().next().value;
+                        processedHistory.delete(oldestHash);
+                    }
+
+                    // Clean Verified Output
+                    console.log(JSON.stringify(jsonOutput, null, 2));
+                    sendAlert(jsonOutput);
+                }
+            }
+        });
+    }
+
     // Initialize background automation worker
     const timer = setupAutomationTimer({
         onTick: (count, time, logs) => {
-            // console.log('checking')
-            // sendAlert(`Setup triggered at ${time}`)
-            // sendLog(`Ping: ${time}`)
+            if (isWeekend()) {
+                console.log('Market is Off! Enjoy Weekend!');
+                return;
+            }
+
+            processPineLogs();
+
+            if (count % 5 === 0) {
+                sendLog(`Ping: ${time}`);
+            }
         }
     });
 
-    timer.start({ initialDelay: 10000, interval: 1000, logs: false });
+    timer.start({ initialDelay: 30000, interval: 1000, logs: false });
 })();
