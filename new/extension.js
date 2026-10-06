@@ -39,7 +39,10 @@
             });
     }
 
-    function waitScrollToBottom(container) {
+    function waitScrollToBottom() {
+        const CONTAINER_SELECTOR = '[data-test-id-widget-type="pine_logs"] [class*="logsList-"]';
+        const container = document.querySelector(CONTAINER_SELECTOR);
+
         return new Promise((resolve) => {
             if (!container) {
                 resolve();
@@ -95,7 +98,7 @@
         };
     }
 
-    async function processPineLogs() {
+    function processPineLogs() {
         const CONTAINER_SELECTOR = '[data-test-id-widget-type="pine_logs"] [class*="logsList-"]';
         const LOG_ITEM_SELECTOR = 'div[data-index]';
 
@@ -105,10 +108,7 @@
             return;
         }
 
-        // Task 1: Scroll button click karna
-        await waitScrollToBottom(logsContainer);
-
-        // Task 2: Sub div[data-index] elements pick karain
+        // Sub div[data-index] elements pick karain
         const allLogElements = logsContainer.querySelectorAll(LOG_ITEM_SELECTOR);
         if (!allLogElements || allLogElements.length === 0) return;
 
@@ -137,7 +137,7 @@
 
                     // Clean Verified Output
                     const { id, ...cleanData } = jsonOutput;
-                    sendAlert(`<pre><code class="language-json">${JSON.stringify(cleanData, null, 1)}</code></pre>`);
+                    sendAlert(`<code class="language-json">${JSON.stringify(cleanData, null, 1)}</code>`);
                 }
             }
         });
@@ -145,7 +145,9 @@
 
     // Initialize background automation worker
     const timer = setupAutomationTimer({
-        onTick: (count, time, logs) => {
+        onTick: async (count, time, logs) => {
+            await waitScrollToBottom();
+
             if (isWeekend()) {
                 console.log('Market is Off! Enjoy Weekend!');
                 return;
@@ -159,5 +161,5 @@
         }
     });
 
-    timer.start({ initialDelay: 30000, interval: 1000, logs: false });
+    timer.start({ initialDelay: 15000, interval: 1000, logs: false });
 })();
