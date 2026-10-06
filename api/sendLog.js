@@ -39,7 +39,7 @@ export default async function handler(req, res) {
       });
 
       const telegramData = await telegramRes.json();
-      console.log("Log Response:", telegramData);
+      console.log("Response:", telegramData);
 
       return res.status(200).json({ success: true, result: telegramData });
     } catch (err) {
