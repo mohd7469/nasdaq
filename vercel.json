@@ -2,15 +2,15 @@
     "rewrites": [
         {
             "source": "/:folder/api",
-            "destination": "/:folder/api/index.js"
+            "destination": "/api/index"
         },
         {
             "source": "/:folder/api/",
-            "destination": "/:folder/api/index.js"
+            "destination": "/api/index"
         },
         {
             "source": "/:folder/api/:path*",
-            "destination": "/:folder/api/:path*.js"
+            "destination": "/api/:path*"
         }
     ]
 }
