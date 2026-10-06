@@ -3,9 +3,6 @@
 (function () {
     'use strict';
 
-    const tz = moment().tz("Asia/Karachi");
-    const time = tz.format('hh:mm:ss A');
-
     function sendAlert(customMsg = 'Test Alert') {
         axios.post('https://app-nasdaq.vercel.app/api/sendAlert', {
             text: customMsg,
@@ -34,14 +31,12 @@
             });
     }
 
-    // sendAlert(`Setup triggered at ${time}`)
-    // sendLog(`Ping: ${time}`)
-
-
     // Initialize background automation worker
     const timer = setupAutomationTimer({
         onTick: (count, time, logs) => {
-            console.log(`[Checking] - ${time}`);
+            console.log(count, time)
+            // sendAlert(`Setup triggered at ${time}`)
+            // sendLog(`Ping: ${time}`)
         }
     });
 
