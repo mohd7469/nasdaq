@@ -25,7 +25,7 @@ export default async function handler(req, res) {
     }
 
     try {
-      const msg = `Log: ${text}`;
+      const msg = `${text}`;
       const telegramUrl = `https://api.telegram.org/bot${botToken}/sendMessage`;
 
       const telegramRes = await fetch(telegramUrl, {
