@@ -155,7 +155,7 @@
 
             processPineLogs();
 
-            if (count % 10 === 0) {
+            if (count % 30 === 0) {
                 sendLog(`Ping: ${time}`);
             }
         }
