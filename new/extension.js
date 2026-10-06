@@ -34,7 +34,7 @@
     // Initialize background automation worker
     const timer = setupAutomationTimer({
         onTick: (count, time, logs) => {
-            console.log('checking')
+            // console.log('checking')
             // sendAlert(`Setup triggered at ${time}`)
             // sendLog(`Ping: ${time}`)
         }
