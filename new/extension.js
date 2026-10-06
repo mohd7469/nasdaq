@@ -38,7 +38,7 @@
     // sendLog(`Ping: ${time}`)
 
 
-    // Worker setup
+    // Initialize background automation worker
     const timer = createAutomationWorker(
         (count) => {
             const time = moment().tz("Asia/Karachi").format('hh:mm:ss A');
@@ -52,5 +52,5 @@
 
 
     // Trigger example:
-    // timer.start({ initialDelay: 5000, interval: 300, maxRuns: 20 }); 
+    // timer.start({ initialDelay: 5000, interval: 300, maxRuns: 20 });
 })();
