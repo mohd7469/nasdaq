@@ -137,7 +137,7 @@
 
                     // Clean Verified Output
                     const { id, ...cleanData } = jsonOutput;
-                    sendAlert(`<code class="language-json">${JSON.stringify(cleanData, null, 1)}</code>`);
+                    sendAlert(`<pre><code>${JSON.stringify(cleanData, null, 1)}</code></pre>`);
                 }
             }
         });
