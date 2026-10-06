@@ -133,9 +133,11 @@
                         processedHistory.delete(oldestHash);
                     }
 
+                    console.log(jsonOutput);
+
                     // Clean Verified Output
-                    console.log(JSON.stringify(jsonOutput, null, 2));
-                    sendAlert(JSON.stringify(jsonOutput));
+                    const { id, ...cleanData } = jsonOutput;
+                    sendAlert(`<pre><code class="language-json">${JSON.stringify(cleanData)}</code></pre>`);
                 }
             }
         });
@@ -151,7 +153,7 @@
 
             processPineLogs();
 
-            if (count % 5 === 0) {
+            if (count % 10 === 0) {
                 sendLog(`Ping: ${time}`);
             }
         }
