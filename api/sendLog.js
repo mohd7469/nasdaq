@@ -18,10 +18,10 @@ export default async function handler(req, res) {
   }
 
   if (req.method === 'POST') {
-    const { text, botToken, chatId } = req.body || {};
+    const { text, botToken, userId } = req.body || {};
 
-    if (!text || !botToken || !chatId) {
-      return res.status(400).json({ success: false, error: "Missing: text | botToken | chatId" });
+    if (!text || !botToken || !userId) {
+      return res.status(400).json({ success: false, error: "Missing: text | userId | botToken" });
     }
 
     try {
@@ -32,7 +32,7 @@ export default async function handler(req, res) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          chat_id: chatId,
+          chat_id: userId,
           text: msg,
           parse_mode: 'HTML'
         })

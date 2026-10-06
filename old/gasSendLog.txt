@@ -5,13 +5,13 @@ function authorizeUrlFetch() {
 function sendLogs(data) {
   try {
     var token = data.token;
-    var chatId = data.chat_id;
+    var userId = data.chat_id;
     var text = data.text;
     
     var telegramUrl = "https://api.telegram.org/bot" + token + "/sendMessage";
     
     var payload = {
-      "chat_id": chatId,
+      "chat_id": userId,
       "text": text
     };
     
