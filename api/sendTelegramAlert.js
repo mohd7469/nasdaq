@@ -16,7 +16,7 @@ export default async function handler(req, res) {
     const { text, botToken, chatId } = req.body || {};
 
     if (!text || !botToken || !chatId) {
-      return res.status(400).json({ success: false, error: "Missing text, botToken, or chatId!" });
+      return res.status(400).json({ success: false, error: "Missing: text | botToken | chatId" });
     }
 
     try {
