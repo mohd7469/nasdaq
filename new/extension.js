@@ -39,18 +39,11 @@
 
 
     // Initialize background automation worker
-    const timer = createAutomationWorker(
-        (count) => {
-            const time = moment().tz("Asia/Karachi").format('hh:mm:ss A');
-            console.log(`[Tick ${count}] - ${time}`);
-            // sendAlert(`MNQ Trigger Tick ${count}`);
-        },
-        () => {
-            console.log("Worker Completed Execution.");
+    const timer = setupAutomationTimer({
+        onTick: (count, time) => {
+            console.log(`[Checking] - ${time}`);
         }
-    );
+    });
 
-
-    // Trigger example:
-    // timer.start({ initialDelay: 5000, interval: 300, maxRuns: 20 });
+    timer.start({ initialDelay: 10000, interval: 1000, logs: false });
 })();

@@ -5,22 +5,20 @@ function createAutomationWorker(onTick, onComplete) {
     const workerCode = `
     let timerId = null;
     self.onmessage = function (e) {
-      const { action, interval = 300, maxRuns = 20, initialDelay = 5000 } = e.data;
+      const { action, interval = 300, initialDelay = 5000 } = e.data;
+      
       if (action === 'START') {
         if (timerId) clearInterval(timerId);
+        
         setTimeout(() => {
           let count = 0;
           timerId = setInterval(() => {
             count++;
             self.postMessage({ type: 'TICK', count: count });
-            if (count >= maxRuns) {
-              clearInterval(timerId);
-              timerId = null;
-              self.postMessage({ type: 'STOPPED' });
-            }
           }, interval);
         }, initialDelay);
       }
+      
       if (action === 'STOP') {
         if (timerId) clearInterval(timerId);
         timerId = null;
@@ -55,7 +53,7 @@ function setupAutomationTimer(callbacks = {}) {
     return createAutomationWorker(
         (count) => {
             const time = moment().tz("Asia/Karachi").format('hh:mm:ss A');
-            console.log(`[Tick ${count}] - ${time}`);
+            // console.log(`[Checking] - ${time}`);
             if (typeof onTick === 'function') onTick(count, time);
         },
         () => {
