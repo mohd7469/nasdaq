@@ -1,6 +1,14 @@
 {
     "rewrites": [
         {
+            "source": "/:folder/api",
+            "destination": "/:folder/api/index.js"
+        },
+        {
+            "source": "/:folder/api/",
+            "destination": "/:folder/api/index.js"
+        },
+        {
             "source": "/:folder/api/:path*",
             "destination": "/:folder/api/:path*.js"
         }
