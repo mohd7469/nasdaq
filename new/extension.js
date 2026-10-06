@@ -135,7 +135,7 @@
 
                     // Clean Verified Output
                     console.log(JSON.stringify(jsonOutput, null, 2));
-                    sendAlert(JSON.stringify(jsonOutput, null, 2));
+                    sendAlert(JSON.stringify(jsonOutput));
                 }
             }
         });
