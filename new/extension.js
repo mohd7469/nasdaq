@@ -133,11 +133,11 @@
                         processedHistory.delete(oldestHash);
                     }
 
-                    console.log(jsonOutput);
+                    console.log(JSON.stringify(jsonOutput, null, 1));
 
                     // Clean Verified Output
                     const { id, ...cleanData } = jsonOutput;
-                    sendAlert(`<pre><code class="language-json">${JSON.stringify(cleanData)}</code></pre>`);
+                    sendAlert(`<pre><code class="language-json">${JSON.stringify(cleanData, null, 1)}</code></pre>`);
                 }
             }
         });
