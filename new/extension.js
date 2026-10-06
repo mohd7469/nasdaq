@@ -1,3 +1,5 @@
+// file://D:\projects\nasdaq\new\extension.js
+
 (function () {
     'use strict';
 
@@ -34,4 +36,21 @@
 
     // sendAlert(`Setup triggered at ${time}`)
     // sendLog(`Ping: ${time}`)
+
+
+    // Worker setup
+    const timer = createAutomationWorker(
+        (count) => {
+            const time = moment().tz("Asia/Karachi").format('hh:mm:ss A');
+            console.log(`[Tick ${count}] - ${time}`);
+            // sendAlert(`MNQ Trigger Tick ${count}`);
+        },
+        () => {
+            console.log("Worker Completed Execution.");
+        }
+    );
+
+
+    // Trigger example:
+    // timer.start({ initialDelay: 5000, interval: 300, maxRuns: 20 }); 
 })();
