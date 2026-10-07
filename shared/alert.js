@@ -11,6 +11,24 @@ if (typeof window !== 'undefined' && window.axios) {
     axios = require('axios');
 }
 
+let interactionDone = false;
+
+const firstInteraction = () => {
+    if (interactionDone) return;
+
+    const overlay = Object.assign(document.createElement('div'), {
+        style: 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.85);z-index:999999;cursor:pointer;transition:opacity 0.5s ease;'
+    });
+    overlay.onclick = () => {
+        console.log('Interaction Done');
+        overlay.style.opacity = '0';
+        interactionDone = true;
+        setTimeout(() => overlay.remove(), 500);
+    };
+
+    document.body.prepend(overlay);
+}
+
 const showDesktopAlert = async (customMsg = 'Open tradingview for details') => {
     try {
         await new Audio('https://cdn.jsdelivr.net/gh/mohd7469/alert@main/beep1.mp3').play();
@@ -63,6 +81,7 @@ const sendLog = (customMsg = 'Test Log') =>
 
 // Browser / Tampermonkey support
 if (typeof window !== 'undefined') {
+    firstInteraction();
     window.sendAlert = sendAlert;
     window.sendLog = sendLog;
 }
