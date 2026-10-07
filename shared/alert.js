@@ -1,5 +1,7 @@
 // file://D:\projects\nasdaq\shared\alert.js
 
+import axios from 'axios';
+
 'use strict';
 
 const sendAlert = (customMsg = 'Test Alert') =>
