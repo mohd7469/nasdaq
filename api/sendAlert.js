@@ -48,7 +48,7 @@ export default async function handler(req, res) {
         }
     }
 
-    await sendAlert();
+    await sendAlert(req.query?.text?.trim());
 
     return res.status(200).json({
         status: "OK",
