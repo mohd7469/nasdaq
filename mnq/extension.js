@@ -135,7 +135,7 @@
 
             if (Math.abs(diff) >= 50) {
                 const symbol = diff > 0 ? '+' : '-';
-                const signal = `Setup is triggered (${symbol} ${realtimeValues.V})`;
+                const signal = `Setup is triggered (${symbol}${realtimeValues.V})`;
                 console.log(signal);
                 sendAlert(signal);
             }
