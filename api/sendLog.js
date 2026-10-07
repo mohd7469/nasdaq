@@ -47,6 +47,8 @@ export default async function handler(req, res) {
         }
     }
 
+    await sendLog();
+
     return res.status(200).json({
         status: "OK",
         uptime: uptime,
