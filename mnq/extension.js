@@ -113,6 +113,7 @@
 
             if (count % 30 === 0) {
                 cleanupProcessedHistory();
+                console.log('ping..');
                 sendLog(`Ping: ${time}`);
             }
         }
