@@ -134,7 +134,7 @@
             const diff = closePrice - openPrice;
 
             if (Math.abs(diff) >= 50) {
-                const symbol = diff > 0 ? '▲' : '▼';
+                const symbol = diff > 0 ? '+' : '-';
                 const signal = `Setup is triggered (${symbol} ${realtimeValues.V})`;
                 console.log(signal);
                 sendAlert(signal);
