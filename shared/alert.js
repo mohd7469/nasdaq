@@ -1,8 +1,15 @@
 // file://D:\projects\nasdaq\shared\alert.js
 
-import axios from 'axios';
-
 'use strict';
+
+let axios;
+
+// Dynamic Browser / Tampermonkey and Node.js support
+if (typeof window !== 'undefined' && window.axios) {
+    axios = window.axios;
+} else if (typeof require !== 'undefined') {
+    axios = require('axios');
+}
 
 const sendAlert = (customMsg = 'Test Alert') =>
     axios.post('https://app-nasdaq.vercel.app/api/sendAlert', {
@@ -34,4 +41,14 @@ const sendLog = (customMsg = 'Test Log') =>
             return false;
         });
 
-export { sendAlert, sendLog };
+// Browser / Tampermonkey support
+if (typeof window !== 'undefined') {
+    window.sendAlert = sendAlert;
+    window.sendLog = sendLog;
+}
+
+// Node.js support
+if (typeof module !== 'undefined' && module.exports) {
+    // export { sendAlert, sendLog };
+    module.exports = { sendAlert, sendLog };
+}
