@@ -5,7 +5,8 @@
 
     const processedHistory = new Map();
 
-    const CONTAINER = '[data-test-id-widget-type="pine_logs"] [class*="logsList-"]';
+    const PINE_LOGS_CONTAINER = '[data-test-id-widget-type="pine_logs"] [class*="logsList-"]';
+    const OHLC_CONTAINER = '[data-qa-id="legend-series-item"]';
     const TIMEZONE = 'Asia/Karachi';
 
     const getTimezone = (time) => {
@@ -42,7 +43,7 @@
     }
 
     function waitScrollToBottom() {
-        const container = document.querySelector(CONTAINER);
+        const container = document.querySelector(PINE_LOGS_CONTAINER);
         if (!container) return Promise.resolve();
 
         const scrollBtn = container.querySelector('button');
@@ -79,7 +80,7 @@
     }
 
     function processPineLogs() {
-        const container = document.querySelector(CONTAINER);
+        const container = document.querySelector(PINE_LOGS_CONTAINER);
         if (!container) {
             console.log('Waiting for data..');
             return;
