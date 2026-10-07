@@ -2,30 +2,32 @@
 
 'use strict';
 
-function sendAlert(customMsg = 'Test Alert') {
+const sendAlert = (customMsg = 'Test Alert') =>
     axios.post('https://app-nasdaq.vercel.app/api/sendAlert', {
         text: customMsg,
         userId: "7670215141",
         botToken: "8721637113:AAE6LY0BgBIYtcsqdo29I2nyp0e63PnTmzo"
     })
-        .then(response => {
+        .then((res) => {
             // console.log('Alert Sent');
+            return true;
         })
-        .catch(error => {
-            console.error('Alert Error:', error);
+        .catch(err => {
+            console.error('Alert Error:', err?.response?.data || err?.message || err);
+            return false;
         });
-}
 
-function sendLog(customMsg = 'Test Log') {
+const sendLog = (customMsg = 'Test Log') =>
     axios.post('https://app-nasdaq.vercel.app/api/sendLog', {
         text: customMsg,
         userId: "7670215141",
         botToken: "8916407832:AAHjG7jtmP4_gdhPgsaika8P0yGMmKZb-I4"
     })
-        .then(response => {
+        .then((res) => {
             // console.log('Log Sent');
+            return true;
         })
-        .catch(error => {
-            console.error('Log Error:', error);
+        .catch(err => {
+            console.error('Log Error:', err?.response?.data || err?.message || err);
+            return false;
         });
-}
