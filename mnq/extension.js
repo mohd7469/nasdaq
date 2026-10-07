@@ -82,7 +82,7 @@
     function processPineLogs() {
         const container = document.querySelector(PINE_LOGS_CONTAINER);
         if (!container) {
-            console.log('Waiting for data..');
+            console.log('Waiting for logs..');
             return;
         }
 
@@ -103,6 +103,42 @@
         }
     }
 
+    function processRealtimeValues() {
+        const container = document.querySelector(OHLC_CONTAINER);
+        if (!container) {
+            console.log('Waiting for OHLC..');
+            return;
+        }
+
+        const getValue = (key) => {
+            const el = container.querySelector(`[data-test-id-value-title="${key}"]`);
+            if (!el) return null;
+
+            const rawText = (el.textContent || el.innerText || '').replace(/\u00a0/g, ' ').trim();
+
+            return rawText.replace(/^([OHLC]|Vol)\s*/i, ''); // remove (O, H, L, C, Vol) from rawText
+        };
+
+        const realtimeValues = {
+            O: getValue('O'),
+            H: getValue('H'),
+            L: getValue('L'),
+            C: getValue('C'),
+            V: getValue('Vol')
+        };
+
+        const openPrice = parseFloat(realtimeValues.O?.replace(/,/g, ''));
+        const closePrice = parseFloat(realtimeValues.C?.replace(/,/g, ''));
+
+        if (!isNaN(openPrice) && !isNaN(closePrice)) {
+            const difference = Math.abs(closePrice - openPrice);
+
+            if (difference >= 50) {
+                console.log(`Setup is triggered (vol: ${realtimeValues.V})`);
+            }
+        }
+    }
+
     const timer = setupAutomationTimer({
         onTick: async (count, time, logs) => {
             await waitScrollToBottom();
@@ -112,6 +148,7 @@
                 return;
             }
 
+            processRealtimeValues();
             processPineLogs();
 
             if (count % 30 === 0) {
