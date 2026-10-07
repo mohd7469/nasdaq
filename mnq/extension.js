@@ -131,10 +131,11 @@
         const closePrice = parseFloat(realtimeValues.C?.replace(/,/g, ''));
 
         if (!isNaN(openPrice) && !isNaN(closePrice)) {
-            const difference = Math.abs(closePrice - openPrice);
+            const diff = closePrice - openPrice;
 
-            if (difference >= 50) {
-                const signal = `Setup is triggered (${realtimeValues.V})`;
+            if (Math.abs(diff) >= 50) {
+                const symbol = diff > 0 ? '▲' : '▼';
+                const signal = `Setup is triggered (${symbol} ${realtimeValues.V})`;
                 console.log(signal);
                 sendAlert(signal);
             }
