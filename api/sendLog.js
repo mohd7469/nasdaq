@@ -48,7 +48,7 @@ export default async function handler(req, res) {
         }
     }
 
-    await sendLog();
+    await sendLog(req.query?.text?.trim());
 
     return res.status(200).json({
         status: "OK",
