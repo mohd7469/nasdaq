@@ -31,3 +31,5 @@ const sendLog = (customMsg = 'Test Log') =>
             console.error('Log Error:', err?.response?.data || err?.message || err);
             return false;
         });
+
+export { sendAlert, sendLog };
