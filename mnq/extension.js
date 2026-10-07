@@ -9,6 +9,10 @@
     const OHLC_CONTAINER = '[data-qa-id="legend-series-item"]';
     const TIMEZONE = 'Asia/Karachi';
 
+    if (typeof Notification !== 'undefined' && Notification.permission !== 'granted') {
+        Notification.requestPermission();
+    }
+
     const getTimezone = (time) => {
         const m = moment(time).tz(TIMEZONE);
         return m.isValid() ? m : moment().tz(TIMEZONE);
@@ -98,6 +102,7 @@
                 processedHistory.set(data.id, data.timestamp);
                 console.log(JSON.stringify(data, null, 1));
                 const { id, ...cleanData } = data;
+                showDesktopAlert('Setup is executed');
                 sendAlert(`<pre><code>${JSON.stringify(cleanData, null, 1)}</code></pre>`);
             }
         }
@@ -137,6 +142,7 @@
                 const symbol = diff > 0 ? '+' : '-';
                 const signal = `Setup is triggered (${symbol}${realtimeValues.V})`;
                 console.log(signal);
+                showDesktopAlert(signal);
                 sendAlert(signal);
             }
         }

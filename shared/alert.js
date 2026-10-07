@@ -11,6 +11,26 @@ if (typeof window !== 'undefined' && window.axios) {
     axios = require('axios');
 }
 
+const showDesktopAlert = async (customMsg = 'Open tradingview for details') => {
+    try {
+        await new Audio('https://cdn.jsdelivr.net/gh/mohd7469/alert@main/beep1.mp3').play();
+    } catch (err) {
+        console.warn('Audio play error', err);
+    }
+
+    if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+        const notif = new Notification('Nasdaq Alert', {
+            body: customMsg,
+            icon: 'https://www.nasdaq.com/sites/acquia.prod/files/2020/09/24/nasdaq.jpg'
+        });
+
+        notif.onclick = function () {
+            window.focus();
+            notif.close();
+        };
+    }
+}
+
 const sendAlert = (customMsg = 'Test Alert') =>
     axios.post('https://app-nasdaq.vercel.app/api/sendAlert', {
         text: customMsg,
