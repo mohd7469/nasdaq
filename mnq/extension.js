@@ -134,7 +134,9 @@
             const difference = Math.abs(closePrice - openPrice);
 
             if (difference >= 50) {
-                console.log(`Setup is triggered (vol: ${realtimeValues.V})`);
+                const signal = `Setup is triggered (${realtimeValues.V})`;
+                console.log(signal);
+                sendAlert(signal);
             }
         }
     }
