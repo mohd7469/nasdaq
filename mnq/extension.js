@@ -1,4 +1,4 @@
-// file://D:\projects\nasdaq\new\extension.js
+// file://D:\projects\nasdaq\mnq\extension.js
 
 (function () {
     'use strict';
