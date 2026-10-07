@@ -18,7 +18,9 @@
         return day === 0 || day === 6;
     };
 
-    const getYesterdayStart = () => getTimezone().subtract(1, 'day').startOf('day');
+    const getYesterdayStart = () => {
+        return getTimezone().subtract(1, 'day').startOf('day');
+    };
 
     function isFromYesterdayOrToday(timestamp) {
         if (!timestamp) return false;
