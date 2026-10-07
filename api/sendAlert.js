@@ -1,4 +1,5 @@
 import moment from 'moment';
+import { sendAlert } from '../shared/alert.js';
 
 export default async function handler(req, res) {
     const uptimeInSeconds = process.uptime();
