@@ -160,9 +160,9 @@
             processRealtimeValues();
             processPineLogs();
 
-            if (count % 30 === 0) {
+            if (count % 300 === 0) {
                 cleanupProcessedHistory();
-                console.log('✔ Ping');
+                console.log('✔ 5m ping');
                 sendLog(`Ping: ${time}`);
             }
         }
