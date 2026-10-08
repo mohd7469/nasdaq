@@ -10,8 +10,11 @@ sudo apt autoremove -y --purge 2>/dev/null
 sudo apt clean 2>/dev/null
 rm -rf ~/.config ~/.cache ~/.vnc ~/.local 2>/dev/null
 
-echo "=== Step 2: Fresh Installation & Auto Keyboard Selection ==="
-sudo apt update && sudo apt install -y debconf-utils
+echo "=== Step 2: Updating & Upgrading System Packages ==="
+sudo apt update && sudo apt upgrade -y && sudo DEBIAN_FRONTEND=noninteractive apt upgrade -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold"
+
+echo "=== Step 3: Fresh Installation & Auto Keyboard Selection ==="
+sudo apt install -y debconf-utils
 echo "keyboard-configuration keyboard-configuration/layoutcode string us" | sudo debconf-set-selections
 echo "keyboard-configuration keyboard-configuration/modelcode string pc105" | sudo debconf-set-selections
 
@@ -26,7 +29,7 @@ fi
 # Yahan default directories ko dobara generate karne ke liye add kiya hai:
 xdg-user-dirs-update
 
-echo "=== Step 3: Starting Environment ==="
+echo "=== Step 4: Starting Environment ==="
 killall -9 Xvfb x11vnc websockify google-chrome xfce4-session 2>/dev/null
 eval $(dbus-launch --sh-syntax)
 Xvfb :1 -screen 0 1920x1080x24 &
@@ -34,7 +37,7 @@ sleep 2
 DISPLAY=:1 dbus-run-session xfce4-session &
 sleep 1
 x11vnc -display :1 -nopw -forever -shared &
-websockify --web /usr/share/novnc 6080 localhost:5900 &
+websockify --web /usr/share/novnc 6080 localhost:6080 &
 sleep 3
 DISPLAY=:1 google-chrome --no-sandbox --start-maximized https://tradingview.com/chart &
 
