@@ -37,7 +37,13 @@ export default async function handler(req, res) {
                 break;
         }
 
-        console.log('type::', type, 'text::', text);
+        if (text !== undefined && text === '') {
+            throw new Error("Bad Request: text is empty");
+        }
+
+        if (type !== undefined && type === '') {
+            throw new Error("Bad Request: type is empty");
+        }
 
         switch (type) {
             case 'alert':
