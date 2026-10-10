@@ -35,7 +35,7 @@ export default async function handler(req, res) {
             break;
     }
 
-    console.log('type', type, 'text', text);
+    console.log('type:', type, 'text:', text);
 
     try {
         switch (type) {
