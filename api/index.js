@@ -40,7 +40,10 @@ export default async function handler(req, res) {
     try {
         if (type === 'alert') {
             await sendAlert(text);
+        } else if (type === 'log') {
+            await sendLog(text);
         } else {
+            await sendAlert(text);
             await sendLog(text);
         }
     } catch (err) {
