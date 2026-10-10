@@ -1,6 +1,6 @@
 import moment from 'moment';
 import { sendAlert, sendLog } from './bot.js';
-import { ALERT_BOT_TOKEN, LOG_BOT_TOKEN, WEBHOOK_SECRET } from '../env.js';
+import { ALERT_BOT_TOKEN, LOG_BOT_TOKEN, WEBHOOK_SECRET } from './env.js';
 
 // Deployment / Initialization ke waqt webhook auto-register karne ka function
 async function autoRegisterWebhooks(host, protocol) {
