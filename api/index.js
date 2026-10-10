@@ -38,10 +38,12 @@ export default async function handler(req, res) {
         }
 
         if (text !== undefined && text === '') {
+            console.error("Bad Request: text is empty");
             throw new Error("Bad Request: text is empty");
         }
 
         if (type !== undefined && type === '') {
+            console.error("Bad Request: type is empty");
             throw new Error("Bad Request: type is empty");
         }
 
