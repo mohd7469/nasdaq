@@ -25,26 +25,30 @@ export default async function handler(req, res) {
     switch (req.method) {
         case 'OPTIONS':
             return res.status(200).end();
-
         case 'POST':
             type = req?.body?.type?.toLowerCase()?.trim();
             text = req?.body?.text?.trim();
             break;
-
         case 'GET':
             type = req?.query?.type?.toLowerCase()?.trim();
             text = req?.query?.text?.trim();
             break;
+        default:
+            type = '';
+            text = '';
     }
 
     try {
-        if (type === 'alert') {
-            await sendAlert(text);
-        } else if (type === 'log') {
-            await sendLog(text);
-        } else {
-            await sendAlert(text);
-            await sendLog(text);
+        switch (type) {
+            case 'alert':
+                await sendAlert(text);
+                break;
+            case 'log':
+                await sendLog(text);
+                break;
+            default:
+                await sendAlert(text);
+                await sendLog(text);
         }
     } catch (err) {
         console.error(`${type} Error:`, err.message);
