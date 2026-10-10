@@ -22,22 +22,23 @@ export default async function handler(req, res) {
     let type;
     let text;
 
-    switch (req.method) {
-        case 'OPTIONS':
-            return res.status(200).end();
-        case 'POST':
-            type = req?.body?.type.trim();
-            text = req?.body?.text.trim();
-            break;
-        case 'GET':
-            type = req?.query?.type.trim();
-            text = req?.query?.text.trim();
-            break;
-    }
-
-    console.log('type::', type, 'text::', text);
-
     try {
+
+        switch (req.method) {
+            case 'OPTIONS':
+                return res.status(200).end();
+            case 'POST':
+                type = req?.body?.type.trim();
+                text = req?.body?.text.trim();
+                break;
+            case 'GET':
+                type = req?.query?.type.trim();
+                text = req?.query?.text.trim();
+                break;
+        }
+
+        console.log('type::', type, 'text::', text);
+
         switch (type) {
             case 'alert':
                 await sendAlert(text);
@@ -49,6 +50,7 @@ export default async function handler(req, res) {
                 await sendAlert(text);
                 await sendLog(text);
         }
+
     } catch (err) {
         console.error(`${type} Error:`, err.message);
         return res.status(500).json({ error: err.message });
