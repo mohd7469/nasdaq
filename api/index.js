@@ -26,17 +26,16 @@ export default async function handler(req, res) {
         case 'OPTIONS':
             return res.status(200).end();
         case 'POST':
-            type = req?.body?.type?.toLowerCase()?.trim();
+            type = req?.body?.type?.toLowerCase()?.trim() || null;
             text = req?.body?.text?.trim();
             break;
         case 'GET':
-            type = req?.query?.type?.toLowerCase()?.trim();
+            type = req?.query?.type?.toLowerCase()?.trim() || null;
             text = req?.query?.text?.trim();
             break;
-        default:
-            type = '';
-            text = '';
     }
+
+    console.log('type', type);
 
     try {
         switch (type) {
