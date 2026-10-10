@@ -45,8 +45,9 @@ export default async function handler(req, res) {
     let type;
     let text;
 
+    await registerWebhooks(req);
+
     try {
-        await registerWebhooks(req);
 
         switch (req.method) {
             case 'OPTIONS':
