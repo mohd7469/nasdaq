@@ -18,11 +18,11 @@ logBot.command("start", (ctx) => {
 });
 
 export async function sendAlert(text = 'Test Alert') {
-    await alertBot.api.sendMessage({ chatId, text, parse_mode: 'HTML' });
+    await alertBot.api.sendMessage({ chat_id: chatId, text, parse_mode: 'HTML' });
 }
 
 export async function sendLog(text = 'Test Log') {
-    await logBot.api.sendMessage({ chatId, text, parse_mode: 'HTML' });
+    await logBot.api.sendMessage({ chat_id: chatId, text, parse_mode: 'HTML' });
 }
 
 export default async function handler(req, res) {
