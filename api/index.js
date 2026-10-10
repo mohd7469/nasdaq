@@ -40,8 +40,8 @@ export default async function handler(req, res) {
         }
 
         case 'GET': {
-            const type = (req.query?.type).toLowerCase().replace(/"/g, '').trim();
-            const text = (req.query?.text).replace(/"/g, '').trim();
+            const type = req.query?.type?.trim();
+            const text = req.query?.text?.trim();
 
             try {
                 switch (type) {
