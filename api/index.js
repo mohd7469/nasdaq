@@ -3,9 +3,12 @@ import { sendAlert, sendLog } from './bot.js';
 import { ALERT_BOT_TOKEN, LOG_BOT_TOKEN, WEBHOOK_SECRET } from './env.js';
 
 // Deployment / Initialization ke waqt webhook auto-register karne ka function
-async function autoRegisterWebhooks(host, protocol) {
+export async function registerWebhooks(req) {
     try {
+        const host = req.headers['x-forwarded-host'] || req.headers.host;
+        const protocol = req.headers['x-forwarded-proto'] || 'https';
         const baseUrl = `${protocol}://${host}`;
+
         const bots = [
             { type: 'alert', token: ALERT_BOT_TOKEN },
             { type: 'log', token: LOG_BOT_TOKEN }
@@ -16,7 +19,7 @@ async function autoRegisterWebhooks(host, protocol) {
             console.log(webhookUrl);
             const telegramUrl = `https://api.telegram.org/bot${b.token}/setWebhook`;
 
-            await fetch(telegramUrl, {
+            const response = await fetch(telegramUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -24,8 +27,10 @@ async function autoRegisterWebhooks(host, protocol) {
                     secret_token: WEBHOOK_SECRET
                 })
             });
+
+            const result = await response.json();
+            console.log(`Webhook set for ${b.type}:`, result);
         }
-        console.log("Webhooks auto-registered successfully on deployment/request!");
     } catch (err) {
         console.error("Auto-register webhook error:", err.message);
     }
@@ -41,12 +46,7 @@ export default async function handler(req, res) {
     let text;
 
     try {
-        // Automatically Webhook set karne ke liye host/protocol detect karein
-        const host = req.headers['x-forwarded-host'] || req.headers.host;
-        const protocol = req.headers['x-forwarded-proto'] || 'https';
-
-        // Background mein webhook register karwa dein taaki manual link na kholna pade
-        autoRegisterWebhooks(host, protocol);
+        await registerWebhooks(req);
 
         switch (req.method) {
             case 'OPTIONS':
