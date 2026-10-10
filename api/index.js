@@ -13,8 +13,9 @@ async function autoRegisterWebhooks(host, protocol) {
 
         for (const b of bots) {
             const webhookUrl = `${baseUrl}/api/bot?type=${b.type}`;
+            console.log(webhookUrl);
             const telegramUrl = `https://api.telegram.org/bot${b.token}/setWebhook`;
-            
+
             await fetch(telegramUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -43,7 +44,7 @@ export default async function handler(req, res) {
         // Automatically Webhook set karne ke liye host/protocol detect karein
         const host = req.headers['x-forwarded-host'] || req.headers.host;
         const protocol = req.headers['x-forwarded-proto'] || 'https';
-        
+
         // Background mein webhook register karwa dein taaki manual link na kholna pade
         autoRegisterWebhooks(host, protocol);
 
