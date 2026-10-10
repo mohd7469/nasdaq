@@ -9,24 +9,22 @@ alertBot.on('message', async (msg) => {
     const chatId = msg.chat.id;
     const text = msg.text;
 
-    console.log(`AlertBot ${chatId}: ${text}`);
-    await alertBot.api.sendMessage({ chat_id: chatId, text: `We've got your msg: ${text}` });
+    console.log(`AlertBot: ${chatId}: ${text}`);
 });
 
 logBot.on('message', async (msg) => {
     const chatId = msg.chat.id;
     const text = msg.text;
 
-    console.log(`LogBot ${chatId}: ${text}`);
-    await logBot.api.sendMessage({ chat_id: chatId, text: `We've got your msg: ${text}` });
+    console.log(`LogBot: ${chatId}: ${text}`);
 });
 
 export async function sendAlert(text = 'Test Alert') {
-    await alertBot.api.sendMessage({ chat_id: USER_ID, text: `alertBot: ${text}`, parse_mode: 'HTML' });
+    await alertBot.api.sendMessage({ chat_id: USER_ID, text, parse_mode: 'HTML' });
 }
 
 export async function sendLog(text = 'Test Log') {
-    await logBot.api.sendMessage({ chat_id: USER_ID, text: `logBot: ${text}`, parse_mode: 'HTML' });
+    await logBot.api.sendMessage({ chat_id: USER_ID, text, parse_mode: 'HTML' });
 }
 
 export default async function handler(req, res) {
