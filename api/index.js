@@ -33,11 +33,16 @@ export default async function handler(req, res) {
                     case 'alert': await sendAlert(text); break;
                     default: await sendAlert(text); await sendLog(text);
                 }
-                return res.status(200).json({ success: true, type });
             } catch (err) {
-                console.error('Error:', err.message);
-                return res.status(500).json({ success: false, error: err.message });
+                console.error(`${type} Error:`, err.message);
+                return res.status(500).json({ success: false, type, error: err.message });
             }
+
+            return res.status(200).json({
+                status: 'OK',
+                uptime: moment.duration(process.uptime(), 'seconds').humanize() + ' ago',
+                timestamp: new Date().toISOString()
+            });
         }
 
         case 'GET': {
@@ -50,9 +55,9 @@ export default async function handler(req, res) {
                     case 'alert': await sendAlert(text); break;
                     default: await sendAlert(text); await sendLog(text);
                 }
-                return res.status(200).json({ success: true, type });
             } catch (err) {
-                console.error('Error:', err.message);
+                console.error(`${type} Error:`, err.message);
+                return res.status(500).json({ success: false, type, error: err.message });
             }
 
             return res.status(200).json({
