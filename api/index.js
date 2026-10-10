@@ -1,7 +1,7 @@
 import moment from 'moment';
 import { Bot } from 'node-telegram-bot-api';
 
-const USER_ID = '7670215141';
+// const USER_ID = '7670215141';
 const alertBot = new Bot('8721637113:AAE6LY0BgBIYtcsqdo29I2nyp0e63PnTmzo');
 const logBot = new Bot('8916407832:AAHjG7jtmP4_gdhPgsaika8P0yGMmKZb-I4');
 
@@ -20,11 +20,11 @@ logBot.on('message', async (msg) => {
 });
 
 export async function sendAlert(text = 'Test Alert') {
-    await alertBot.api.sendMessage({ chat_id: USER_ID, text, parse_mode: 'HTML' });
+    await alertBot.api.sendMessage({ text, parse_mode: 'HTML' });
 }
 
 export async function sendLog(text = 'Test Log') {
-    await logBot.api.sendMessage({ chat_id: USER_ID, text, parse_mode: 'HTML' });
+    await logBot.api.sendMessage({ text, parse_mode: 'HTML' });
 }
 
 export default async function handler(req, res) {
