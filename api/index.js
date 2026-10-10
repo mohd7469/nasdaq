@@ -45,6 +45,8 @@ export default async function handler(req, res) {
         const host = req.headers['x-forwarded-host'] || req.headers.host;
         const protocol = req.headers['x-forwarded-proto'] || 'https';
 
+        console.log(host, protocol)
+
         // Background mein webhook register karwa dein taaki manual link na kholna pade
         autoRegisterWebhooks(host, protocol);
 
