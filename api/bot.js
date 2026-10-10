@@ -1,8 +1,9 @@
 import { Bot, webhookCallback } from "node-telegram-bot-api";
+import { ALERT_BOT_TOKEN, LOG_BOT_TOKEN, WEBHOOK_SECRET, CHAT_ID } from '../env.js';
 
-let chatId = '7670215141';
-const alertBot = new Bot('8883267489:AAGwp4ayOjgzhOwMK2To6njUvlA5mHuC1W4');
-const logBot = new Bot('8846747499:AAF0JUr6JgRDzq9t7E-LKUL6rzTcTlPuvNY');
+let chatId = CHAT_ID;
+const alertBot = new Bot(ALERT_BOT_TOKEN);
+const logBot = new Bot(LOG_BOT_TOKEN);
 
 alertBot.command("start", (ctx) => {
     chatId = ctx.chat.id;
@@ -16,6 +17,9 @@ logBot.command("start", (ctx) => {
     ctx.reply(`Got it! Aapka chatId: ${ctx.chat.id}`);
 });
 
+const alertHandler = webhookCallback(alertBot, 'std/http', { secretToken: WEBHOOK_SECRET });
+const logHandler = webhookCallback(logBot, 'std/http', { secretToken: WEBHOOK_SECRET });
+
 export async function sendAlert(text = 'Test Alert') {
     await alertBot.api.sendMessage(chatId, text, { parse_mode: 'HTML' });
 }
@@ -23,9 +27,6 @@ export async function sendAlert(text = 'Test Alert') {
 export async function sendLog(text = 'Test Log') {
     await logBot.api.sendMessage(chatId, text, { parse_mode: 'HTML' });
 }
-
-const alertHandler = webhookCallback(alertBot, 'std/http', { secretToken: 'dxbbot' });
-const logHandler = webhookCallback(logBot, 'std/http', { secretToken: 'dxbbot' });
 
 export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
