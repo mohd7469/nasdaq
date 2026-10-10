@@ -1,5 +1,5 @@
 import { Bot, registerExpressWebhook } from "node-telegram-bot-api";
-import { ALERT_BOT_TOKEN, LOG_BOT_TOKEN, WEBHOOK_SECRET, CHAT_ID } from '../env.js';
+import { ALERT_BOT_TOKEN, LOG_BOT_TOKEN, WEBHOOK_SECRET, CHAT_ID } from './env.js';
 
 let chatId = CHAT_ID;
 
