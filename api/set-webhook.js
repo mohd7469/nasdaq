@@ -25,7 +25,7 @@ export default async function handler(req, res) {
         const bot = new Bot(token, { polling: false });
 
         // node-telegram-bot-api ka official setWebHook method
-        const result = await bot.setWebHook(webhookUrl, {
+        const result = await bot.api.setWebhook(webhookUrl, {
             secret_token: WEBHOOK_SECRET
         });
 
