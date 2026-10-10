@@ -17,6 +17,7 @@ logBot.command("start", (ctx) => {
     ctx.reply(`Got it! Aapka chatId: ${ctx.chat.id}`);
 });
 
+console.log("SECRET:", WEBHOOK_SECRET)
 const alertHandler = webhookCallback(alertBot, 'std/http', { secretToken: WEBHOOK_SECRET });
 const logHandler = webhookCallback(logBot, 'std/http', { secretToken: WEBHOOK_SECRET });
 
