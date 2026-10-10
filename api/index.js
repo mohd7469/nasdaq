@@ -3,8 +3,8 @@ import * as pkg from 'node-telegram-bot-api';
 const TelegramBot = pkg.default || pkg;
 
 let chatId; // '7670215141';
-const alertBot = new TelegramBot('8721637113:AAE6LY0BgBIYtcsqdo29I2nyp0e63PnTmzo', { polling: true });
-const logBot = new TelegramBot('8916407832:AAHjG7jtmP4_gdhPgsaika8P0yGMmKZb-I4', { polling: true });
+const alertBot = new TelegramBot('8883267489:AAGwp4ayOjgzhOwMK2To6njUvlA5mHuC1W4', { polling: true });
+const logBot = new TelegramBot('8846747499:AAF0JUr6JgRDzq9t7E-LKUL6rzTcTlPuvNY', { polling: true });
 
 alertBot.on('message', (msg) => {
     chatId = msg.chat.id;
