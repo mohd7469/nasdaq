@@ -26,11 +26,11 @@ export default async function handler(req, res) {
         case 'OPTIONS':
             return res.status(200).end();
         case 'POST':
-            type = req?.body?.type?.toLowerCase()?.trim() || null;
+            type = req?.body?.type?.toLowerCase()?.trim() || undefined;
             text = req?.body?.text?.trim();
             break;
         case 'GET':
-            type = req?.query?.type?.toLowerCase()?.trim() || null;
+            type = req?.query?.type?.toLowerCase()?.trim() || undefined;
             text = req?.query?.text?.trim();
             break;
     }
