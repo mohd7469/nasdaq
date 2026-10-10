@@ -24,7 +24,8 @@ export default async function handler(req, res) {
             return res.status(200).end();
 
         case 'POST': {
-            const { type = 'alert', text } = req.body || {};
+            const type = req?.body?.type?.trim();
+            const text = req?.body?.text?.trim();
 
             try {
                 switch (type) {
@@ -40,8 +41,8 @@ export default async function handler(req, res) {
         }
 
         case 'GET': {
-            const type = req.query?.type?.trim();
-            const text = req.query?.text?.trim();
+            const type = req?.query?.type?.trim();
+            const text = req?.query?.text?.trim();
 
             try {
                 switch (type) {
