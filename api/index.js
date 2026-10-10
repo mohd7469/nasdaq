@@ -1,22 +1,18 @@
 import moment from 'moment';
 import { Bot } from 'node-telegram-bot-api';
 
-// const USER_ID = '7670215141';
+let chatId; // '7670215141';
 const alertBot = new Bot('8721637113:AAE6LY0BgBIYtcsqdo29I2nyp0e63PnTmzo');
 const logBot = new Bot('8916407832:AAHjG7jtmP4_gdhPgsaika8P0yGMmKZb-I4');
 
-alertBot.on('message', async (msg) => {
-    const chatId = msg.chat.id;
-    const text = msg.text;
-
-    console.log(`AlertBot: ${chatId}: ${text}`);
+alertBot.on('message', (msg) => {
+    chatId = msg.chat.id;
+    console.log(`AlertBot: ${msg.chat.id}: ${msg.text}`);
 });
 
 logBot.on('message', async (msg) => {
-    const chatId = msg.chat.id;
-    const text = msg.text;
-
-    console.log(`LogBot: ${chatId}: ${text}`);
+    chatId = msg.chat.id;
+    console.log(`LogBot: ${msg.chat.id}: ${msg.text}`);
 });
 
 alertBot.start();
