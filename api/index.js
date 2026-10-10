@@ -22,20 +22,24 @@ export default async function handler(req, res) {
     let type;
     let text;
 
+    let typeExist;
+
     switch (req.method) {
         case 'OPTIONS':
             return res.status(200).end();
         case 'POST':
-            type = req?.body?.type?.toLowerCase()?.trim() || undefined;
+            typeExist = 'type' in req?.body;
+            type = req?.body?.type?.toLowerCase()?.trim();
             text = req?.body?.text?.trim();
             break;
         case 'GET':
-            type = req?.query?.type?.toLowerCase()?.trim() || undefined;
+            typeExist = 'type' in req?.query;
+            type = req?.query?.type?.toLowerCase()?.trim();
             text = req?.query?.text?.trim();
             break;
     }
 
-    console.log('type', type);
+    console.log('typeExist', typeExist, 'type', type);
 
     try {
         switch (type) {
