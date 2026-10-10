@@ -37,25 +37,17 @@
 
     const sendAlert = async (text = 'Test Alert') => {
         try {
-            return await fetch(API_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ type: 'alert', text })
-            });
+            await axios.post(API_URL, { type: 'alert', text });
         } catch (err) {
-            return console.error('Alert Error:', err?.message);
+            console.error('Alert Error:', err?.message);
         }
     }
 
     const sendLog = async (text = 'Test Log') => {
         try {
-            return await fetch(API_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ type: 'log', text })
-            });
+            await axios.post(API_URL, { type: 'log', text });
         } catch (err) {
-            return console.error('Log Error:', err?.message);
+            console.error('Log Error:', err?.message);
         }
     }
 
