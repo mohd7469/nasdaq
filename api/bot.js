@@ -16,11 +16,18 @@ logBot.command("start", (ctx) => {
     ctx.reply(`Got it! Aapka chatId: ${ctx.chat.id}`);
 });
 
+export async function sendAlert(text = 'Test Alert') {
+    await alertBot.api.sendMessage(chatId, text, { parse_mode: 'HTML' });
+}
+
+export async function sendLog(text = 'Test Log') {
+    await logBot.api.sendMessage(chatId, text, { parse_mode: 'HTML' });
+}
+
 const alertHandler = webhookCallback(alertBot, 'std/http', { secretToken: 'dxbbot' });
 const logHandler = webhookCallback(logBot, 'std/http', { secretToken: 'dxbbot' });
 
 export default async function handler(req, res) {
-    // CORS headers
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Telegram-Bot-Api-Secret-Token');
@@ -29,7 +36,6 @@ export default async function handler(req, res) {
         return res.status(200).end();
     }
 
-    // api/bot?type=alert
     const botType = req.query?.type;
 
     if (botType === 'alert') {
