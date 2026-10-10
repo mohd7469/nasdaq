@@ -19,6 +19,9 @@ logBot.on('message', async (msg) => {
     console.log(`LogBot: ${chatId}: ${text}`);
 });
 
+alertBot.start();
+logBot.start();
+
 export async function sendAlert(text = 'Test Alert') {
     await alertBot.api.sendMessage({ text, parse_mode: 'HTML' });
 }
