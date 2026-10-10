@@ -1,16 +1,16 @@
 import moment from 'moment';
-import { Api } from 'node-telegram-bot-api';
+import { Bot } from 'node-telegram-bot-api';
 
 const USER_ID = '7670215141';
-const alertBot = new Api('8721637113:AAE6LY0BgBIYtcsqdo29I2nyp0e63PnTmzo');
-const logBot = new Api('8916407832:AAHjG7jtmP4_gdhPgsaika8P0yGMmKZb-I4');
+const alertBot = new Bot('8721637113:AAE6LY0BgBIYtcsqdo29I2nyp0e63PnTmzo');
+const logBot = new Bot('8916407832:AAHjG7jtmP4_gdhPgsaika8P0yGMmKZb-I4');
 
 alertBot.on('message', async (msg) => {
     const chatId = msg.chat.id;
     const text = msg.text;
 
     console.log(`AlertBot ${chatId}: ${text}`);
-    await alertBot.sendMessage(chatId, `We've got your msg: ${text}`);
+    await alertBot.api.sendMessage({ chat_id: chatId, text: `We've got your msg: ${text}` });
 });
 
 logBot.on('message', async (msg) => {
@@ -18,15 +18,15 @@ logBot.on('message', async (msg) => {
     const text = msg.text;
 
     console.log(`LogBot ${chatId}: ${text}`);
-    await logBot.sendMessage(chatId, `We've got your msg: ${text}`);
+    await logBot.api.sendMessage({ chat_id: chatId, text: `We've got your msg: ${text}` });
 });
 
 export async function sendAlert(text = 'Test Alert') {
-    return alertBot.sendMessage({ chat_id: USER_ID, text: String(text), parse_mode: 'HTML' });
+    await alertBot.api.sendMessage({ chat_id: USER_ID, text: `alertBot: ${text}`, parse_mode: 'HTML' });
 }
 
 export async function sendLog(text = 'Test Log') {
-    return logBot.sendMessage({ chat_id: USER_ID, text: String(text), parse_mode: 'HTML' });
+    await logBot.api.sendMessage({ chat_id: USER_ID, text: `logBot: ${text}`, parse_mode: 'HTML' });
 }
 
 export default async function handler(req, res) {
