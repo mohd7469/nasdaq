@@ -6,13 +6,13 @@ let chatId = '7670215141';
 const alertBot = new Bot('8883267489:AAGwp4ayOjgzhOwMK2To6njUvlA5mHuC1W4');
 const logBot = new Bot('8846747499:AAF0JUr6JgRDzq9t7E-LKUL6rzTcTlPuvNY');
 
-alertBot.on('message', (ctx) => {
+alertBot.command("start", (ctx) => {
     chatId = ctx.chat.id;
     console.log(`AlertBot: ${ctx.chat.id}: ${ctx.message?.text}`);
     ctx.reply(`Got it! Aapka chatId: ${ctx.chat.id}`);
 });
 
-logBot.on('message', (ctx) => {
+logBot.command("start", (ctx) => {
     chatId = ctx.chat.id;
     console.log(`LogBot: ${ctx.chat.id}: ${ctx.message?.text}`);
     ctx.reply(`Got it! Aapka chatId: ${ctx.chat.id}`);
