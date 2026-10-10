@@ -28,12 +28,12 @@ export default async function handler(req, res) {
             case 'OPTIONS':
                 return res.status(200).end();
             case 'POST':
-                type = req?.body?.type.trim();
-                text = req?.body?.text.trim();
+                type = req?.body?.type;
+                text = req?.body?.text;
                 break;
             case 'GET':
-                type = req?.query?.type.trim();
-                text = req?.query?.text.trim();
+                type = req?.query?.type;
+                text = req?.query?.text;
                 break;
         }
 
