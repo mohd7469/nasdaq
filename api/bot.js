@@ -17,8 +17,8 @@ logBot.command("start", (ctx) => {
     ctx.reply(`Got it! Aapka chatId: ${ctx.chat.id}`);
 });
 
-const alertHandler = webhookCallback(alertBot, 'std/http', { secretToken: WEBHOOK_SECRET });
-const logHandler = webhookCallback(logBot, 'std/http', { secretToken: WEBHOOK_SECRET });
+const alertHandler = webhookCallback(alertBot, { secretToken: WEBHOOK_SECRET });
+const logHandler = webhookCallback(logBot, { secretToken: WEBHOOK_SECRET });
 
 export async function sendAlert(text = 'Test Alert') {
     await alertBot.api.sendMessage(chatId, text, { parse_mode: 'HTML' });
