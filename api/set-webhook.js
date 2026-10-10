@@ -1,4 +1,4 @@
-import TelegramBot from 'node-telegram-bot-api';
+import { Bot } from "node-telegram-bot-api";
 import { ALERT_BOT_TOKEN, LOG_BOT_TOKEN, WEBHOOK_SECRET } from '../env.js';
 
 export default async function handler(req, res) {
@@ -22,7 +22,7 @@ export default async function handler(req, res) {
     const webhookUrl = `${protocol}://${host}/api/bot?type=${type}`;
 
     try {
-        const bot = new TelegramBot(token, { polling: false });
+        const bot = new Bot(token, { polling: false });
 
         // node-telegram-bot-api ka official setWebHook method
         const result = await bot.setWebHook(webhookUrl, {
