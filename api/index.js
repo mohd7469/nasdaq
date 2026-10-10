@@ -19,55 +19,38 @@ export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
+    let type;
+    let text;
+
     switch (req.method) {
         case 'OPTIONS':
             return res.status(200).end();
 
-        case 'POST': {
-            const type = req?.body?.type?.trim();
-            const text = req?.body?.text?.trim();
+        case 'POST':
+            type = req?.body?.type?.trim();
+            text = req?.body?.text?.trim();
+            break;
 
-            try {
-                switch (type) {
-                    case 'log': await sendLog(text); break;
-                    case 'alert': await sendAlert(text); break;
-                    default: await sendAlert(text); await sendLog(text);
-                }
-            } catch (err) {
-                console.error(`${type} Error:`, err.message);
-                return res.status(500).json({ success: false, type, error: err.message });
-            }
-
-            return res.status(200).json({
-                status: 'OK',
-                uptime: moment.duration(process.uptime(), 'seconds').humanize() + ' ago',
-                timestamp: new Date().toISOString()
-            });
-        }
-
-        case 'GET': {
-            const type = req?.query?.type?.trim();
-            const text = req?.query?.text?.trim();
-
-            try {
-                switch (type) {
-                    case 'log': await sendLog(text); break;
-                    case 'alert': await sendAlert(text); break;
-                    default: await sendAlert(text); await sendLog(text);
-                }
-            } catch (err) {
-                console.error(`${type} Error:`, err.message);
-                return res.status(500).json({ success: false, type, error: err.message });
-            }
-
-            return res.status(200).json({
-                status: 'OK',
-                uptime: moment.duration(process.uptime(), 'seconds').humanize() + ' ago',
-                timestamp: new Date().toISOString()
-            });
-        }
-
-        default:
-            return res.status(405).json({ error: 'Method Not Allowed' });
+        case 'GET':
+            type = req?.query?.type?.trim();
+            text = req?.query?.text?.trim();
+            break;
     }
+
+    try {
+        switch (type) {
+            case 'log': await sendLog(text); break;
+            case 'alert': await sendAlert(text); break;
+            default: await sendAlert(text); await sendLog(text);
+        }
+    } catch (err) {
+        console.error(`${type} Error:`, err.message);
+        return res.status(500).json({ success: false, type, error: err.message });
+    }
+
+    return res.status(200).json({
+        status: 'OK',
+        uptime: moment.duration(process.uptime(), 'seconds').humanize() + ' ago',
+        timestamp: new Date().toISOString()
+    });
 }
