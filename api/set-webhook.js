@@ -1,5 +1,5 @@
 import { Bot } from "node-telegram-bot-api";
-import { ALERT_BOT_TOKEN, LOG_BOT_TOKEN, WEBHOOK_SECRET } from '../env.js';
+import { ALERT_BOT_TOKEN, LOG_BOT_TOKEN, WEBHOOK_SECRET } from './env.js';
 
 export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
