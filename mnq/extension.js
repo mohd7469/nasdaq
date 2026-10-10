@@ -3,10 +3,22 @@
 (function () {
     'use strict';
 
+    (() => {
+        const overlay = Object.assign(document.createElement('div'), {
+            style: 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.85);z-index:999999;cursor:pointer;transition:opacity 0.5s ease;'
+        });
+        overlay.onclick = () => {
+            overlay.style.opacity = '0';
+            setTimeout(() => overlay.remove(), 500);
+        };
+        document.body.prepend(overlay);
+    })();
+
     const processedHistory = new Map();
 
     const PINE_LOGS_CONTAINER = '[data-test-id-widget-type="pine_logs"] [class*="logsList-"]';
     const OHLC_CONTAINER = '[data-qa-id="legend-series-item"]';
+    const API_URL = 'https://app-nasdaq.vercel.app/api';
     const TIMEZONE = 'Asia/Karachi';
 
     if (typeof Notification !== 'undefined' && Notification.permission !== 'granted') {
@@ -23,8 +35,47 @@
         return day === 0 || day === 6;
     };
 
+    const sendAlert = async (text = 'Test Alert') => {
+        try {
+            return await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: 'alert', text })
+            });
+        } catch (err) {
+            return console.error('Alert Error:', err?.message);
+        }
+    }
+
+    const sendLog = async (text = 'Test Log') => {
+        try {
+            return await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: 'log', text })
+            });
+        } catch (err) {
+            return console.error('Log Error:', err?.message);
+        }
+    }
+
     const getYesterdayStart = () => {
         return getTimezone().subtract(1, 'day').startOf('day');
+    };
+
+    const showDesktopAlert = async (msg = 'Open tradingview for details') => {
+        try {
+            await new Audio('https://cdn.jsdelivr.net/gh/mohd7469/alert@main/beep1.mp3').play();
+        } catch (err) {
+            console.warn('Audio play error', err);
+        }
+
+        if (Notification.permission === 'granted') {
+            new Notification('Nasdaq Alert', {
+                body: msg,
+                icon: 'https://www.nasdaq.com/sites/acquia.prod/files/2020/09/24/nasdaq.jpg'
+            }).onclick = () => { window.focus(); };
+        }
     };
 
     function isFromYesterdayOrToday(timestamp) {
