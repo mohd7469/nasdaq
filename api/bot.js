@@ -29,7 +29,7 @@ export default async function handler(req, res) {
         return res.status(200).end();
     }
 
-    // /api/bot?type=alert)
+    // api/bot?type=alert
     const botType = req.query?.type;
 
     if (botType === 'alert') {
