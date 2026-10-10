@@ -5,6 +5,22 @@ const USER_ID = '7670215141';
 const alertBot = new Api('8721637113:AAE6LY0BgBIYtcsqdo29I2nyp0e63PnTmzo');
 const logBot = new Api('8916407832:AAHjG7jtmP4_gdhPgsaika8P0yGMmKZb-I4');
 
+alertBot.on('message', async (msg) => {
+    const chatId = msg.chat.id;
+    const text = msg.text;
+
+    console.log(`AlertBot ${chatId}: ${text}`);
+    await alertBot.sendMessage(chatId, `We've got your msg: ${text}`);
+});
+
+logBot.on('message', async (msg) => {
+    const chatId = msg.chat.id;
+    const text = msg.text;
+
+    console.log(`LogBot ${chatId}: ${text}`);
+    await logBot.sendMessage(chatId, `We've got your msg: ${text}`);
+});
+
 export async function sendAlert(text = 'Test Alert') {
     return alertBot.sendMessage({ chat_id: USER_ID, text: String(text), parse_mode: 'HTML' });
 }
