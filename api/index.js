@@ -1,5 +1,6 @@
 import moment from 'moment';
-import TelegramBot from 'node-telegram-bot-api';
+import * as pkg from 'node-telegram-bot-api';
+const TelegramBot = pkg.default || pkg;
 
 let chatId; // '7670215141';
 const alertBot = new TelegramBot('8721637113:AAE6LY0BgBIYtcsqdo29I2nyp0e63PnTmzo', { polling: true });
