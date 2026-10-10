@@ -1,6 +1,5 @@
 import moment from 'moment';
-import { Bot } from 'node-telegram-bot-api';
-import { run } from 'node-telegram-bot-api/node';
+import { Bot } from "node-telegram-bot-api";
 
 let chatId = '7670215141';
 const alertBot = new Bot('8883267489:AAGwp4ayOjgzhOwMK2To6njUvlA5mHuC1W4');
@@ -18,15 +17,12 @@ logBot.command("start", (ctx) => {
     ctx.reply(`Got it! Aapka chatId: ${ctx.chat.id}`);
 });
 
-await run(alertBot);
-await run(logBot);
-
 export async function sendAlert(text = 'Test Alert') {
-    await alertBot.api.sendMessage({ text, parse_mode: 'HTML' });
+    await alertBot.api.sendMessage({ chatId, text, parse_mode: 'HTML' });
 }
 
 export async function sendLog(text = 'Test Log') {
-    await logBot.api.sendMessage({ text, parse_mode: 'HTML' });
+    await logBot.api.sendMessage({ chatId, text, parse_mode: 'HTML' });
 }
 
 export default async function handler(req, res) {
