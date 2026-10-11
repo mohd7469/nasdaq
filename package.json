@@ -1,5 +1,5 @@
 {
-  "name": "app-nasdaq",
+  "name": "nasdaq",
   "version": "1.0.0",
   "url": "https://app-nasdaq.vercel.app/api/send",
   "private": true,
