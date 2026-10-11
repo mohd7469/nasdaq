@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { DEFAULT_TEXT, BOTS_CONFIG, WEBHOOK_SECRET } from './env.js';
+import { DEFAULT_TEXT, BOTS_CONFIG, WEBHOOK_SECRET, DEFAULT_CHAT_ID } from './env.js';
 
 // In-memory storage: Har botId ke under uski chat IDs save hongi
 // { dxbmnq_bot: ["7670215141"], dxblog_bot: ["7670215141"] }
@@ -124,7 +124,10 @@ export default async function handler(req, res) {
 
             for (const [bId, config] of Object.entries(BOTS_CONFIG)) {
                 results[bId] = [];
-                const chats = botChatMap[bId] || [];
+                let chats = botChatMap[bId] && botChatMap[bId].length > 0 ? botChatMap[bId] : [];
+                if (chats.length === 0 && DEFAULT_CHAT_ID) {
+                    chats = [DEFAULT_CHAT_ID];
+                }
                 for (const chatId of chats) {
                     const resMsg = await sendTelegramMessage(config.token, chatId, textToSend);
                     results[bId].push({ chatId, result: resMsg });
@@ -139,7 +142,11 @@ export default async function handler(req, res) {
             return res.status(400).json({ error: `Invalid or missing bot identifier: ${targetBot}` });
         }
 
-        const chatsForBot = botChatMap[targetBot] || [];
+        let chatsForBot = botChatMap[targetBot] && botChatMap[targetBot].length > 0 ? botChatMap[targetBot] : [];
+        if (chatsForBot.length === 0 && DEFAULT_CHAT_ID) {
+            chatsForBot = [DEFAULT_CHAT_ID];
+        }
+
         if (chatsForBot.length === 0) {
             return res.status(200).json({
                 success: true,
