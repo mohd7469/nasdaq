@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { BOTS_CONFIG, WEBHOOK_SECRET } from '../env.js';
+import { BOTS_CONFIG, WEBHOOK_SECRET } from './env.js';
 
 
 // In-memory storage: Har botId ke under uski chat IDs save hongi
@@ -105,12 +105,23 @@ export default async function handler(req, res) {
         // SCENARIO B: CLIENT SIDE SE CALLING (GET / POST)
         // ==========================================
 
-        const targetBot = req.body?.bot || req.query?.bot;
-        const customText = req.body?.text || req.query?.text;
+        const targetBot = req.body?.bot !== undefined ? req.body.bot : req.query?.bot;
+        const botText = req.body?.text !== undefined ? req.body.text : req.query?.text;
 
-        if (!targetBot && (req.method === 'GET' || !req.body?.bot)) {
+        // Aapki di gayi validations
+        if (botText !== undefined && botText === '') {
+            console.error("text is missing");
+            throw new Error("text is missing");
+        }
+
+        if (targetBot !== undefined && targetBot === '') {
+            console.error("bot is missing");
+            throw new Error("bot is missing");
+        }
+
+        if (targetBot === undefined && (req.method === 'GET' || req.body?.bot === undefined)) {
             const results = {};
-            const textToSend = customText || DEFAULT_SUCCESS_TEXT;
+            const textToSend = botText || DEFAULT_SUCCESS_TEXT;
 
             for (const [bId, config] of Object.entries(BOTS_CONFIG)) {
                 results[bId] = [];
@@ -138,7 +149,7 @@ export default async function handler(req, res) {
         }
 
         // Text determine karna (Custom diya ho ya default "Test Success")
-        const finalMessage = customText || DEFAULT_SUCCESS_TEXT;
+        const finalMessage = botText || DEFAULT_SUCCESS_TEXT;
 
         const broadcastResults = [];
         for (const chatId of chatsForBot) {
