@@ -212,4 +212,30 @@
     });
 
     timer.start({ initialDelay: 15000, interval: 1000, logs: false });
+
+    if (isWeekend()) {
+        const tooltip = document.createElement('div');
+        tooltip.innerText = 'Market Close';
+        tooltip.style.position = 'fixed';
+        tooltip.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+        tooltip.style.color = '#fff';
+        tooltip.style.padding = '5px 10px';
+        tooltip.style.borderRadius = '4px';
+        tooltip.style.fontSize = '12px';
+        tooltip.style.border = '1px solid orange';
+        tooltip.style.pointerEvents = 'none';
+        tooltip.style.zIndex = '99999';
+        tooltip.style.display = 'none';
+        document.body.appendChild(tooltip);
+
+        document.addEventListener('mousemove', (e) => {
+            tooltip.style.display = 'block';
+            tooltip.style.left = (e.clientX + 15) + 'px';
+            tooltip.style.top = (e.clientY + 15) + 'px';
+        });
+
+        document.addEventListener('mouseleave', () => {
+            tooltip.style.display = 'none';
+        });
+    }
 })();
