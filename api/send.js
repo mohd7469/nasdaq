@@ -73,7 +73,7 @@ export default async function handler(req, res) {
             if (text.startsWith('/stop')) {
                 await removeChatId(botId, chatId);
                 console.log(`[${botConfig.name}] Chat ID removed: ${chatId}`);
-                await sendTelegramMessage(botConfig.token, chatId, `You have been unsubscribed from ${botConfig.name}.`);
+                await sendTelegramMessage(botConfig.token, chatId, `You have been unsubscribed. To subscribe for updates send /start`);
                 const savedChats = await db.smembers(dbKey);
                 return res.status(200).json({ status: 'OK', savedChatsCount: savedChats.length });
             }
