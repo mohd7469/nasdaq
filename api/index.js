@@ -4,6 +4,8 @@ import { WEBHOOK_SECRET, BOTS_CONFIG } from './env.js';
 
 // Deployment / Initialization ke waqt webhook auto-register karne ka function
 export async function registerWebhooks(req) {
+    console.log(`Registering webhook..`);
+
     try {
         const host = req.headers['x-forwarded-host'] || req.headers.host;
         const protocol = req.headers['x-forwarded-proto'] || 'https';
