@@ -4,31 +4,7 @@ import { WEBHOOK_SECRET } from './env.js';
 // Deployment / Initialization ke waqt webhook auto-register karne ka function
 export async function registerWebhooks(req) {
     try {
-        const host = req.headers['x-forwarded-host'] || req.headers.host;
-        const protocol = req.headers['x-forwarded-proto'] || 'https';
-        const baseUrl = `${protocol}://${host}`;
-
-        const bots = [
-            { type: 'alert', token: ALERT_BOT_TOKEN },
-            { type: 'log', token: LOG_BOT_TOKEN }
-        ];
-
-        for (const b of bots) {
-            const webhookUrl = `${baseUrl}/api/bot?type=${b.type}`;
-            console.log(webhookUrl);
-            const telegramUrl = `https://api.telegram.org/bot${b.token}/setWebhook`;
-
-            const response = await fetch(telegramUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    url: webhookUrl,
-                    secret_token: WEBHOOK_SECRET
-                })
-            });
-
-            const result = await response.json();
-            console.log(`Webhook set for ${b.type}:`, result);
+        
         }
     } catch (err) {
         console.error("Auto-register webhook error:", err.message);
