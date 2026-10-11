@@ -1,9 +1,10 @@
 import axios from 'axios';
+import { kv } from '@vercel/kv';
 import { DEFAULT_TEXT, BOTS_CONFIG, WEBHOOK_SECRET, DEFAULT_CHAT_ID } from './env.js';
 
 // In-memory storage: Har botId ke under uski chat IDs save hongi
 // { dxbmnq_bot: ["7670215141"], dxblog_bot: ["7670215141"] }
-const botChatMap = {};
+// const botChatMap = {}; // Replaced with Vercel KV for persistence across server restarts
 
 // Kisi specific bot aur chatId par message bhejne ke liye
 async function sendTelegramMessage(token, chatId, text) {
@@ -50,23 +51,22 @@ export default async function handler(req, res) {
             const chatId = String(message.chat.id);
             const text = message.text || '';
 
-            // Bot ke mapping mein array initialize karein agar nahi hai
-            if (!botChatMap[botParam]) {
-                botChatMap[botParam] = [];
-            }
+            // Vercel KV key for this bot's chat IDs
+            const kvKey = `bot:${botParam}:chats`;
 
-            // Chat ID save karein (duplicates avoid karne ke liye)
-            if (!botChatMap[botParam].includes(chatId)) {
-                botChatMap[botParam].push(chatId);
-                console.log(`[${botConfig.name}] New Chat ID saved: ${chatId}`);
-            }
+            // Chat ID save karein (KV Set / sadd duplicate values khud avoid karta hai)
+            await kv.sadd(kvKey, chatId);
+            console.log(`[${botConfig.name}] New Chat ID saved: ${chatId}`);
+
+            // Current stored chats count retrieve karna response ke liye
+            const savedChats = await kv.smembers(kvKey);
 
             // Agar user ne /start bheja hai toh welcome/acknowledgment bhej dein
             if (text.startsWith('/start')) {
                 await sendTelegramMessage(botConfig.token, chatId, `Your are now subscribed to ${botConfig.name}.`);
             }
 
-            return res.status(200).json({ status: 'OK', savedChatsCount: botChatMap[botParam].length });
+            return res.status(200).json({ status: 'OK', savedChatsCount: savedChats.length });
         }
 
 
@@ -94,10 +94,11 @@ export default async function handler(req, res) {
 
             for (const [bId, config] of Object.entries(BOTS_CONFIG)) {
                 results[bId] = [];
-                let chats = botChatMap[bId] && botChatMap[bId].length > 0 ? botChatMap[bId] : [];
-                if (chats.length === 0 && DEFAULT_CHAT_ID) {
-                    chats = [DEFAULT_CHAT_ID];
-                }
+                const storedChats = await kv.smembers(`bot:${bId}:chats`);
+                let chats = storedChats && storedChats.length > 0 ? storedChats : [];
+                // if (chats.length === 0 && DEFAULT_CHAT_ID) {
+                //     chats = [DEFAULT_CHAT_ID];
+                // }
                 for (const chatId of chats) {
                     const resMsg = await sendTelegramMessage(config.token, chatId, textToSend);
                     results[bId].push({ chatId, result: resMsg });
@@ -112,10 +113,11 @@ export default async function handler(req, res) {
             return res.status(400).json({ error: `Invalid or missing bot identifier: ${targetBot}` });
         }
 
-        let chatsForBot = botChatMap[targetBot] && botChatMap[targetBot].length > 0 ? botChatMap[targetBot] : [];
-        if (chatsForBot.length === 0 && DEFAULT_CHAT_ID) {
-            chatsForBot = [DEFAULT_CHAT_ID];
-        }
+        const storedChatsForBot = await kv.smembers(`bot:${targetBot}:chats`);
+        let chatsForBot = storedChatsForBot && storedChatsForBot.length > 0 ? storedChatsForBot : [];
+        // if (chatsForBot.length === 0 && DEFAULT_CHAT_ID) {
+        //     chatsForBot = [DEFAULT_CHAT_ID];
+        // }
 
         if (chatsForBot.length === 0) {
             return res.status(200).json({

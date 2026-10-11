@@ -1,4 +1,4 @@
-export const DEFAULT_CHAT_ID = ''; //7670215141
+export const DEFAULT_CHAT_ID = '7670215141';
 export const WEBHOOK_SECRET = 'dxbbot';
 export const DEFAULT_TEXT = "Test Success";
 export const BOTS_CONFIG = {
