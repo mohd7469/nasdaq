@@ -18,7 +18,7 @@
 
     const PINE_LOGS_CONTAINER = '[data-test-id-widget-type="pine_logs"] [class*="logsList-"]';
     const OHLC_CONTAINER = '[data-qa-id="legend-series-item"]';
-    const API_URL = 'https://app-nasdaq.vercel.app/api';
+    const API_URL = 'https://app-nasdaq.vercel.app/api/send';
     const TIMEZONE = 'Asia/Karachi';
 
     if (typeof Notification !== 'undefined' && Notification.permission !== 'granted') {
