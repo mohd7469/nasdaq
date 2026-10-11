@@ -1,5 +1,6 @@
+import axios from 'axios';
 import moment from 'moment';
-import { WEBHOOK_SECRET } from './env.js';
+import { WEBHOOK_SECRET, BOTS_CONFIG } from './env.js';
 
 // Deployment / Initialization ke waqt webhook auto-register karne ka function
 export async function registerWebhooks(req) {
@@ -21,10 +22,10 @@ export async function registerWebhooks(req) {
                 url: webhookUrl,
                 secret_token: WEBHOOK_SECRET
             });
-            console.log(`[Register] Webhook set for ${botId} -> ${webhookUrl}`);
+            console.log(`Register Webhook:: ${botId}: ${webhookUrl}`);
         }
     } catch (err) {
-        console.error("[Register] webhook error:", err.message);
+        console.error("Register Webhook Error:", err.message);
     }
 }
 
