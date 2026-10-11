@@ -1,8 +1,10 @@
 {
-  "url": "https://app-nasdaq.vercel.app/api",
+  "name": "app-nasdaq",
+  "version": "1.0.0",
+  "private": true,
+  "url": "https://app-nasdaq.vercel.app/api/send",
   "dependencies": {
     "axios": "^1.20.0",
-    "moment": "^2.31.0",
-    "node-telegram-bot-api": "^2.1.0"
+    "moment": "^2.31.0"
   }
 }
