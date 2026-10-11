@@ -21,18 +21,17 @@ async function sendTelegramMessage(token, chatId, text) {
 }
 
 async function removeChatId(botParam, chatId) {
-  try {
-    // db.srem specific chat ID ko set mein se remove kar dega
-    const result = await db.srem(`bot:${botParam}:chats`, chatId);
-    
-    if (result > 0) {
-      console.log(`Chat ID ${chatId} successfully remove ho gayi.`);
-    } else {
-      console.log(`Yeh Chat ID list mein nahi mili.`);
+    try {
+        const result = await db.srem(`bot:${botParam}:chats`, chatId);
+
+        if (result > 0) {
+            console.log(`Chat ID ${chatId} successfully removed.`);
+        } else {
+            console.log(`Chat ID ${chatId} not exist.`);
+        }
+    } catch (error) {
+        console.error("Error deleting chat ID:", error);
     }
-  } catch (error) {
-    console.error("Error deleting chat ID:", error);
-  }
 }
 // await removeChatId('dxbmnq_bot', DEFAULT_CHAT_ID);
 
