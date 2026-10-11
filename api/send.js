@@ -1,10 +1,9 @@
 import axios from 'axios';
-import { kv } from '@vercel/kv';
+import { kv as db } from '@vercel/kv';
 import { DEFAULT_TEXT, BOTS_CONFIG, WEBHOOK_SECRET, DEFAULT_CHAT_ID } from './env.js';
 
 // In-memory storage: Har botId ke under uski chat IDs save hongi
-// { dxbmnq_bot: ["7670215141"], dxblog_bot: ["7670215141"] }
-// const botChatMap = {}; // Replaced with Vercel KV for persistence across server restarts
+// const botChatMap = { dxbmnq_bot: ["7670215141"], dxblog_bot: ["7670215141"] }
 
 // Kisi specific bot aur chatId par message bhejne ke liye
 async function sendTelegramMessage(token, chatId, text) {
@@ -51,15 +50,15 @@ export default async function handler(req, res) {
             const chatId = String(message.chat.id);
             const text = message.text || '';
 
-            // Vercel KV key for this bot's chat IDs
-            const kvKey = `bot:${botParam}:chats`;
+            // Vercel db key for this bot's chat IDs
+            const dbKey = `bot:${botParam}:chats`;
 
-            // Chat ID save karein (KV Set / sadd duplicate values khud avoid karta hai)
-            await kv.sadd(kvKey, chatId);
+            // Chat ID save karein (ye db sari duplicate values khud avoid karta hai)
+            await db.sadd(dbKey, chatId);
             console.log(`[${botConfig.name}] New Chat ID saved: ${chatId}`);
 
             // Current stored chats count retrieve karna response ke liye
-            const savedChats = await kv.smembers(kvKey);
+            const savedChats = await db.smembers(dbKey);
 
             // Agar user ne /start bheja hai toh welcome/acknowledgment bhej dein
             if (text.startsWith('/start')) {
@@ -94,7 +93,7 @@ export default async function handler(req, res) {
 
             for (const [bId, config] of Object.entries(BOTS_CONFIG)) {
                 results[bId] = [];
-                const storedChats = await kv.smembers(`bot:${bId}:chats`);
+                const storedChats = await db.smembers(`bot:${bId}:chats`);
                 let chats = storedChats && storedChats.length > 0 ? storedChats : [];
                 // if (chats.length === 0 && DEFAULT_CHAT_ID) {
                 //     chats = [DEFAULT_CHAT_ID];
@@ -113,7 +112,7 @@ export default async function handler(req, res) {
             return res.status(400).json({ error: `Invalid or missing bot identifier: ${targetBot}` });
         }
 
-        const storedChatsForBot = await kv.smembers(`bot:${targetBot}:chats`);
+        const storedChatsForBot = await db.smembers(`bot:${targetBot}:chats`);
         let chatsForBot = storedChatsForBot && storedChatsForBot.length > 0 ? storedChatsForBot : [];
         // if (chatsForBot.length === 0 && DEFAULT_CHAT_ID) {
         //     chatsForBot = [DEFAULT_CHAT_ID];
