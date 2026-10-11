@@ -1,8 +1,11 @@
 {
   "name": "app-nasdaq",
   "version": "1.0.0",
-  "private": true,
   "url": "https://app-nasdaq.vercel.app/api/send",
+  "private": true,
+  "scripts": {
+    "build": "node api/index.js"
+  },
   "dependencies": {
     "axios": "^1.20.0",
     "moment": "^2.31.0"
