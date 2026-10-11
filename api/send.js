@@ -25,7 +25,7 @@ async function registerAllWebhooks(host, protocol) {
     const baseUrl = `${protocol}://${host}`;
 
     for (const [botId, config] of Object.entries(BOTS_CONFIG)) {
-        if (!config.token || config.token.includes('HERE')) continue;
+        if (!config.token) continue;
 
         try {
             const webhookUrl = `${baseUrl}/api/send?bot=${botId}`;

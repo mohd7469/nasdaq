@@ -4,7 +4,7 @@ import { WEBHOOK_SECRET, BOTS_CONFIG } from './env.js';
 
 // Deployment / Initialization ke waqt webhook auto-register karne ka function
 export async function registerWebhooks(req) {
-    console.log(`Registering webhook..`);
+    console.log(`Registering..`);
     try {
         const host = req.headers['x-forwarded-host'] || req.headers.host;
         const protocol = req.headers['x-forwarded-proto'] || 'https';
@@ -14,11 +14,12 @@ export async function registerWebhooks(req) {
         const baseUrl = `${protocol}://${host}`;
 
         for (const [botId, config] of Object.entries(BOTS_CONFIG)) {
-            if (!config.token || config.token.includes('HERE')) continue;
+            console.log(botId);
+
+            if (!config.token) continue;
 
             // Har bot ka webhook URL uske specific ?bot=botId ke sath register hoga
             const webhookUrl = `${baseUrl}/api/send?bot=${botId}`;
-            console.log(webhookUrl);
 
             await axios.post(`https://api.telegram.org/bot${config.token}/setWebhook`, {
                 url: webhookUrl,
