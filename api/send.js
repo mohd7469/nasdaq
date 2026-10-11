@@ -3,7 +3,7 @@ import { DEFAULT_TEXT, BOTS_CONFIG, WEBHOOK_SECRET } from './env.js';
 
 
 // In-memory storage: Har botId ke under uski chat IDs save hongi
-// { botId1: ["7670215141"], botId2: ["11223344"] }
+// { dxbmnq_bot: ["7670215141"], dxblog_bot: ["7670215141"] }
 const botChatMap = {};
 
 // Kisi specific bot aur chatId par message bhejne ke liye
@@ -131,7 +131,7 @@ export default async function handler(req, res) {
                     results[bId].push({ chatId, result: resMsg });
                 }
             }
-            return res.status(200).json({ success: true, scope: 'all_bots', results });
+            return res.status(200).json({ success: true, scope: 'broadcast', results });
         }
 
         // Selected bot validation
