@@ -20,6 +20,7 @@ async function sendTelegramMessage(token, chatId, text) {
     }
 }
 
+// Kisi specific bot se chatId ko remove karne ke liye
 async function removeChatId(botParam, chatId) {
     try {
         const result = await db.srem(`bot:${botParam}:chats`, chatId);
