@@ -37,7 +37,7 @@
 
     const sendAlert = async (text = 'Test Alert') => {
         try {
-            await axios.post(API_URL, { type: 'alert', text });
+            await axios.post(API_URL, { bot: 'dxbmnq_bot', text });
         } catch (err) {
             console.error('Alert Error:', err?.message);
         }
@@ -45,7 +45,7 @@
 
     const sendLog = async (text = 'Test Log') => {
         try {
-            await axios.post(API_URL, { type: 'log', text });
+            await axios.post(API_URL, { bot: 'dxblog_bot', text });
         } catch (err) {
             console.error('Log Error:', err?.message);
         }
