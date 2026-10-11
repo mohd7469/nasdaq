@@ -63,7 +63,7 @@ export default async function handler(req, res) {
 
             // Agar user ne /start bheja hai toh welcome/acknowledgment bhej dein
             if (text.startsWith('/start')) {
-                await sendTelegramMessage(botConfig.token, chatId, `Welcome! You are now connected to ${botConfig.name}. Chat ID: ${chatId}`);
+                await sendTelegramMessage(botConfig.token, chatId, `Your are now connected to ${botConfig.name}.\nSubscription ID: ${chatId} `);
             }
 
             return res.status(200).json({ status: 'ok', savedChatsCount: botChatMap[botParam].length });
