@@ -21,9 +21,9 @@ async function sendTelegramMessage(token, chatId, text) {
 }
 
 // Kisi specific bot se chatId ko remove karne ke liye
-async function removeChatId(botParam, chatId) {
+async function removeChatId(botId, chatId) {
     try {
-        const result = await db.srem(`bot:${botParam}:chats`, chatId);
+        const result = await db.srem(`bot:${botId}:chats`, chatId);
 
         if (result > 0) {
             console.log(`Chat ID ${chatId} successfully removed.`);
@@ -50,14 +50,14 @@ export default async function handler(req, res) {
         // ==========================================
         // SCENARIO A: TELEGRAM SE WEBHOOK UPDATE AAYE (POST)
         // ==========================================
-        const botParam = req.query?.bot;
-        if (req.method === 'POST' && req.body && req.body.message && botParam) {
+        const botId = req.query?.bot;
+        if (req.method === 'POST' && req.body && req.body.message && botId) {
             const secretHeader = req.headers['x-telegram-bot-api-secret-token'];
             if (secretHeader !== WEBHOOK_SECRET) {
                 return res.status(401).json({ error: 'Unauthorized secret token' });
             }
 
-            const botConfig = BOTS_CONFIG[botParam];
+            const botConfig = BOTS_CONFIG[botId];
             if (!botConfig) {
                 return res.status(404).json({ error: 'Bot ID not found in config' });
             }
@@ -67,7 +67,7 @@ export default async function handler(req, res) {
             const text = message.text || '';
 
             // Vercel db key for this bot's chat IDs
-            const dbKey = `bot:${botParam}:chats`;
+            const dbKey = `bot:${botId}:chats`;
 
             // Chat ID save karein (ye db sari duplicate values khud avoid karta hai)
             await db.sadd(dbKey, chatId);
