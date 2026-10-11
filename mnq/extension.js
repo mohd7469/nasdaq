@@ -185,7 +185,7 @@
                 const symbol = diff > 0 ? '+' : '-';
                 const signal = `Setup is triggered (${symbol}${realtimeValues.V})`;
                 console.log(signal);
-                showDesktopAlert(signal);
+                // showDesktopAlert(signal);
                 sendAlert(signal);
             }
         }
