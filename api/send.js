@@ -69,6 +69,15 @@ export default async function handler(req, res) {
             // Vercel db key for this bot's chat IDs
             const dbKey = `bot:${botId}:chats`;
 
+            // Agar user ne /stop bheja hai toh chat ID remove kar dein
+            if (text.startsWith('/stop')) {
+                await removeChatId(botId, chatId);
+                console.log(`[${botConfig.name}] Chat ID removed: ${chatId}`);
+                await sendTelegramMessage(botConfig.token, chatId, `You have been unsubscribed from ${botConfig.name}.`);
+                const savedChats = await db.smembers(dbKey);
+                return res.status(200).json({ status: 'OK', savedChatsCount: savedChats.length });
+            }
+
             // Chat ID save karein (ye db sari duplicate values khud avoid karta hai)
             await db.sadd(dbKey, chatId);
             console.log(`[${botConfig.name}] New Chat ID saved: ${chatId}`);
