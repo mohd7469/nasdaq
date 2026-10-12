@@ -238,4 +238,7 @@
             tooltip.style.display = 'none';
         });
     }
+
+    const currentTime = getTimezone().format("hh:mm A");
+    sendLog(`Restarted: ${currentTime}`);
 })();
