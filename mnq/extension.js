@@ -35,6 +35,23 @@
         return day === 0 || day === 6;
     };
 
+    const isMidnight = () => {
+        const now = getTimezone();
+        const today = now.format('YYYY-MM-DD');
+        const lastReload = localStorage.getItem('last_reload_date');
+
+        if (lastReload === today) {
+            return false;
+        }
+
+        if (now.hour() >= 2) {
+            localStorage.setItem('last_reload_date', today);
+            return true;
+        }
+
+        return false;
+    };
+
     const sendAlert = async (text = 'Test Alert') => {
         try {
             await axios.post(API_URL, { bot: 'dxbmnq_bot', text });
@@ -200,8 +217,14 @@
         onTick: async (count, time, logs) => {
             await waitScrollToBottom();
 
+            if (isMidnight()) {
+                await sendLog(`Reload: ${time}`);
+                window.location.reload();
+                return;
+            }
+
             if (isWeekend()) {
-                console.log('Market is Off! Enjoy Weekend!');
+                console.log('Market is closed!');
                 return;
             }
 
