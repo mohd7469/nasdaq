@@ -225,6 +225,9 @@
 
             if (isWeekend()) {
                 console.log('Market Closed');
+                if (count % 300 === 0) {
+                    sendLog(`Market Closed`);
+                }
                 return;
             }
 
@@ -233,7 +236,6 @@
 
             if (count % 300 === 0) {
                 cleanupProcessedHistory();
-                console.log('✔ 5m ping');
                 sendLog(`Ping: ${time}`);
             }
         }
