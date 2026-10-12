@@ -46,16 +46,24 @@ function createAutomationWorker(onTick, onComplete) {
     };
 }
 
+function getTime() {
+    return moment().tz("Asia/Karachi").format('hh:mm:ss A');
+}
+
 // Custom wrapper setup export for extension runtime
 function setupAutomationTimer(callbacks = {}) {
-    const { onTick, onComplete } = callbacks;
+    const { onInit, onTick, onComplete } = callbacks;
 
+    // 1. One-Time Execution
+    if (typeof onInit === 'function') {
+        onInit(getTime());
+    }
+
+    // 2. Worker Execution
     return createAutomationWorker(
         (count, logs = true) => {
-            const time = moment().tz("Asia/Karachi").format('hh:mm:ss A');
-
             if (logs) {
-                console.log(`[Worker] - ${time}`);
+                console.log(`[Worker] - ${getTime()}`);
             }
 
             if (typeof onTick === 'function') onTick(count, time, logs);

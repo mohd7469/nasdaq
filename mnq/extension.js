@@ -192,6 +192,11 @@
     }
 
     const timer = setupAutomationTimer({
+        onInit: (time) => {
+            const msg = `Started: ${time}`;
+            console.log(msg);
+            sendLog(msg);
+        },
         onTick: async (count, time, logs) => {
             await waitScrollToBottom();
 
@@ -238,7 +243,4 @@
             tooltip.style.display = 'none';
         });
     }
-
-    const currentTime = getTimezone().format("hh:mm A");
-    sendLog(`Restarted: ${currentTime}`);
 })();
