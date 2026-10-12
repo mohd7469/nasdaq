@@ -73,7 +73,7 @@ export default async function handler(req, res) {
             if (text.startsWith('/stop')) {
                 await removeChatId(botId, chatId);
                 console.log(`[${botConfig.name}] Chat ID removed: ${chatId}`);
-                await sendTelegramMessage(botConfig.token, chatId, `Send <b>/start</b> to activate again`);
+                await sendTelegramMessage(botConfig.token, chatId, `Tap <b>/start</b> to subscribe again`);
                 const savedChats = await db.smembers(dbKey);
                 return res.status(200).json({ status: 'OK', savedChatsCount: savedChats.length });
             }
@@ -87,7 +87,7 @@ export default async function handler(req, res) {
 
             // Agar user ne /start bheja hai toh welcome/acknowledgment bhej dein
             if (text.startsWith('/start')) {
-                await sendTelegramMessage(botConfig.token, chatId, `You're now subscribed to ${botConfig.name}. <b>/stop</b>`);
+                await sendTelegramMessage(botConfig.token, chatId, `Connected to ${botConfig.name} tap <b>/stop</b> to leave`);
             }
 
             return res.status(200).json({ status: 'OK', savedChatsCount: savedChats.length });
