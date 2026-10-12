@@ -204,8 +204,9 @@
             const diff = closePrice - openPrice;
 
             if (Math.abs(diff) >= 50) {
+                const positionType = diff > 0 ? 'Long' : 'Short';
                 const symbol = diff > 0 ? '+' : '-';
-                const signal = `Setup is triggered (${symbol}${realtimeValues.V})`;
+                const signal = `Get ready for ${positionType}... (${symbol}${realtimeValues.V})`;
                 console.log(signal);
                 // showDesktopAlert(signal);
                 sendAlert(signal);
