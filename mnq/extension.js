@@ -225,7 +225,7 @@
 
             if (isWeekend()) {
                 console.log('Market Closed');
-                if (count % 300 === 0) {
+                if (count % 3600 === 0) {
                     sendLog(`Market Closed`);
                 }
                 return;
