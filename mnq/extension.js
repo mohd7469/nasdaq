@@ -162,7 +162,7 @@
                 processedHistory.set(data.id, data.timestamp);
 
                 // add new property
-                data['triggered'] = getTimezone(data.timestamp).fromNow();
+                data['triggered'] = getTimezone(data.timestamp).format('DD MMM hh:mm A');
 
                 console.log(JSON.stringify(data, null, 1));
                 const { id, ...cleanData } = data;
