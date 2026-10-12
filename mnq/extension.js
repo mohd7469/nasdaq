@@ -35,21 +35,25 @@
         return day === 0 || day === 6;
     };
 
-    const isMidnight = () => {
+    const isReloadRequired = () => {
         const now = getTimezone();
-        const today = now.format('YYYY-MM-DD');
-        const lastReload = localStorage.getItem('last_reload_date');
+        const currentHour = now.hour();
 
-        if (lastReload === today) {
+        // 1. Agar 12 AM - 2 AM ka time hai to ignore
+        if (currentHour < 2) return false;
+
+        // 2. Slot identify karo
+        const slot = currentHour >= 14 ? '_2PM' : '_2AM';
+        const currentSlotKey = `${now.format('YYYY-MM-DD')}${slot}`;
+
+        // 3. Simple localStorage check (Fast memory read)
+        if (localStorage.getItem('last_reload_slot') === currentSlotKey) {
             return false;
         }
 
-        if (now.hour() >= 2) {
-            localStorage.setItem('last_reload_date', today);
-            return true;
-        }
-
-        return false;
+        // 4. Save & Trigger Reload
+        localStorage.setItem('last_reload_slot', currentSlotKey);
+        return true;
     };
 
     const sendAlert = async (text = 'Test Alert') => {
@@ -223,8 +227,8 @@
         onTick: async (count, time, logs) => {
             await waitScrollToBottom();
 
-            if (isMidnight()) {
-                await sendLog(`Midnight: ${time}`);
+            if (isReloadRequired()) {
+                await sendLog(`Reload: ${time}`);
                 window.location.reload();
                 return;
             }
