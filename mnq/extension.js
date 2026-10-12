@@ -160,8 +160,13 @@
 
             if (data && isFromYesterdayOrToday(data.timestamp) && !processedHistory.has(data.id)) {
                 processedHistory.set(data.id, data.timestamp);
+
+                // add new property
+                data['triggered'] = getTimezone(data.timestamp).fromNow();
+
                 console.log(JSON.stringify(data, null, 1));
                 const { id, ...cleanData } = data;
+
                 showDesktopAlert('Setup is executed');
                 sendAlert(`<pre><code>${JSON.stringify(cleanData, null, 1)}</code></pre>`);
             }
