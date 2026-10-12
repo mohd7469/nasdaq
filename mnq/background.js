@@ -66,7 +66,7 @@ function setupAutomationTimer(callbacks = {}) {
                 console.log(`[Worker] - ${getTime()}`);
             }
 
-            if (typeof onTick === 'function') onTick(count, time, logs);
+            if (typeof onTick === 'function') onTick(count, getTime(), logs);
         },
         () => {
             console.log("Worker Completed Execution.");
