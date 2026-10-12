@@ -218,13 +218,13 @@
             await waitScrollToBottom();
 
             if (isMidnight()) {
-                await sendLog(`Reload: ${time}`);
+                await sendLog(`Midnight: ${time}`);
                 window.location.reload();
                 return;
             }
 
             if (isWeekend()) {
-                console.log('Market is closed!');
+                console.log('Market Closed');
                 return;
             }
 
@@ -243,7 +243,7 @@
 
     if (isWeekend()) {
         const tooltip = document.createElement('div');
-        tooltip.innerText = 'Market Close';
+        tooltip.innerText = 'Market Closed';
         tooltip.style.position = 'fixed';
         tooltip.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
         tooltip.style.color = '#fff';
