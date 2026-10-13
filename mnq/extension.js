@@ -19,15 +19,16 @@
     const PINE_LOGS_CONTAINER = '[data-test-id-widget-type="pine_logs"] [class*="logsList-"]';
     const OHLC_CONTAINER = '[data-qa-id="legend-series-item"]';
     const API_URL = 'https://app-nasdaq.vercel.app/api/send';
-    const TIMEZONE = 'Asia/Karachi';
+    const PKT_TIMEZONE = 'Asia/Karachi';
+    const DXB_TIMEZONE = 'Asia/Dubai';
 
     if (typeof Notification !== 'undefined' && Notification.permission !== 'granted') {
         Notification.requestPermission();
     }
 
-    const getTimezone = (time) => {
-        const m = moment(time).tz(TIMEZONE);
-        return m.isValid() ? m : moment().tz(TIMEZONE);
+    const getTimezone = (time = moment(), timezone = PKT_TIMEZONE) => {
+        const m = moment(time).tz(timezone);
+        return m.isValid() ? m : moment().tz(timezone);
     };
 
     const isWeekend = () => {
@@ -166,7 +167,8 @@
                 processedHistory.set(data.id, data.timestamp);
 
                 // add new property
-                data['triggered'] = getTimezone(data.timestamp).format('ddd, MMM D, h:mm A');
+                data['PKT'] = getTimezone(data.timestamp, PKT_TIMEZONE).format('ddd, MMM D, h:mm A');
+                data['DXB'] = getTimezone(data.timestamp, DXB_TIMEZONE).format('ddd, MMM D, h:mm A');
 
                 console.log(JSON.stringify(data, null, 1));
                 const { id, ...cleanData } = data;
@@ -220,14 +222,14 @@
 
     const timer = setupAutomationTimer({
         onInit: async (time) => {
-            console.log(`Starting: ${time}`);
+            console.log(`Starting: ${time} (PKT)`);
             await sendLog(`Starting..`);
         },
         onTick: async (count, time, logs) => {
             await waitScrollToBottom();
 
             if (isReloadRequired()) {
-                console.log(`Reloading: ${time}`);
+                console.log(`Reloading: ${time} (PKT)`);
                 await sendLog(`Reloading..`);
                 window.location.reload();
                 return;
@@ -246,7 +248,7 @@
 
             if (count % 300 === 0) {
                 cleanupProcessedHistory();
-                sendLog(`Ping: ${time}`);
+                sendLog(`Ping: ${time} (PKT)`);
             }
         }
     });
