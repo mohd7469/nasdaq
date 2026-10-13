@@ -173,7 +173,7 @@
                 console.log(JSON.stringify(data, null, 1));
                 const { id, ...cleanData } = data;
 
-                showDesktopAlert('Setup is executed');
+                // showDesktopAlert('Setup is executed');
                 sendAlert(`<pre><code>${JSON.stringify(cleanData, null, 1)}</code></pre>`);
             }
         }
@@ -223,14 +223,14 @@
     const timer = setupAutomationTimer({
         onInit: async (time) => {
             console.log(`Starting..`);
-            await sendLog(`Starting..`);
+            sendLog(`Starting..`);
         },
         onTick: async (count, time, logs) => {
-            await waitScrollToBottom();
+            waitScrollToBottom();
 
             if (isReloadRequired()) {
                 console.log(`Reloading..`);
-                await sendLog(`Reloading..`);
+                sendLog(`Reloading..`);
                 window.location.reload();
                 return;
             }
@@ -248,7 +248,7 @@
 
             if (count % 300 === 0) {
                 cleanupProcessedHistory();
-                sendLog(`Ping: status=online`);
+                sendLog(`Server is online`);
             }
         }
     });
