@@ -222,14 +222,14 @@
 
     const timer = setupAutomationTimer({
         onInit: async (time) => {
-            console.log(`Starting: ${time} (PKT)`);
+            console.log(`Starting..`);
             await sendLog(`Starting..`);
         },
         onTick: async (count, time, logs) => {
             await waitScrollToBottom();
 
             if (isReloadRequired()) {
-                console.log(`Reloading: ${time} (PKT)`);
+                console.log(`Reloading..`);
                 await sendLog(`Reloading..`);
                 window.location.reload();
                 return;
@@ -248,7 +248,7 @@
 
             if (count % 300 === 0) {
                 cleanupProcessedHistory();
-                sendLog(`Ping: ${time} (PKT)`);
+                sendLog(`Ping: status=online`);
             }
         }
     });
