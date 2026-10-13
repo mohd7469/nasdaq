@@ -219,16 +219,16 @@
     }
 
     const timer = setupAutomationTimer({
-        onInit: (time) => {
-            const msg = `Started: ${time}`;
-            console.log(msg);
-            sendLog(msg);
+        onInit: async (time) => {
+            console.log(`Starting: ${time}`);
+            await sendLog(`Starting..`);
         },
         onTick: async (count, time, logs) => {
             await waitScrollToBottom();
 
             if (isReloadRequired()) {
-                await sendLog(`Reload: ${time}`);
+                console.log(`Reloading: ${time}`);
+                await sendLog(`Reloading..`);
                 window.location.reload();
                 return;
             }
