@@ -242,14 +242,14 @@
 
             if (!isSameVersion()) {
                 console.log(`Updating..`);
-                sendLog(`Updating..`);
+                await sendLog(`Updating..`).catch(err => { });
                 window.location.reload();
                 return;
             }
 
             if (isReloadRequired()) {
                 console.log(`Reloading..`);
-                sendLog(`Reloading..`);
+                await sendLog(`Updating..`).catch(err => { });
                 window.location.reload();
                 return;
             }
