@@ -215,6 +215,23 @@
         }
     }
 
+    function isSameVersion() {
+        const currentVersion = GM_info.script.version;
+        const previousVersion = localStorage.getItem('previousVersion');
+
+        if (!previousVersion) {
+            localStorage.setItem('previousVersion', currentVersion);
+            return false;
+        }
+
+        if (previousVersion === currentVersion) {
+            return true;
+        }
+
+        localStorage.setItem('previousVersion', currentVersion);
+        return false;
+    }
+
     const timer = setupAutomationTimer({
         onInit: async (time) => {
             console.log(`Starting..`);
@@ -222,6 +239,13 @@
         },
         onTick: async (count, time, logs) => {
             waitScrollToBottom();
+
+            if (!isSameVersion()) {
+                console.log(`Updating..`);
+                sendLog(`Updating..`);
+                window.location.reload();
+                return;
+            }
 
             if (isReloadRequired()) {
                 console.log(`Reloading..`);
