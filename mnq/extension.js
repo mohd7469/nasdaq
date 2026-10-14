@@ -241,8 +241,8 @@
             waitScrollToBottom();
 
             if (!isSameVersion()) {
-                console.log(`v${GM_info.script.version} Updating..`);
-                await sendLog(`v${GM_info.script.version} Updating..`).catch(err => { });
+                console.log(`@v${GM_info.script.version} Updating..`);
+                await sendLog(`@v${GM_info.script.version} Updating..`).catch(err => { });
                 window.location.reload();
                 return;
             }
