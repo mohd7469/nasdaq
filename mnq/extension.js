@@ -14,8 +14,6 @@
         document.body.prepend(overlay);
     })();
 
-    const processedHistory = new Map();
-
     const PINE_LOGS_CONTAINER = '[data-test-id-widget-type="pine_logs"] [class*="logsList-"]';
     const OHLC_CONTAINER = '[data-qa-id="legend-series-item"]';
     const API_URL = 'https://app-nasdaq.vercel.app/api/send';
@@ -73,10 +71,6 @@
         }
     }
 
-    const getYesterdayStart = () => {
-        return getTimezone().subtract(1, 'day').startOf('day');
-    };
-
     const showDesktopAlert = async (msg = 'Open tradingview for details') => {
         try {
             await new Audio('https://cdn.jsdelivr.net/gh/mohd7469/alert@main/beep1.mp3').play();
@@ -91,25 +85,6 @@
             }).onclick = () => { window.focus(); };
         }
     };
-
-    function isFromYesterdayOrToday(timestamp) {
-        if (!timestamp) return false;
-        const logTime = getTimezone(timestamp);
-        return logTime.isValid() && logTime.isSameOrAfter(getYesterdayStart());
-    }
-
-    function cleanupProcessedHistory() {
-        const yesterdayStart = getYesterdayStart();
-        for (const [id, timestamp] of processedHistory) {
-            const logTime = getTimezone(timestamp);
-            if (!logTime.isValid() || logTime.isBefore(yesterdayStart)) {
-                processedHistory.delete(id);
-            }
-        }
-        while (processedHistory.size > 50) {
-            processedHistory.delete(processedHistory.keys().next().value);
-        }
-    }
 
     function waitScrollToBottom() {
         const container = document.querySelector(PINE_LOGS_CONTAINER);
@@ -158,23 +133,43 @@
         const elements = container.querySelectorAll('div[data-index]');
         if (!elements.length) return;
 
-        const startIndex = Math.max(0, elements.length - 2); // pick just last recent elements
-        for (let i = startIndex; i < elements.length; i++) {
-            const raw = (elements[i].textContent || elements[i].innerText || '').trim();
-            const data = parseLogData(raw);
+        const filterElements = Array.from(elements)
+            // pick last 5 logs
+            .slice(-5)
+            // filter today's logs
+            .filter(el => {
+                const data = parseLogData((el.textContent || el.innerText || '').trim());
+                return data?.timestamp && moment(data.timestamp).isSame(moment(), 'day');
+            })
+            // and sort by time
+            .sort((a, b) => {
+                const dataA = parseLogData((a.textContent || a.innerText || '').trim());
+                const dataB = parseLogData((b.textContent || b.innerText || '').trim());
+                return moment(dataA?.timestamp).valueOf() - moment(dataB?.timestamp).valueOf();
+            });
+        if (!filterElements.length) return;
 
-            if (data && isFromYesterdayOrToday(data.timestamp) && !processedHistory.has(data.id)) {
-                processedHistory.set(data.id, data.timestamp);
+        const previousRow = Number(localStorage.getItem('previousRow')) || 0;
 
-                // add new property
-                data['PKT'] = getTimezone(data.timestamp, PKT_TIMEZONE).format('ddd, MMM D, h:mm A');
-                data['DXB'] = getTimezone(data.timestamp, DXB_TIMEZONE).format('ddd, MMM D, h:mm A');
+        for (let i = 0; i < filterElements.length; i++) {
+            const currentRow = filterElements[i];
+            const currentData = parseLogData((currentRow.textContent || currentRow.innerText || '').trim());
 
-                console.log(JSON.stringify(data, null, 1));
-                const { id, ...cleanData } = data;
+            if (currentData && currentData.timestamp) {
+                const currentTimestamp = moment(currentData.timestamp).valueOf();
+                if (currentTimestamp > previousRow) {
+                    // add new property
+                    currentData['PKT'] = getTimezone(currentData.timestamp, PKT_TIMEZONE).format('ddd, MMM D, h:mm A');
+                    currentData['DXB'] = getTimezone(currentData.timestamp, DXB_TIMEZONE).format('ddd, MMM D, h:mm A');
 
-                // showDesktopAlert('Setup is executed');
-                sendAlert(`<pre><code>${JSON.stringify(cleanData, null, 1)}</code></pre>`);
+                    const { id, ...cleanData } = currentData;
+                    console.log(JSON.stringify(cleanData, null, 1));
+
+                    // showDesktopAlert('Setup is executed');
+                    sendAlert(`<pre><code>${JSON.stringify(cleanData, null, 1)}</code></pre>`);
+
+                    localStorage.setItem('previousRow', currentTimestamp);
+                }
             }
         }
     }
@@ -247,7 +242,6 @@
             processPineLogs();
 
             if (count % 300 === 0) {
-                cleanupProcessedHistory();
                 sendLog(`Server is online`);
             }
         }
