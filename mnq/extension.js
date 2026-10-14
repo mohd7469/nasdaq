@@ -205,9 +205,9 @@
             const diff = closePrice - openPrice;
 
             if (Math.abs(diff) >= 50) {
-                const positionType = diff > 0 ? 'Long' : 'Short';
-                const symbol = diff > 0 ? '+' : '-';
-                const signal = `Get ready for ${positionType}... (${symbol}${realtimeValues.V})`;
+                const signal = diff > 0 ?
+                    `Get ready for Long... (+${realtimeValues.V})` :
+                    `Get ready for Short... (-${realtimeValues.V})🔻`;
                 console.log(signal);
                 // showDesktopAlert(signal);
                 sendAlert(signal);
