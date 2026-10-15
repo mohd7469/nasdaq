@@ -6,4 +6,4 @@ const sendAlert = async (text = 'Test Alert') => {
         console.error('Alert Error:', err?.message);
     }
 }
-sendAlert(`Get ready for Short... (-59.00) 🔻`)
+sendAlert(`Starting @v1.7..`)

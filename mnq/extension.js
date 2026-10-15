@@ -234,30 +234,34 @@
 
     const timer = setupAutomationTimer({
         onInit: async (time) => {
-            console.log(`Starting..`);
-            sendLog(`Starting..`);
+            const msg = `Starting @v${GM_info.script.version}..`
+            console.log(msg);
+            sendLog(msg);
         },
         onTick: async (count, time, logs) => {
             waitScrollToBottom();
 
             if (!isSameVersion()) {
-                console.log(`@v${GM_info.script.version} Updating..`);
-                await sendLog(`@v${GM_info.script.version} Updating..`).catch(err => { });
+                const msg = `Updating @v${GM_info.script.version}..`
+                console.log(msg);
+                await sendLog(msg).catch(err => { });
                 window.location.reload();
                 return;
             }
 
             if (isReloadRequired()) {
-                console.log(`Reloading..`);
-                await sendLog(`Updating..`).catch(err => { });
+                const msg = `Reloading..`
+                console.log(msg);
+                await sendLog(msg).catch(err => { });
                 window.location.reload();
                 return;
             }
 
             if (isWeekend()) {
-                console.log('Market Closed');
+                const msg = `Market Closed`
+                console.log(msg);
                 if (count % 3600 === 0) {
-                    sendLog(`Market Closed`);
+                    sendLog(msg);
                 }
                 return;
             }
