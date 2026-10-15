@@ -13,10 +13,9 @@ docker run -d \
   -e PGID=1000 \
   -e TZ=Asia/Karachi \
   -p 54321:3000 \
-  -p 54322:3001 \
   -v ~/mohammad:/config \
   --restart unless-stopped \
-  lscr.io/linuxserver/chromium:latest
+  lscr.io/linuxserver/webtop:ubuntu-kde
 
 docker ps -a
 docker start mohammad-chrome
