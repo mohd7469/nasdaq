@@ -2,9 +2,8 @@ sudo docker stop $(sudo docker ps -aq) 2>/dev/null
 sudo docker rm -f $(sudo docker ps -aq) 2>/dev/null
 sudo docker rmi -f $(sudo docker images -q) 2>/dev/null
 sudo docker system prune -af --volumes
-sudo rm -rf ~/mohammad
+sudo rm -rf ~/mohammad && mkdir -p ~/mohammad
 sudo docker ps -a
-ls ~/mohammad
 ------------------------------------------
 sudo apt update && sudo apt upgrade -y
 sudo apt install -y docker.io
