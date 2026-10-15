@@ -22,8 +22,8 @@ sudo docker run -d \
   -p 54321:3000 \
   -v ~/mohammad:/config \
   --restart unless-stopped \
-  lscr.io/linuxserver/webtop:ubuntu-kde
-
+  lscr.io/linuxserver/webtop:ubuntu-xfce
+  
 docker ps -a
 docker start mohammad-chrome
 ------------------------------------------
