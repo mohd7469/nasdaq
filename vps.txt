@@ -8,7 +8,6 @@ sudo apt update && sudo apt upgrade -y
 sudo apt install -y docker.io
 sudo systemctl enable --now docker
 mkdir -p ~/mohammad
-sudo ufw allow 54321/tcp
 sudo ufw allow 54322/tcp
 sudo usermod -aG docker $USER && newgrp docker
 
@@ -21,8 +20,6 @@ docker run -d \
   --shm-size=2gb \
   --restart unless-stopped \
   kasmweb/chrome:1.15.0
-
-sudo docker ps -a
 
 ------------------------------------------
 sudo docker start mohammad-chrome
