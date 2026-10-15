@@ -34,24 +34,34 @@
         return day === 0 || day === 6;
     };
 
-    const isReloadRequired = () => {
+    const isReloadingHours = () => {
         const now = getTimezone();
-        const currentHour = now.hour();
+        const currentHour = now.hour(); // 0 to 23
 
-        // 1. Agar 12 AM - 2 AM ka time hai to ignore
-        if (currentHour < 2) return false;
+        // 1. target hours 24-hour format me add karen
+        const reloadHours = [0, 3, 6, 9, 12, 15, 18, 21];
 
-        // 2. Slot identify karo
-        const slot = currentHour >= 14 ? '_2PM' : '_2AM';
-        const currentSlotKey = `${now.format('YYYY-MM-DD')}${slot}`;
+        // 2. Dekho aj ka sab se recent slot konsa chal raha hai
+        const activeSlotHour = reloadHours
+            .slice()
+            .reverse()
+            .find(h => currentHour >= h);
 
-        // 3. Simple localStorage check (Fast memory read)
-        if (localStorage.getItem('last_reload_slot') === currentSlotKey) {
+        // Safety check (agar reloadHours array empty ho ya koi match na miley)
+        if (activeSlotHour === undefined) {
             return false;
         }
 
-        // 4. Save & Trigger Reload
-        localStorage.setItem('last_reload_slot', currentSlotKey);
+        // 3. Slot Key banayein (e.g., "2026-10-15_SLOT_15" for 3 PM)
+        const currentSlotKey = `${now.format('YYYY-MM-DD')}_SLOT_${activeSlotHour}`;
+
+        // 4. agar is slot me pehle hi reload ho chuka to return false
+        if (localStorage.getItem('_botPreviousReloadingSlot') === currentSlotKey) {
+            return false;
+        }
+
+        // 5. Save & Trigger Reload
+        localStorage.setItem('_botPreviousReloadingSlot', currentSlotKey);
         return true;
     };
 
@@ -149,7 +159,7 @@
             });
         if (!filterElements.length) return;
 
-        const previousRow = Number(localStorage.getItem('previousRow')) || 0;
+        const previousRow = Number(localStorage.getItem('_botPreviousPineLogsRow')) || 0;
 
         for (let i = 0; i < filterElements.length; i++) {
             const currentRow = filterElements[i];
@@ -168,7 +178,7 @@
                     // showDesktopAlert('Setup is executed');
                     sendAlert(`<pre><code>${JSON.stringify(cleanData, null, 1)}</code></pre>`);
 
-                    localStorage.setItem('previousRow', currentTimestamp);
+                    localStorage.setItem('_botPreviousPineLogsRow', currentTimestamp);
                 }
             }
         }
@@ -217,10 +227,10 @@
 
     function isSameVersion() {
         const currentVersion = GM_info.script.version;
-        const previousVersion = localStorage.getItem('previousVersion');
+        const previousVersion = localStorage.getItem('_botPreviousVersion');
 
         if (!previousVersion) {
-            localStorage.setItem('previousVersion', currentVersion);
+            localStorage.setItem('_botPreviousVersion', currentVersion);
             return false;
         }
 
@@ -228,7 +238,7 @@
             return true;
         }
 
-        localStorage.setItem('previousVersion', currentVersion);
+        localStorage.setItem('_botPreviousVersion', currentVersion);
         return false;
     }
 
@@ -249,7 +259,7 @@
                 return;
             }
 
-            if (isReloadRequired()) {
+            if (isReloadingHours()) {
                 const msg = `Reloading..`
                 console.log(msg);
                 await sendLog(msg).catch(err => { });
