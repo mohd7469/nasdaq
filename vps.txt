@@ -1,7 +1,7 @@
 sudo docker stop $(sudo docker ps -aq) 2>/dev/null
 sudo docker rm -f $(sudo docker ps -aq) 2>/dev/null
 sudo docker rmi -f $(sudo docker images -q) 2>/dev/null
-sudo docker system prune -a --volumes -y
+sudo docker system prune -af --volumes
 sudo rm -rf ~/mohammad
 sudo docker ps -a
 ls ~/mohammad
