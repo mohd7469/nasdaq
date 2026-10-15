@@ -17,7 +17,6 @@ sudo chown -R 1000:1000 ~/mohammad
 docker run -d \
   --name=mohammad-chrome \
   -p 54322:6901 \
-  -e VNC_USER=awais \
   -e VNC_PW="Awais123!" \
   -v ~/mohammad:/home/kasm-user \
   --shm-size=2gb \
