@@ -2,11 +2,12 @@ sudo docker stop $(sudo docker ps -aq) 2>/dev/null
 sudo docker rm -f $(sudo docker ps -aq) 2>/dev/null
 sudo docker rmi -f $(sudo docker images -q) 2>/dev/null
 sudo docker system prune -af --volumes
-sudo rm -rf ~/mohammad && mkdir -p ~/mohammad
+sudo rm -rf ~/mohammad
 sudo docker ps -a
 ------------------------------------------
 sudo apt update && sudo apt upgrade -y
 sudo apt install -y docker.io
+sudo systemctl enable --now docker
 sudo usermod -aG docker $USER && newgrp docker
 mkdir -p ~/mohammad
 sudo ufw allow 54321/tcp
