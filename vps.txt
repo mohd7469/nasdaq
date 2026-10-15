@@ -8,6 +8,7 @@ sudo ufw allow 54322/tcp
 docker run -d \
   --name=mohammad-chrome \
   --security-opt seccomp=unconfined \
+  --shm-size="2gb" \
   -e PUID=1000 \
   -e PGID=1000 \
   -e TZ=Asia/Karachi \
