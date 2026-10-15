@@ -234,7 +234,7 @@
 
     const timer = setupAutomationTimer({
         onInit: async (time) => {
-            const msg = `Starting @v${GM_info.script.version}..`
+            const msg = `Starting.. @v${GM_info.script.version}`
             console.log(msg);
             sendLog(msg);
         },
@@ -242,7 +242,7 @@
             waitScrollToBottom();
 
             if (!isSameVersion()) {
-                const msg = `Updating @v${GM_info.script.version}..`
+                const msg = `Updating.. @v${GM_info.script.version}`
                 console.log(msg);
                 await sendLog(msg).catch(err => { });
                 window.location.reload();
