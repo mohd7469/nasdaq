@@ -159,7 +159,7 @@
             });
         if (!filterElements.length) return;
 
-        const previousRow = Number(localStorage.getItem('_botRecentPineLogsRow')) || 0;
+        const recentRow = Number(localStorage.getItem('_botRecentPineLogsRow')) || 0;
 
         for (let i = 0; i < filterElements.length; i++) {
             const currentRow = filterElements[i];
@@ -167,7 +167,7 @@
 
             if (currentData && currentData.timestamp) {
                 const currentTimestamp = moment(currentData.timestamp).valueOf();
-                if (currentTimestamp > previousRow) {
+                if (currentTimestamp > recentRow) {
                     // add new property
                     currentData['PKT'] = getTimezone(currentData.timestamp, PKT_TIMEZONE).format('ddd, MMM D, h:mm A');
                     currentData['DXB'] = getTimezone(currentData.timestamp, DXB_TIMEZONE).format('ddd, MMM D, h:mm A');
@@ -227,14 +227,14 @@
 
     function isSameVersion() {
         const currentVersion = GM_info.script.version;
-        const previousVersion = localStorage.getItem('_botRecentVersion');
+        const recentVersion = localStorage.getItem('_botRecentVersion');
 
-        if (!previousVersion) {
+        if (!recentVersion) {
             localStorage.setItem('_botRecentVersion', currentVersion);
             return false;
         }
 
-        if (previousVersion === currentVersion) {
+        if (recentVersion === currentVersion) {
             return true;
         }
 
