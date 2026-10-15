@@ -4,3 +4,6 @@ sudo apt install xrdp -y
 echo "xfce4-session" > ~/.xsession
 sudo systemctl restart xrdp
 sudo ufw allow 3389/tcp
+
+wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+sudo apt install ./google-chrome-stable_current_amd64.deb -y
