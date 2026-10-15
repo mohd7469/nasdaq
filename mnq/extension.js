@@ -159,7 +159,7 @@
             });
         if (!filterElements.length) return;
 
-        const recentRow = Number(localStorage.getItem('_botRecentPineLogsRow')) || 0;
+        const recentTimestamp = Number(localStorage.getItem('_botRecentPineLogsTimestamp')) || 0;
 
         for (let i = 0; i < filterElements.length; i++) {
             const currentRow = filterElements[i];
@@ -167,7 +167,7 @@
 
             if (currentData && currentData.timestamp) {
                 const currentTimestamp = moment(currentData.timestamp).valueOf();
-                if (currentTimestamp > recentRow) {
+                if (currentTimestamp > recentTimestamp) {
                     // add new property
                     currentData['PKT'] = getTimezone(currentData.timestamp, PKT_TIMEZONE).format('ddd, MMM D, h:mm A');
                     currentData['DXB'] = getTimezone(currentData.timestamp, DXB_TIMEZONE).format('ddd, MMM D, h:mm A');
@@ -178,7 +178,7 @@
                     // showDesktopAlert('Setup is executed');
                     sendAlert(`<pre><code>${JSON.stringify(cleanData, null, 1)}</code></pre>`);
 
-                    localStorage.setItem('_botRecentPineLogsRow', currentTimestamp);
+                    localStorage.setItem('_botRecentPineLogsTimestamp', currentTimestamp);
                 }
             }
         }
