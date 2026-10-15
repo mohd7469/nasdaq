@@ -8,9 +8,10 @@ sudo docker ps -a
 sudo apt update && sudo apt upgrade -y
 sudo apt install -y docker.io
 sudo systemctl enable --now docker
-sudo usermod -aG docker $USER && newgrp docker
 mkdir -p ~/mohammad
 sudo ufw allow 54321/tcp
+sudo ufw allow 54322/tcp
+sudo usermod -aG docker $USER && newgrp docker
 
 sudo docker run -d \
   --name=mohammad-chrome \
