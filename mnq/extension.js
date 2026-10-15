@@ -56,12 +56,12 @@
         const currentSlotKey = `${now.format('YYYY-MM-DD')}_SLOT_${activeSlotHour}`;
 
         // 4. agar is slot me pehle hi reload ho chuka to return false
-        if (localStorage.getItem('_botPreviousReloadingSlot') === currentSlotKey) {
+        if (localStorage.getItem('_botRecentReloadingSlot') === currentSlotKey) {
             return false;
         }
 
         // 5. Save & Trigger Reload
-        localStorage.setItem('_botPreviousReloadingSlot', currentSlotKey);
+        localStorage.setItem('_botRecentReloadingSlot', currentSlotKey);
         return true;
     };
 
@@ -159,7 +159,7 @@
             });
         if (!filterElements.length) return;
 
-        const previousRow = Number(localStorage.getItem('_botPreviousPineLogsRow')) || 0;
+        const previousRow = Number(localStorage.getItem('_botRecentPineLogsRow')) || 0;
 
         for (let i = 0; i < filterElements.length; i++) {
             const currentRow = filterElements[i];
@@ -178,7 +178,7 @@
                     // showDesktopAlert('Setup is executed');
                     sendAlert(`<pre><code>${JSON.stringify(cleanData, null, 1)}</code></pre>`);
 
-                    localStorage.setItem('_botPreviousPineLogsRow', currentTimestamp);
+                    localStorage.setItem('_botRecentPineLogsRow', currentTimestamp);
                 }
             }
         }
@@ -227,10 +227,10 @@
 
     function isSameVersion() {
         const currentVersion = GM_info.script.version;
-        const previousVersion = localStorage.getItem('_botPreviousVersion');
+        const previousVersion = localStorage.getItem('_botRecentVersion');
 
         if (!previousVersion) {
-            localStorage.setItem('_botPreviousVersion', currentVersion);
+            localStorage.setItem('_botRecentVersion', currentVersion);
             return false;
         }
 
@@ -238,7 +238,7 @@
             return true;
         }
 
-        localStorage.setItem('_botPreviousVersion', currentVersion);
+        localStorage.setItem('_botRecentVersion', currentVersion);
         return false;
     }
 
