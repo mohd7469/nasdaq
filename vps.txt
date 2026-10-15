@@ -12,7 +12,7 @@ sudo usermod -aG docker $USER && newgrp docker
 mkdir -p ~/mohammad
 sudo ufw allow 54321/tcp
 
-docker run -d \
+sudo docker run -d \
   --name=mohammad-chrome \
   --security-opt seccomp=unconfined \
   --shm-size="2gb" \
