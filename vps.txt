@@ -12,18 +12,15 @@ sudo ufw allow 54321/tcp
 sudo ufw allow 54322/tcp
 sudo usermod -aG docker $USER && newgrp docker
 
-sudo docker run -d \
+docker run -d \
   --name=mohammad-chrome \
-  --security-opt seccomp=unconfined \
-  --shm-size="2gb" \
-  -e PUID=1000 \
-  -e PGID=1000 \
-  -e TZ=Asia/Karachi \
-  -p 54321:3000 \
-  -p 54322:3001 \
-  -v ~/mohammad:/config \
+  -p 54322:6901 \
+  -e VNC_USER=awais \
+  -e VNC_PW="Awais123!" \
+  -v ~/mohammad:/home/kasm-user \
+  --shm-size=2gb \
   --restart unless-stopped \
-  lscr.io/linuxserver/webtop:ubuntu-xfce
+  kasmweb/chrome:1.15.0
 
 sudo docker ps -a
 
