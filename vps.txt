@@ -3,7 +3,6 @@ sudo apt install -y docker.io
 sudo usermod -aG docker $USER && newgrp docker
 mkdir -p ~/mohammad
 sudo ufw allow 54321/tcp
-sudo ufw allow 54322/tcp
 
 docker run -d \
   --name=mohammad-chrome \
@@ -24,7 +23,7 @@ docker stop mohammad-chrome
 docker restart mohammad-chrome
 docker rm -f mohammad-chrome
 ------------------------------------------
-https://YOUR_VPS_IP:54322
+https://YOUR_VPS_IP:54321
 ------------------------------------------
 docker commit mohammad-chrome backup-chrome:v1
 docker save -o backup-chrome.tar backup-chrome:v1
@@ -39,7 +38,6 @@ docker run -d \
   -e PGID=1000 \
   -e TZ=Asia/Karachi \
   -p 54321:3000 \
-  -p 54322:3001 \
   -v ~/mohammad:/config \
   --restart unless-stopped \
   backup-chrome:v1
