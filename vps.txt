@@ -23,13 +23,12 @@ sudo docker run -d \
   -v ~/mohammad:/config \
   --restart unless-stopped \
   lscr.io/linuxserver/webtop:ubuntu-xfce
-  
+
 docker ps -a
 docker start mohammad-chrome
 ------------------------------------------
-docker stop mohammad-chrome
+sudo docker stop mohammad-chrome && sudo docker rm -f mohammad-chrome
 docker restart mohammad-chrome
-docker rm -f mohammad-chrome
 ------------------------------------------
 https://YOUR_VPS_IP:54321
 ------------------------------------------
