@@ -1,0 +1,45 @@
+sudo apt update && sudo apt upgrade -y
+sudo apt install -y docker.io
+sudo usermod -aG docker $USER && newgrp docker
+mkdir -p ~/mohammad
+sudo ufw allow 54321/tcp
+sudo ufw allow 54322/tcp
+
+docker run -d \
+  --name=mohammad-chrome \
+  --security-opt seccomp=unconfined \
+  -e PUID=1000 \
+  -e PGID=1000 \
+  -e TZ=Asia/Karachi \
+  -p 54321:3000 \
+  -p 54322:3001 \
+  -v ~/mohammad:/config \
+  --restart unless-stopped \
+  lscr.io/linuxserver/chromium:latest
+
+docker ps -a
+docker start mohammad-chrome
+------------------------------------------
+docker stop mohammad-chrome
+docker restart mohammad-chrome
+docker rm -f mohammad-chrome
+------------------------------------------
+https://YOUR_VPS_IP:54322
+------------------------------------------
+docker commit mohammad-chrome backup-chrome:v1
+docker save -o backup-chrome.tar backup-chrome:v1
+tar -czvf mohammad-data.tar.gz -C ~ mohammad
+------------------------------------------
+docker load -i backup-chrome.tar
+tar -xzvf mohammad-data.tar.gz -C ~
+docker run -d \
+  --name=mohammad-chrome \
+  --security-opt seccomp=unconfined \
+  -e PUID=1000 \
+  -e PGID=1000 \
+  -e TZ=Asia/Karachi \
+  -p 54321:3000 \
+  -p 54322:3001 \
+  -v ~/mohammad:/config \
+  --restart unless-stopped \
+  backup-chrome:v1
