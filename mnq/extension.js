@@ -206,8 +206,8 @@
 
             if (Math.abs(diff) >= 50) {
                 const signal = diff > 0 ?
-                    `Get ready for Longs... (+${realtimeValues.V})` :
-                    `Shorts coming... (-${realtimeValues.V})`;
+                    `Getting ready.. Long (+${realtimeValues.V})` :
+                    `Getting ready.. Short (-${realtimeValues.V})`;
                 console.log(signal);
                 // showDesktopAlert(signal);
                 sendAlert(signal);
