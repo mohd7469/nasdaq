@@ -11,6 +11,9 @@ mkdir -p ~/mohammad
 sudo ufw allow 54322/tcp
 sudo usermod -aG docker $USER && newgrp docker
 
+docker rm -f mohammad-chrome
+sudo chown -R 1000:1000 ~/mohammad
+
 docker run -d \
   --name=mohammad-chrome \
   -p 54322:6901 \
