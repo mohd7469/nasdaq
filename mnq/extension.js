@@ -19,7 +19,6 @@
 
     const PINE_LOGS_CONTAINER = '[data-test-id-widget-type="pine_logs"] [class*="logsList-"]';
     const OHLC_CONTAINER = '[data-qa-id="legend-series-item"]';
-    const API_URL = `${config.API_URL}/send`;
     const PKT_TIMEZONE = 'Asia/Karachi';
     const DXB_TIMEZONE = 'Asia/Dubai';
 
@@ -84,7 +83,7 @@
 
     const sendAlert = async (text = 'Test Alert') => {
         try {
-            await axios.post(API_URL, { bot: 'dxbmnq_bot', text });
+            await axios.post(`${config.API_URL}/send`, { bot: 'dxbmnq_bot', text });
         } catch (err) {
             console.error('Alert Error:', err?.message);
         }
@@ -92,7 +91,7 @@
 
     const sendLog = async (text = 'Test Log') => {
         try {
-            await axios.post(API_URL, { bot: 'dxblog_bot', text });
+            await axios.post(`${config.API_URL}/send`, { bot: 'dxblog_bot', text });
         } catch (err) {
             console.error('Log Error:', err?.message);
         }
