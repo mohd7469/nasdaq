@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { kv as db } from '@vercel/kv';
-import config from './config.json' assert { type: 'json' };
+import config from './config.json' with { type: 'json' };
 const { DEFAULT_TEXT, BOTS_CONFIG, WEBHOOK_SECRET, DEFAULT_CHAT_ID } = config;
 
 // In-memory storage: Har botId ke under uski chat IDs save hongi
