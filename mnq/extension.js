@@ -175,10 +175,14 @@
                     const { id, ...cleanData } = currentData;
                     console.log(JSON.stringify(cleanData, null, 1));
 
-                    // showDesktopAlert('Setup is executed');
-                    sendAlert(`<pre><code>${JSON.stringify(cleanData, null, 1)}</code></pre>`);
-
                     localStorage.setItem('_botRecentPineLogsTimestamp', currentTimestamp);
+
+                    if (!isWeekend()) {
+                        // showDesktopAlert('Setup is executed');
+                        sendAlert(`<pre><code>${JSON.stringify(cleanData, null, 1)}</code></pre>`);
+                    } else {
+                        sendLog('Setup detected (Market Closed)');
+                    }
                 }
             }
         }
@@ -267,6 +271,8 @@
                 return;
             }
 
+            processPineLogs();
+
             if (isWeekend()) {
                 const msg = `Market Closed`
                 console.log(msg);
@@ -277,7 +283,6 @@
             }
 
             processRealtimeValues();
-            processPineLogs();
 
             if (count % 300 === 0) {
                 sendLog(`Server is online`);
