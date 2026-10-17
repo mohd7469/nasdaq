@@ -296,6 +296,10 @@
                 return;
             }
 
+            if (count % (1 * 60) === 0) {
+                isReloadRequested()
+            }
+
             processPineLogs();
 
             if (isWeekend()) {
@@ -308,10 +312,6 @@
             }
 
             processRealtimeValues();
-
-            if (count % (1 * 60) === 0) {
-                isReloadRequested()
-            }
 
             if (count % (5 * 60) === 0) {
                 sendLog(`Server is online`);
