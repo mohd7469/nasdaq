@@ -8,3 +8,6 @@ const sendAlert = async (text = 'Test Alert') => {
     }
 }
 sendAlert(`Test Success`)
+
+const response = await fetch('https://raw.githubusercontent.com/mohd7469/nasdaq/refs/heads/main/api/config.json');
+const config = await response.json();

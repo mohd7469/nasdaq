@@ -1,6 +1,6 @@
 // file://D:\projects\nasdaq\mnq\extension.js
 
-(function () {
+(async function () {
     'use strict';
 
     (() => {
@@ -13,6 +13,9 @@
         };
         document.body.prepend(overlay);
     })();
+
+    const response = await fetch('https://raw.githubusercontent.com/mohd7469/nasdaq/refs/heads/main/api/config.json');
+    const config = await response.json();
 
     const PINE_LOGS_CONTAINER = '[data-test-id-widget-type="pine_logs"] [class*="logsList-"]';
     const OHLC_CONTAINER = '[data-qa-id="legend-series-item"]';
@@ -63,6 +66,28 @@
         // 5. Save & Trigger Reload
         localStorage.setItem('_botRecentReloadingSlot', currentSlotKey);
         return true;
+    };
+
+    const isReloadRequested = async () => {
+        try {
+            let recentTelegramMessageId = parseInt(localStorage.getItem('_botRecentTelegramMessageId') || '0', 10);
+
+            const response = await fetch(`https://api.telegram.org/bot${config.BOTS_CONFIG.dxblog_bot.token}/getUpdates?offset=${recentTelegramMessageId + 1}&timeout=10`);
+            const data = await response.json();
+
+            if (data.ok && data.result.length > 0) {
+                for (const update of data.result) {
+                    localStorage.setItem('_botRecentTelegramMessageId', update.update_id);
+                    const text = update.message?.text?.trim();
+                    if (text && ['/reload', '/refresh', 'reload', 'refresh'].includes(text.toLowerCase())) {
+                        window.location.reload();
+                        return;
+                    }
+                }
+            }
+        } catch (err) {
+            console.error('Telegram Error:', err?.message);
+        }
     };
 
     const sendAlert = async (text = 'Test Alert') => {
@@ -284,7 +309,11 @@
 
             processRealtimeValues();
 
-            if (count % 300 === 0) {
+            if (count % (1 * 60) === 0) {
+                isReloadRequested()
+            }
+
+            if (count % (5 * 60) === 0) {
                 sendLog(`Server is online`);
             }
         }
