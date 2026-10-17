@@ -19,7 +19,7 @@
 
     const PINE_LOGS_CONTAINER = '[data-test-id-widget-type="pine_logs"] [class*="logsList-"]';
     const OHLC_CONTAINER = '[data-qa-id="legend-series-item"]';
-    const API_URL = 'https://app-nasdaq.vercel.app/api/send';
+    const API_URL = `${config.API_URL}/send`;
     const PKT_TIMEZONE = 'Asia/Karachi';
     const DXB_TIMEZONE = 'Asia/Dubai';
 
@@ -70,23 +70,15 @@
 
     const isReloadRequested = async () => {
         try {
-            let recentTelegramMessageId = parseInt(localStorage.getItem('_botRecentTelegramMessageId') || '0', 10);
+            const response = await fetch(`${config.API_URL}/reload`, { cache: 'no-store' });
+            const shouldReload = await response.json();
+            console.log('isReloadRequested:', shouldReload);
 
-            const response = await fetch(`https://api.telegram.org/bot${config.BOTS_CONFIG.dxblog_bot.token}/getUpdates?offset=${recentTelegramMessageId + 1}&timeout=10`);
-            const data = await response.json();
-
-            if (data.ok && data.result.length > 0) {
-                for (const update of data.result) {
-                    localStorage.setItem('_botRecentTelegramMessageId', update.update_id);
-                    const text = update.message?.text?.trim();
-                    if (text && ['/reload', '/refresh', 'reload', 'refresh'].includes(text.toLowerCase())) {
-                        window.location.reload();
-                        return;
-                    }
-                }
+            if (shouldReload === true) {
+                window.location.reload();
             }
         } catch (err) {
-            console.error('Telegram Error:', err?.message);
+            console.error('Reload Request Error:', err?.message);
         }
     };
 

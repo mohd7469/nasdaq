@@ -1,4 +1,5 @@
 {
+    "API_URL": "https://app-nasdaq.vercel.app/api",
     "DEFAULT_CHAT_ID": "7670215141",
     "WEBHOOK_SECRET": "dxbbot",
     "DEFAULT_TEXT": "Test Success",
