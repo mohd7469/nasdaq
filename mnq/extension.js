@@ -197,7 +197,7 @@
                         // showDesktopAlert('Setup is executed');
                         sendAlert(`<pre><code>${JSON.stringify(cleanData, null, 1)}</code></pre>`);
                     } else {
-                        sendLog('Market Closed');
+                        sendLog('Market Closed').catch(err => { });
                     }
                 }
             }
@@ -266,7 +266,7 @@
         onInit: async (time) => {
             const msg = `Starting.. @v${GM_info.script.version}`
             console.log(msg);
-            sendLog(msg);
+            sendLog(msg).catch(err => { });
         },
         onTick: async (count, time, logs) => {
             let minutes = 60;
