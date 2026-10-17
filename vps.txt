@@ -17,5 +17,7 @@ sudo sed -i 's|Exec=/usr/bin/google-chrome-stable %U|Exec=/usr/bin/google-chrome
 export DISPLAY=:10.0
 sudo systemctl restart xrdp
 
+zoom: 75%
+chrome://settings/performance
 chrome://settings/system
 chrome://gpu
