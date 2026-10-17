@@ -269,43 +269,30 @@
             sendLog(msg);
         },
         onTick: async (count, time, logs) => {
+            let minutes = 60;
+
             waitScrollToBottom();
 
-            if (!isSameVersion()) {
-                const msg = `Updating.. @v${GM_info.script.version}`
-                console.log(msg);
-                await sendLog(msg).catch(err => { });
+            if (!isSameVersion() || isReloadingHours()) {
+                await sendLog(`Reloading..`).catch(err => { });
                 window.location.reload();
                 return;
             }
 
-            if (isReloadingHours()) {
-                const msg = `Reloading..`
-                console.log(msg);
-                await sendLog(msg).catch(err => { });
-                window.location.reload();
-                return;
-            }
-
-            if (count % (1 * 60) === 0) {
+            if (count % (1 * minutes) === 0) {
                 isReloadRequested()
             }
 
             processPineLogs();
 
-            if (isWeekend()) {
-                const msg = `Market Closed`
-                console.log(msg);
-                if (count % (60 * 60) === 0) {
-                    sendLog(msg);
-                }
-                return;
+            if (count % (60 * minutes) === 0 && isWeekend()) {
+                sendLog(`Market Closed`).catch(err => { });
             }
 
             processRealtimeValues();
 
-            if (count % (5 * 60) === 0) {
-                sendLog(`Server is online`);
+            if (count % (5 * minutes) === 0) {
+                sendLog(`Server is online`).catch(err => { });
             }
         }
     });
