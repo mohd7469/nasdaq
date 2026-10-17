@@ -21,3 +21,7 @@ zoom: 75%
 chrome://settings/performance
 chrome://settings/system
 chrome://gpu
+
+tar -czvf ~/user_snapshot_$(date +%Y%m%d).tar.gz -C /home/awais .
+tar -xzvf ~/user_snapshot_*.tar.gz -C /home/awais/
+sudo systemctl restart xrdp
