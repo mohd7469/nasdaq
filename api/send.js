@@ -79,6 +79,23 @@ export default async function handler(req, res) {
                 return res.status(200).json({ status: 'OK', savedChatsCount: savedChats.length });
             }
 
+            // Agar user ne reload / refresh bheja hai
+            const cleanText = text.trim().toLowerCase();
+            const reloadCommands = ['reload', 'refresh', '/reload', '/refresh'];
+            if (reloadCommands.includes(cleanText)) {
+                await db.sadd(dbKey, chatId);
+                const reloadPayload = {
+                    bot: botId,
+                    botName: botConfig.name,
+                    command: cleanText,
+                    chatId: chatId,
+                    timestamp: Date.now()
+                };
+                await db.set(`bot:${botId}:reload`, reloadPayload);
+                console.log(`[${botConfig.name}] Reload command received: "${text}" from ${chatId}`);
+                return res.status(200).json({ status: 'OK', message: 'Reload signal recorded', reload: reloadPayload });
+            }
+
             // Chat ID save karein (ye db sari duplicate values khud avoid karta hai)
             await db.sadd(dbKey, chatId);
             console.log(`[${botConfig.name}] New Chat ID saved: ${chatId}`);
