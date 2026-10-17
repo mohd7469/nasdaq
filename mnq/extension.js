@@ -181,7 +181,7 @@
                         // showDesktopAlert('Setup is executed');
                         sendAlert(`<pre><code>${JSON.stringify(cleanData, null, 1)}</code></pre>`);
                     } else {
-                        sendLog('Setup detected (Market Closed)');
+                        sendLog('Market Closed');
                     }
                 }
             }
