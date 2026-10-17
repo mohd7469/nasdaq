@@ -1,13 +1,5 @@
 sudo apt update && sudo apt upgrade -y
 
-option:1
-sudo apt install xfce4 xfce4-goodies -y
-sudo apt install xrdp -y
-echo "xfce4-session" > ~/.xsession
-sudo systemctl restart xrdp
-sudo ufw allow 3389/tcp
-
-option:2
 sudo apt install -y lxde xrdp
 echo "startlxde" > ~/.xsession
 sudo systemctl restart xrdp
@@ -23,12 +15,7 @@ sudo rm google-chrome-stable_current_amd64.deb
 sudo sed -i 's|Exec=/usr/bin/google-chrome-stable %U|Exec=/usr/bin/google-chrome-stable --disable-gpu --no-sandbox %U|g' /usr/share/applications/google-chrome.desktop
 
 export DISPLAY=:10.0
-DISPLAY=:10.0 google-chrome --disable-gpu &
-sudo ufw allow 3389/tcp
-google-chrome --disable-gpu --no-sandbox &
-
-echo "startxfce4" > ~/.xsession
-chmod +x ~/.xsession
 sudo systemctl restart xrdp
 
 chrome://settings/system
+chrome://gpu
