@@ -301,7 +301,7 @@
             if (isWeekend()) {
                 const msg = `Market Closed`
                 console.log(msg);
-                if (count % 3600 === 0) {
+                if (count % (60 * 60) === 0) {
                     sendLog(msg);
                 }
                 return;
