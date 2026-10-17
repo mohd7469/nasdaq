@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { kv as db } from '@vercel/kv';
-import { DEFAULT_TEXT, BOTS_CONFIG, WEBHOOK_SECRET, DEFAULT_CHAT_ID } from './env.js';
+import config from './config.json' assert { type: 'json' };
+const { DEFAULT_TEXT, BOTS_CONFIG, WEBHOOK_SECRET, DEFAULT_CHAT_ID } = config;
 
 // In-memory storage: Har botId ke under uski chat IDs save hongi
 // const botChatMap = { dxbmnq_bot: ["7670215141"], dxblog_bot: ["7670215141"] }

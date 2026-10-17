@@ -1,6 +1,7 @@
 import axios from 'axios';
 import moment from 'moment';
-import { WEBHOOK_SECRET, BOTS_CONFIG } from './env.js';
+import config from './config.json' assert { type: 'json' };
+const { WEBHOOK_SECRET, BOTS_CONFIG } = config;
 
 export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
