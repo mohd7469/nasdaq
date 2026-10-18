@@ -195,7 +195,7 @@
                         // showDesktopAlert('Setup is executed');
                         sendAlert(`<pre><code>${JSON.stringify(cleanData, null, 1)}</code></pre>`);
                     } else {
-                        sendLog('Market Closed').catch(err => { });
+                        console.log('Skipping Trade | Market Closed')
                     }
                 }
             }
@@ -282,6 +282,11 @@
             }
 
             processPineLogs();
+
+            if (isWeekend()) {
+                return;
+            }
+
             processRealtimeValues();
 
             if (count % (5 * minutes) === 0) {
