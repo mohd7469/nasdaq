@@ -5,6 +5,10 @@ strategy("5m OC Diff Strategy", overlay=true, initial_capital=1000, default_qty_
 minVolume = input.int(5000, title="Minimum Volume Threshold")
 priceDifferenceThreshold = input.float(50.0, title="Price Difference Threshold", step=0.5)
 
+// --- Reward Inputs ---
+longReward   = input.float(1.0, title="longReward", step=0.1)
+shortReward  = input.float(0.5, title="shortReward", step=0.1)
+
 // --- 5m Open/Close Difference Calculation ---
 ocDiff = close - open
 
@@ -33,8 +37,8 @@ if isBullishTarget and strategy.position_size == 0
     entryPrice = math.round_to_mintick((high + low) / 2)
     // 3. SL at low (for long)
     slPrice = math.round_to_mintick(low)
-    // 4. TP 1:1
-    tpPrice = math.round_to_mintick(high + candleRange)
+    // 4. TP based on input
+    tpPrice = math.round_to_mintick(high + (candleRange * longReward))
     // 5. Calculate risk
     risk = entryPrice - slPrice
 
@@ -55,8 +59,8 @@ if isBearishTarget and strategy.position_size == 0
     entryPrice = math.round_to_mintick(close)
     // 3. SL at high (for short)
     slPrice = math.round_to_mintick(high)
-    // 4. TP 1:0.5
-    tpPrice = math.round_to_mintick(entryPrice - (candleRange * 0.5))
+    // 4. TP based on input
+    tpPrice = math.round_to_mintick(entryPrice - (candleRange * shortReward))
     // 5. Calculate risk
     risk = slPrice - entryPrice
     
