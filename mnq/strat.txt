@@ -1,8 +1,11 @@
 //@version=5
-strategy("5m OC Diff Strategy Webhook", overlay=true, initial_capital=1000, default_qty_type=strategy.fixed, default_qty_value=1, process_orders_on_close=true)
+strategy("5m OC Diff + VWAP Strategy", overlay=true, initial_capital=1000, default_qty_type=strategy.fixed, default_qty_value=1, process_orders_on_close=true)
 
 // --- Simple Volume Input (Default 50k) ---
 minVolume = input.int(5000, title="Minimum Volume Threshold")
+
+// Session anchor ke sath VWAP aur 1st Standard Deviation bands nikalna
+[vwapLine, upperBand, lowerBand] = ta.vwap(hlc3, session.ismarket, 1.0)
 
 // --- 5m Open/Close Difference & Volume Check ---
 ocDiff = close - open
@@ -10,9 +13,9 @@ ocDiff = close - open
 // Check candle confirmation to avoid fake mid-candle triggers on live chart
 isCandleClosed = barstate.isconfirmed
 
-// Pehle volume check, phir price difference, or phr position size
-isBullishTarget = (volume >= minVolume) and (ocDiff >= 50) and isCandleClosed and (strategy.position_size == 0)
-isBearishTarget = (volume >= minVolume) and (ocDiff <= -50) and isCandleClosed and (strategy.position_size == 0)
+// Pehle volume check, phir price difference, phir vwap or phir position size
+isBullishTarget = (volume >= minVolume) and (ocDiff >= 50) and isCandleClosed and (close > lowerBand) and (strategy.position_size == 0)
+isBearishTarget = (volume >= minVolume) and (ocDiff <= -50) and isCandleClosed and (close < upperBand) and (strategy.position_size == 0)
 
 // Persistent variables for active TP and SL prices
 var float activeTP = na
