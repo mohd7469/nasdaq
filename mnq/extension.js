@@ -71,8 +71,6 @@
         try {
             const response = await fetch(`${config.API_URL}/reload`, { cache: 'no-store' });
             const shouldReload = await response.json();
-            console.log('isReloadRequested:', shouldReload);
-
             if (shouldReload === true) {
                 window.location.reload();
             }
@@ -279,16 +277,11 @@
                 return;
             }
 
-            if (count % (1 * minutes) === 0) {
+            if (count % (15 * minutes) === 0) {
                 isReloadRequested()
             }
 
             processPineLogs();
-
-            if (count % (60 * minutes) === 0 && isWeekend()) {
-                sendLog(`Market Closed`).catch(err => { });
-            }
-
             processRealtimeValues();
 
             if (count % (5 * minutes) === 0) {
