@@ -10,9 +10,9 @@ ocDiff = close - open
 // Check candle confirmation to avoid fake mid-candle triggers on live chart
 isCandleClosed = barstate.isconfirmed
 
-// Pehle volume check, phir price difference, phir VWAP condition, or phr position size
-isBullishTarget = (volume >= minVolume) and (ocDiff >= 50) and isCandleClosed and (close > ta.vwap) and (strategy.position_size == 0)
-isBearishTarget = (volume >= minVolume) and (ocDiff <= -50) and isCandleClosed and (close < ta.vwap) and (strategy.position_size == 0)
+// Pehle volume check, phir price difference, or phr position size
+isBullishTarget = (volume >= minVolume) and (ocDiff >= 50) and isCandleClosed and (strategy.position_size == 0)
+isBearishTarget = (volume >= minVolume) and (ocDiff <= -50) and isCandleClosed and (strategy.position_size == 0)
 
 // Persistent variables for active TP and SL prices
 var float activeTP = na
