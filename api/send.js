@@ -168,7 +168,7 @@ export default async function handler(req, res) {
             });
         }
 
-        // Text determine karna (Custom diya ho ya default "Test Success")
+        // Text determine karna (Custom ho ya default)
         const finalMessage = botText || DEFAULT_TEXT;
 
         const broadcastResults = [];

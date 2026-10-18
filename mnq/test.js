@@ -7,7 +7,7 @@ const sendAlert = async (text = 'Test Alert') => {
         console.error('Alert Error:', err?.message);
     }
 }
-sendAlert(`Test Success`)
+// sendAlert(`Test Webhook`)
 
 const response = await fetch('https://raw.githubusercontent.com/mohd7469/nasdaq/refs/heads/main/api/config.json');
 const config = await response.json();
