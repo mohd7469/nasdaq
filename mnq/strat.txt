@@ -9,6 +9,10 @@ priceDifferenceThreshold = input.float(50.0, title="Price Difference Threshold",
 longReward   = input.float(1.0, title="longReward", step=0.1)
 shortReward  = input.float(0.5, title="shortReward", step=0.1)
 
+// Entry Method Inputs
+use50PctEntryLong  = input.bool(true, title="use50PctEntryLong")
+use50PctEntryShort = input.bool(false, title="use50PctEntryShort")
+
 // 5m Open/Close Difference Calculation
 ocDiff = close - open
 
@@ -33,8 +37,8 @@ plotshape(isBullishTarget, title="Bullish Marker", style=shape.triangleup, locat
 if isBullishTarget and strategy.position_size == 0
     // 1. Get range (for long)
     candleRange = high - low
-    // 2. Set entry (50% range)
-    entryPrice = math.round_to_mintick((high + low) / 2)
+    // 2. Set entry (50% range or at closing price)
+    entryPrice = math.round_to_mintick(use50PctEntryLong ? (high + low) / 2 : close)
     // 3. SL at low (for long)
     slPrice = math.round_to_mintick(low)
     // 4. TP based on input
@@ -55,8 +59,8 @@ plotshape(isBearishTarget, title="Bearish Marker", style=shape.triangledown, loc
 if isBearishTarget and strategy.position_size == 0
     // 1. Get range (for short)
     candleRange = high - close
-    // 2. Set entry (close)
-    entryPrice = math.round_to_mintick(close)
+    // 2. Set entry (50% range or at closing price)
+    entryPrice = math.round_to_mintick(use50PctEntryShort ? (high + low) / 2 : close)
     // 3. SL at high (for short)
     slPrice = math.round_to_mintick(high)
     // 4. TP based on input
