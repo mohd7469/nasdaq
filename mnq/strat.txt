@@ -4,9 +4,6 @@ strategy("5m OC Diff + VWAP Strategy", overlay=true, initial_capital=1000, defau
 // --- Simple Volume Input (Default 50k) ---
 minVolume = input.int(5000, title="Minimum Volume Threshold")
 
-// Session anchor ke sath VWAP aur 1st Standard Deviation bands nikalna
-[vwapLine, upperBand, lowerBand] = ta.vwap(hlc3, session.ismarket, 1.0)
-
 // --- 5m Open/Close Difference & Volume Check ---
 ocDiff = close - open
 
@@ -18,8 +15,8 @@ UTC5 = dayofweek(time, "UTC+5")
 weekend = (UTC5 == dayofweek.saturday) or (UTC5 == dayofweek.sunday) or (UTC5 == 7) or (UTC5 == 1)
 
 // Pehle volume check, phir price difference, phir vwap or phir position size
-isBullishTarget = (strategy.position_size == 0) and (volume >= minVolume) and (ocDiff >= 50) and isCandleClosed and (close >= lowerBand) and not weekend
-isBearishTarget = (strategy.position_size == 0) and (volume >= minVolume) and (ocDiff <= -50) and isCandleClosed and (close <= upperBand) and not weekend
+isBullishTarget = (strategy.position_size == 0) and (volume >= minVolume) and (ocDiff >= 50) and isCandleClosed and not weekend
+isBearishTarget = (strategy.position_size == 0) and (volume >= minVolume) and (ocDiff <= -50) and isCandleClosed and not weekend
 
 // Persistent variables for active TP and SL prices
 var float activeTP = na
