@@ -13,9 +13,12 @@ ocDiff = close - open
 // Check candle confirmation to avoid fake mid-candle triggers on live chart
 isCandleClosed = barstate.isconfirmed
 
+// Check weekend (Saturday aur Sunday)
+weekend = (dayofweek == dayofweek.saturday) or (dayofweek == dayofweek.sunday)
+
 // Pehle volume check, phir price difference, phir vwap or phir position size
-isBullishTarget = (strategy.position_size == 0) and (volume >= minVolume) and (ocDiff >= 50) and isCandleClosed and (close >= lowerBand)
-isBearishTarget = (strategy.position_size == 0) and (volume >= minVolume) and (ocDiff <= -50) and isCandleClosed and (close <= upperBand)
+isBullishTarget = (strategy.position_size == 0) and (volume >= minVolume) and (ocDiff >= 50) and isCandleClosed and (close >= lowerBand) and not weekend
+isBearishTarget = (strategy.position_size == 0) and (volume >= minVolume) and (ocDiff <= -50) and isCandleClosed and (close <= upperBand) and not weekend
 
 // Persistent variables for active TP and SL prices
 var float activeTP = na
