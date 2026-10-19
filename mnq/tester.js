@@ -23,8 +23,8 @@
     function downloadCSV(data) {
         let csvContent = "data:text/csv;charset=utf-8,MinVolume,PriceDiff,LongReward,ShortReward,Long50,Short50,TotalPnL,MaxDrawdown\n";
         data.forEach(row => {
-            // sb ko excel formula text format (="value") mein convert karden
-            let formattedRow = row.map(val => `="${val}"`);
+            // Har value ko sirf normal double quotes mein wrap karna
+            let formattedRow = row.map(val => `"${val}"`);
             csvContent += formattedRow.join(",") + "\n";
         });
         const encodedUri = encodeURI(csvContent);
