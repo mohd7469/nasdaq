@@ -239,9 +239,9 @@
                 const signal = diff > 0 ?
                     `Checking new setup.. (+${realtimeValues.V})` :
                     `Checking new setup.. (-${realtimeValues.V})`;
-                console.log(signal);
                 // showDesktopAlert(signal);
                 if (signal && signal !== recentNasdaqAlert) {
+                    console.log(signal);
                     sendAlert(signal);
                     recentNasdaqAlert = signal;
                     localStorage.setItem('_botRecentNasdaqAlert', signal);
