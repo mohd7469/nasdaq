@@ -1,4 +1,6 @@
-(function () {
+// file://D:\projects\nasdaq\mnq\tester.js
+
+(async function () {
     'use strict';
 
     // ==========================================
