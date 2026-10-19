@@ -107,7 +107,7 @@
         let checkboxes = document.querySelectorAll('input[type="checkbox"]');
 
         if (numberInputs.length < 4) {
-            alert("Please strategy settings modal khol kar saamne rakhein!");
+            alert("Please open strategy settings modal and try again!");
             return;
         }
 
