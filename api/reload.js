@@ -1,10 +1,9 @@
-import { kv as db } from '@vercel/kv';
+import { saveOrUpdateUser, connectDB, ReloadSignal } from './db.js';
 import config from './config.json' with { type: 'json' };
 
 const { BOTS_CONFIG, WEBHOOK_SECRET } = config;
 
 export default async function handler(req, res) {
-    // CORS headers taake browser/test.js se fetch block na ho
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Telegram-Bot-Api-Secret-Token');
@@ -14,16 +13,18 @@ export default async function handler(req, res) {
     }
 
     try {
+        await connectDB();
+
         // =====================================================================
         // 1. CLIENT CHECK (GET): https://app-nasdaq.vercel.app/api/reload
         // =====================================================================
         if (req.method === 'GET') {
             const targetBot = req.query?.bot || 'dxblog_bot';
-            const dbKey = `bot:${targetBot}:reload`;
-            const isReload = await db.get(dbKey);
 
-            if (isReload) {
-                await db.del(dbKey); // Flag consume ho gaya, agli dafa false aayega
+            // Database se reload signal dhoondain aur foran delete (consume) kardein
+            const reloadDoc = await ReloadSignal.findOneAndDelete({ botId: targetBot });
+
+            if (reloadDoc) {
                 return res.status(200).json(true);
             }
 
@@ -37,7 +38,6 @@ export default async function handler(req, res) {
             const botId = req.query?.bot;
             const secretHeader = req.headers['x-telegram-bot-api-secret-token'];
 
-            // Optional secret token verification
             if (secretHeader && secretHeader !== WEBHOOK_SECRET) {
                 return res.status(401).json({ error: 'Unauthorized secret token' });
             }
@@ -50,30 +50,38 @@ export default async function handler(req, res) {
             const rawText = message.text.trim();
             const cleanText = rawText.toLowerCase();
             const chatId = String(message.chat.id);
+            const userInfo = message.from || {};
             const botConfig = botId ? BOTS_CONFIG[botId] : null;
 
-            // Target commands: reload, refresh, /reload, /refresh
             const reloadCommands = ['reload', 'refresh', '/reload', '/refresh'];
 
             if (reloadCommands.includes(cleanText)) {
+                if (botId) {
+                    await saveOrUpdateUser(botId, chatId, userInfo);
+                }
+
                 const reloadPayload = {
                     bot: botId || 'unknown',
                     botName: botConfig ? botConfig.name : (botId || 'Unknown Bot'),
                     command: rawText,
                     chatId: chatId,
+                    from: userInfo,
                     timestamp: Date.now()
                 };
 
-                // KV Database mein reload trigger save karein
                 if (botId) {
-                    await db.set(`bot:${botId}:reload`, reloadPayload);
+                    await ReloadSignal.findOneAndUpdate(
+                        { botId },
+                        { botId, payload: reloadPayload, updatedAt: new Date() },
+                        { upsert: true, new: true }
+                    );
                 }
 
                 console.log(`[Reload] Triggered by ${botId} (${rawText}) from chat ${chatId}`);
 
                 return res.status(200).json({
                     status: 'OK',
-                    message: 'Reload signal stored successfully in KV'
+                    message: 'Reload signal stored successfully in MongoDB'
                 });
             }
 
