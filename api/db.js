@@ -24,8 +24,15 @@ const userSchema = new mongoose.Schema({
     updatedAt: { type: Date, default: Date.now }
 });
 userSchema.index({ botId: 1, chatId: 1 }, { unique: true });
-
 export const User = mongoose.models.User || mongoose.model('User', userSchema);
+
+
+const reloadSchema = new mongoose.Schema({
+    botId: { type: String, required: true, unique: true },
+    payload: { type: Object, required: true },
+    updatedAt: { type: Date, default: Date.now }
+});
+export const ReloadSignal = mongoose.models.ReloadSignal || mongoose.model('ReloadSignal', reloadSchema);
 
 // Create or Update user
 export async function saveOrUpdateUser(botId, chatId, userInfo) {
