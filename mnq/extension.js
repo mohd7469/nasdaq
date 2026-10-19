@@ -72,6 +72,7 @@
             const response = await fetch(`${config.API_URL}/reload`, { cache: 'no-store' });
             const shouldReload = await response.json();
             if (shouldReload === true) {
+                await sendLog(`Reloading..`).catch(err => { });
                 window.location.reload();
             }
         } catch (err) {
