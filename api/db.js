@@ -18,8 +18,8 @@ export async function connectDB() {
 }
 
 const userSchema = new mongoose.Schema({
-    botId: { type: String, required: true },
     chatId: { type: String, required: true },
+    botId: { type: String, required: true },
     userInfo: { type: Object, default: {} },
     updatedAt: { type: Date, default: Date.now }
 });
