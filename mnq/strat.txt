@@ -104,11 +104,11 @@ if inDateRange and barstate.isconfirmed and (bar_index != lastLoggedBar)
     if isLongOpened
         currentStatus := "\nLONG_ENTRY: "    + str.tostring(actualEntryPrice) + "\nTP: " + str.tostring(activeTP) + "\nSL: " + str.tostring(activeSL)
     else if isLongClosed
-        currentStatus := "\nLONG_EXIT: "      + str.tostring(actualExitPrice) + "\nTP: null" + "\nSL: null"
+        currentStatus := "\nLONG_EXIT: "     + str.tostring(actualExitPrice) + "\nTP: null" + "\nSL: null"
     else if isShortOpened
         currentStatus := "\nSHORT_ENTRY: "   + str.tostring(actualEntryPrice) + "\nTP: " + str.tostring(activeTP) + "\nSL: " + str.tostring(activeSL)
     else if isShortClosed
-        currentStatus := "\nSHORT_EXIT: "     + str.tostring(actualExitPrice) + "\nTP: null" + "\nSL: null"
+        currentStatus := "\nSHORT_EXIT: "    + str.tostring(actualExitPrice) + "\nTP: null" + "\nSL: null"
 
     // Trigger log and alert only once per bar index
     if currentStatus != ""
