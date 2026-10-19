@@ -227,6 +227,8 @@
             V: getValue('Vol')
         };
 
+        let recentNasdaqAlert = localStorage.getItem('_botRecentNasdaqAlert')?.trim() || null;
+
         const openPrice = parseFloat(realtimeValues.O?.replace(/,/g, ''));
         const closePrice = parseFloat(realtimeValues.C?.replace(/,/g, ''));
 
@@ -239,7 +241,13 @@
                     `Checking new setup.. (-${realtimeValues.V})`;
                 console.log(signal);
                 // showDesktopAlert(signal);
-                sendAlert(signal);
+                if (signal && signal !== recentNasdaqAlert) {
+                    sendAlert(signal);
+                    recentNasdaqAlert = signal;
+                    localStorage.setItem('_botRecentNasdaqAlert', signal);
+                } else {
+                    console.log("Skipping duplicate signal..");
+                }
             }
         }
     }
