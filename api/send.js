@@ -63,6 +63,8 @@ export default async function handler(req, res) {
                 return res.status(404).json({ error: 'Bot ID not found in config' });
             }
 
+            console.log("Telegram:", req.body);
+
             const message = req.body.message;
             const chatId = String(message.chat.id);
             const text = message.text || '';
