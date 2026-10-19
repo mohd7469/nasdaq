@@ -3,7 +3,8 @@ import {
     saveOrUpdateUser,
     getUsersForBot,
     countBotUsers,
-    removeUser
+    removeUser,
+    ReloadSignal
 } from './db.js';
 import config from './config.json' with { type: 'json' };
 const { DEFAULT_TEXT, BOTS_CONFIG, WEBHOOK_SECRET, DEFAULT_CHAT_ID } = config;
@@ -92,8 +93,15 @@ export default async function handler(req, res) {
                         from: userInfo,
                         timestamp: Date.now()
                     };
-                    console.log(`[${botConfig.name}] Reload command received: "${text}" from ${chatId}`);
-                    return res.status(200).json({ status: 'OK', message: 'Reload signal recorded', reload: reloadPayload });
+
+                    await ReloadSignal.findOneAndUpdate(
+                        { botId },
+                        { botId, payload: reloadPayload, updatedAt: new Date() },
+                        { upsert: true, new: true }
+                    );
+
+                    console.log(`[${botConfig.name}] Reload command received & saved to DB: "${text}" from ${chatId}`);
+                    return res.status(200).json({ status: 'OK', message: 'Reload signal recorded in DB', reload: reloadPayload });
                 }
 
                 default: {
