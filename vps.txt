@@ -1,5 +1,6 @@
 sudo apt update && sudo apt upgrade -y
 
+sudo apt install wine -y
 sudo apt install -y lxde xrdp
 echo "startlxde" > ~/.xsession
 sudo systemctl restart xrdp
