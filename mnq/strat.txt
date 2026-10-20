@@ -7,10 +7,10 @@ priceDifferenceThreshold = input.float(50.0, title="Price Difference Threshold",
 
 // Reward Inputs
 longReward   = input.float(1.0, title="longReward", step=0.1)
-shortReward  = input.float(0.5, title="shortReward", step=0.1)
+shortReward  = input.float(0.6, title="shortReward", step=0.1)
 
 // Entry Method Inputs
-use50PctEntryLong  = input.bool(true, title="use50PctEntryLong")
+use50PctEntryLong  = input.bool(false, title="use50PctEntryLong")
 use50PctEntryShort = input.bool(false, title="use50PctEntryShort")
 
 // 5m Open/Close Difference Calculation
@@ -102,13 +102,13 @@ var int lastLoggedBar = -1
 
 if inDateRange and barstate.isconfirmed and (bar_index != lastLoggedBar)
     if isLongOpened
-        currentStatus := "\nLONG_ENTRY: "    + str.tostring(actualEntryPrice) + "\nTP: " + str.tostring(activeTP) + "\nSL: " + str.tostring(activeSL)
+        currentStatus := "\nLONG_ENTRY: "     + str.tostring(actualEntryPrice) + "\nTP: " + str.tostring(activeTP) + "\nSL: " + str.tostring(activeSL)
     else if isLongClosed
-        currentStatus := "\nLONG_EXIT: "     + str.tostring(actualExitPrice) + "\nTP: null" + "\nSL: null"
+        currentStatus := "\nLONG_EXIT: "      + str.tostring(actualExitPrice) + "\nTP: null" + "\nSL: null"
     else if isShortOpened
-        currentStatus := "\nSHORT_ENTRY: "   + str.tostring(actualEntryPrice) + "\nTP: " + str.tostring(activeTP) + "\nSL: " + str.tostring(activeSL)
+        currentStatus := "\nSHORT_ENTRY: "    + str.tostring(actualEntryPrice) + "\nTP: " + str.tostring(activeTP) + "\nSL: " + str.tostring(activeSL)
     else if isShortClosed
-        currentStatus := "\nSHORT_EXIT: "    + str.tostring(actualExitPrice) + "\nTP: null" + "\nSL: null"
+        currentStatus := "\nSHORT_EXIT: "     + str.tostring(actualExitPrice) + "\nTP: null" + "\nSL: null"
 
     // Trigger log and alert only once per bar index
     if currentStatus != ""
