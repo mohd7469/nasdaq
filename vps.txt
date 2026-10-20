@@ -1,6 +1,8 @@
 sudo apt update && sudo apt upgrade -y
 
 sudo apt install wine -y
+// now download caffine
+
 sudo apt install -y lxde xrdp
 echo "startlxde" > ~/.xsession
 sudo systemctl restart xrdp
