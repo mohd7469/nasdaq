@@ -1,9 +1,5 @@
 sudo apt update && sudo apt upgrade -y
 
-sudo apt install caffeine xdotool -y
-nohup caffeine-indicator > /dev/null 2>&1 &
-pgrep -fl caffeine
-
 sudo apt install -y lxde xrdp
 echo "startlxde" > ~/.xsession
 sudo systemctl restart xrdp
@@ -26,6 +22,16 @@ chrome://settings/performance
 chrome://settings/system
 chrome://gpu
 
+
+// backup and restore 
 tar -czvf ~/user_snapshot_$(date +%Y%m%d).tar.gz -C /home/awais .
 tar -xzvf ~/user_snapshot_*.tar.gz -C /home/awais/
 sudo systemctl restart xrdp
+
+
+// 60 sec auto click and keep alive
+sudo apt install caffeine xdotool -y
+nohup caffeine-indicator > /dev/null 2>&1 &
+pgrep -fl caffeine
+nohup bash -c 'while true; do xdotool click 1; sleep 60; done' > /dev/null 2>&1 &
+pkill -f "xdotool click"
