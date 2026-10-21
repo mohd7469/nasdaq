@@ -1,4 +1,5 @@
 sudo rm -rf /home/awais/* /home/awais/.* 2>/dev/null
+rm -rf /home/awais/.cache /home/awais/.sudo_as_admin_successful
 
 sudo apt update && sudo apt upgrade -y
 
