@@ -1,8 +1,8 @@
 const API_URL = 'https://app-nasdaq.vercel.app/api/send';
 const testkWebhook = async (text = 'typing') => {
     try {
-        await axios.post(API_URL, { bot: 'dxbmnq_bot', action: text });
-        await axios.post(API_URL, { bot: 'dxblog_bot', action: text });
+        await axios.post(API_URL, { bot: 'dxbmnq_bot', text });
+        await axios.post(API_URL, { bot: 'dxblog_bot', text });
     } catch (err) {
         console.error('testkWebhook Error:', err?.message);
     }

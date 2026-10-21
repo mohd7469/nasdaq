@@ -137,14 +137,11 @@ export default async function handler(req, res) {
         const targetBot = req.body?.bot !== undefined ? req.body.bot : req.query?.bot;
         const botText = req.body?.text !== undefined ? req.body.text : req.query?.text;
 
-        const chatAction = req.body?.action || req.query?.action;
-        if (chatAction !== undefined && chatAction !== '') {
-            console.log('chatAction::', chatAction);
+        if (botText.startsWith('...') || botText.startsWith('typing')) {
             if (targetBot) {
                 const targetConfig = BOTS_CONFIG[targetBot];
                 if (targetConfig) {
                     const users = await getUsersForBot(targetBot);
-                    console.log('Action::', chatAction, users);
                     for (const u of users) {
                         await sendTelegramChatAction(targetConfig.token, u.chatId, chatAction);
                     }
