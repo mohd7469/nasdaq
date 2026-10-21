@@ -74,8 +74,9 @@ export default async function handler(req, res) {
             switch (true) {
                 case cleanText.startsWith('/start'): {
                     await saveOrUpdateUser(botId, chatId, userInfo);
-                    console.log(`[${chatId}] awaiting activation,`, userInfo);
-                    await sendTelegramMessage(botConfig.token, chatId, `[${chatId}] awaiting activation..`);
+                    const textToSend = `[${chatId}] Awaiting activation..`;
+                    console.log(textToSend, userInfo);
+                    await sendTelegramMessage(botConfig.token, chatId, textToSend);
                     const totalUsers = await countBotUsers(botId);
                     return res.status(200).json({ status: 'OK', savedChatsCount: totalUsers, userInfo });
                 }
@@ -83,12 +84,13 @@ export default async function handler(req, res) {
                 case cleanText.startsWith('/stop'): {
                     const isDeleted = await removeUser(botId, chatId);
                     if (isDeleted) {
-                        console.log(`[${chatId}] disconnected for [${botConfig.name}]`);
+                        console.log(`[${chatId}] Disconnected for [${botConfig.name}]`);
                     } else {
-                        console.log(`[${chatId}] not found for [${botConfig.name}]`);
+                        console.log(`[${chatId}] Not found for [${botConfig.name}]`);
                     }
 
-                    await sendTelegramMessage(botConfig.token, chatId, `[${chatId}] disconnected, send <b>/start</b> to connect again`);
+                    const textToSend = `[${chatId}] Disconnected, send <b>/start</b> to connect again`;
+                    await sendTelegramMessage(botConfig.token, chatId, textToSend);
                     const totalUsers = await countBotUsers(botId);
                     return res.status(200).json({ status: 'OK', savedChatsCount: totalUsers });
                 }
@@ -111,12 +113,13 @@ export default async function handler(req, res) {
                         { upsert: true, new: true }
                     );
 
-                    console.log(`[${botConfig.name}] Reload command received & saved to DB: "${text}" from ${chatId}`);
-                    return res.status(200).json({ status: 'OK', message: 'Reload signal recorded in DB', reload: reloadPayload });
+                    const textToSend = `[${botConfig.name}] Reload signal received: "${text}" from ${chatId}`;
+                    console.log(textToSend);
+                    return res.status(200).json({ status: 'OK', message: textToSend, reload: reloadPayload });
                 }
 
                 default: {
-                    await sendTelegramMessage(botConfig.token, chatId, `[${chatId}] connected, send <b>/stop</b> to disconnect`);
+                    await sendTelegramMessage(botConfig.token, chatId, `[${chatId}] Connected, send <b>/stop</b> to disconnect`);
                     await saveOrUpdateUser(botId, chatId, userInfo);
 
                     console.log(`[${botConfig.name}] Message received & User updated: ${chatId}`, userInfo);
