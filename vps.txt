@@ -1,3 +1,5 @@
+sudo rm -rf /home/awais/* /home/awais/.* 2>/dev/null
+
 sudo apt update && sudo apt upgrade -y
 
 sudo apt install -y lxde xrdp
