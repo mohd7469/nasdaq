@@ -2,19 +2,19 @@ import axios from 'axios';
 import config from './config.json' with { type: 'json' };
 const { WEBHOOK_SECRET, BOTS_CONFIG } = config;
 
-const BASE_URL = "https://demo.ironbeamapi.com/v2";
-const ACCOUNT_ID = "YOUR_ACCOUNT_ID";
-const USERNAME = "YOUR_ACCOUNT_ID";
-const PASSWORD = "YOUR_PASSWORD";
-const API_KEY = "YOUR_API_KEY";
-const SYMBOL = "XCME:MNQ"; // Micro E-mini Nasdaq-100
+const IRONBEAM_API_URL = "https://demo.ironbeamapi.com/v2";
+const IRONBEAM_ACCOUNT_ID = "YOUR_ACCOUNT_ID";
+const IRONBEAM_USERNAME = "YOUR_ACCOUNT_ID";
+const IRONBEAM_PASSWORD = "YOUR_PASSWORD";
+const IRONBEAM_API_KEY = "YOUR_API_KEY";
+const IRONBEAM_SYMBOL = "XCME:MNQ"; // Micro E-mini Nasdaq-100
 
 // 1. Authentication (Token Lena)
 async function getAuthToken() {
-    const response = await axios.post(`${BASE_URL}/auth`, {
-        username: USERNAME,
-        password: PASSWORD,
-        apiKey: API_KEY
+    const response = await axios.post(`${IRONBEAM_API_URL}/auth`, {
+        username: IRONBEAM_USERNAME,
+        password: IRONBEAM_PASSWORD,
+        apiKey: IRONBEAM_API_KEY
     });
     return response.data.token;
 }
@@ -22,7 +22,7 @@ async function getAuthToken() {
 // 2. Open Positions Check Karna
 async function hasOpenPosition(token) {
     try {
-        const response = await axios.get(`${BASE_URL}/accounts/${ACCOUNT_ID}/positions`, {
+        const response = await axios.get(`${IRONBEAM_API_URL}/accounts/${IRONBEAM_ACCOUNT_ID}/positions`, {
             headers: { "Authorization": `Bearer ${token}` }
         });
 
@@ -30,11 +30,11 @@ async function hasOpenPosition(token) {
 
         // Check karein ke MNQ ki koi active/open position (netQuantity != 0) hai ya nahi
         const activePosition = positions.find(
-            p => (p.symbol === SYMBOL || p.exchSym === SYMBOL) && p.netQuantity !== 0
+            p => (p.symbol === IRONBEAM_SYMBOL || p.exchSym === IRONBEAM_SYMBOL) && p.netQuantity !== 0
         );
 
         if (activePosition) {
-            console.log(`⚠️ Active position already exists for ${SYMBOL}. Position size: ${activePosition.netQuantity}`);
+            console.log(`⚠️ Active position already exists for ${IRONBEAM_SYMBOL}. Position size: ${activePosition.netQuantity}`);
             return true;
         }
 
@@ -56,7 +56,7 @@ async function placeOrder(token, payload) {
     }
 
     try {
-        const response = await axios.post(`${BASE_URL}/orders`, payload, {
+        const response = await axios.post(`${IRONBEAM_API_URL}/orders`, payload, {
             headers: {
                 "Content-Type": "application/json",
                 "Authorization": `Bearer ${token}`
@@ -69,8 +69,8 @@ async function placeOrder(token, payload) {
 }
 
 // const longMarketPayload = {
-//   accountId: ACCOUNT_ID,
-//   exchSym: SYMBOL,
+//   accountId: IRONBEAM_ACCOUNT_ID,
+//   exchSym: IRONBEAM_SYMBOL,
 //   side: "BUY",
 //   orderType: "MARKET",
 //   quantity: 1,
@@ -86,8 +86,8 @@ async function placeOrder(token, payload) {
 // };
 
 // const longLimitPayload = {
-//   accountId: ACCOUNT_ID,
-//   exchSym: SYMBOL,
+//   accountId: IRONBEAM_ACCOUNT_ID,
+//   exchSym: IRONBEAM_SYMBOL,
 //   side: "BUY",
 //   orderType: "LIMIT",
 //   price: 20450.00,      // Specific Entry Price
@@ -104,8 +104,8 @@ async function placeOrder(token, payload) {
 // };
 
 // const shortMarketPayload = {
-//   accountId: ACCOUNT_ID,
-//   exchSym: SYMBOL,
+//   accountId: IRONBEAM_ACCOUNT_ID,
+//   exchSym: IRONBEAM_SYMBOL,
 //   side: "SELL",
 //   orderType: "MARKET",
 //   quantity: 1,
@@ -121,8 +121,8 @@ async function placeOrder(token, payload) {
 // };
 
 // const shortLimitPayload = {
-//   accountId: ACCOUNT_ID,
-//   exchSym: SYMBOL,
+//   accountId: IRONBEAM_ACCOUNT_ID,
+//   exchSym: IRONBEAM_SYMBOL,
 //   side: "SELL",
 //   orderType: "LIMIT",
 //   price: 20550.00,      // Specific Short Entry Price
@@ -165,22 +165,22 @@ export default async function handler(req, res) {
 
         switch (tradeType) {
             case 'LONG_ENTRY':
-                console.log(`${SYMBOL}: Long Opened`);
+                console.log(`${IRONBEAM_SYMBOL}: Long Opened`);
                 // await placeOrder(token, payload);
                 break;
 
             case 'LONG_EXIT':
-                console.log(`${SYMBOL}: Long Closed`);
+                console.log(`${IRONBEAM_SYMBOL}: Long Closed`);
                 // trigger close all
                 break;
 
             case 'SHORT_ENTRY':
-                console.log(`${SYMBOL}: Short Opened`);
+                console.log(`${IRONBEAM_SYMBOL}: Short Opened`);
                 // await placeOrder(token, payload);
                 break;
 
             case 'SHORT_EXIT':
-                console.log(`${SYMBOL}: Short Closed`);
+                console.log(`${IRONBEAM_SYMBOL}: Short Closed`);
                 // trigger close all
                 break;
 
@@ -191,7 +191,7 @@ export default async function handler(req, res) {
         return res.status(200).json({
             status: 'OK',
             success: true,
-            message: `${SYMBOL || 'MNQZ2026'}: ${qty} ${side} futures contract ${action.toUpperCase() === 'ENTRY' ? 'opened' : 'closed'} at ${new Date().toISOString()}`
+            message: `${IRONBEAM_SYMBOL || 'MNQZ2026'}: ${qty} ${side} futures contract ${action.toUpperCase() === 'ENTRY' ? 'opened' : 'closed'} at ${new Date().toISOString()}`
         });
     } catch (error) {
         return res.status(500).json({ success: false, error: error.message });
