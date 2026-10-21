@@ -118,6 +118,7 @@ export default async function handler(req, res) {
                 default: {
                     await sendTelegramMessage(botConfig.token, chatId, `[${chatId}] send <b>/stop</b> to disconnect.`);
                     await saveOrUpdateUser(botId, chatId, userInfo);
+
                     console.log(`[${botConfig.name}] Message received & User updated: ${chatId}`, userInfo);
 
                     const totalUsers = await countBotUsers(botId);
