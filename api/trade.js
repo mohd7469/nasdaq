@@ -67,7 +67,6 @@ async function placeOrder(token, payload) {
     // Pehle check karein ke koi open position toh nahi hai
     const isPositionOpen = await hasOpenPosition(token);
     if (isPositionOpen) {
-        console.log("❌ Trade execution skipped: Open position detected.");
         return;
     }
 
