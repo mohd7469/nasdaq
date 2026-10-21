@@ -242,7 +242,7 @@
                 // showDesktopAlert(signal);
                 if (signal && signal !== recentNasdaqAlert) {
                     console.log(signal);
-                    for (let i = 0; i < 3; i++) sendAlert(signal);
+                    for (let i = 0; i < 2; i++) sendAlert(signal);
                     recentNasdaqAlert = signal;
                     localStorage.setItem('_botRecentNasdaqAlert', signal);
                 } else {
