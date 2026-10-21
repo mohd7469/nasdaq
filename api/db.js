@@ -46,8 +46,7 @@ export async function saveOrUpdateUser(botId, chatId, userInfo = {}, role = 'use
     const existingUser = await User.findOne({ chatId, botId });
     const currentActiveStatus = existingUser ? existingUser.isActive : false;
 
-    // Objects ki keys jis order mein hongay, MongoDB mein wahi order save hoga ('role' sab se uper)
-    const payload = {
+    const userData = {
         role: role,
         chatId: chatId,
         botId: botId,
@@ -58,8 +57,8 @@ export async function saveOrUpdateUser(botId, chatId, userInfo = {}, role = 'use
 
     return await User.findOneAndReplace(
         { chatId, botId },
-        payload,
-        { upsert: true, new: true }
+        userData,
+        { upsert: true, returnDocument: 'after' }
     );
 }
 
@@ -75,7 +74,7 @@ export async function setUserActiveStatus(botId, chatId, status) {
     return await User.findOneAndUpdate(
         { chatId, botId },
         { isActive: status, updatedAt: new Date() },
-        { new: true }
+        { returnDocument: 'after' }
     );
 }
 
