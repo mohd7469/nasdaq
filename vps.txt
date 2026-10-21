@@ -34,6 +34,11 @@ sudo systemctl restart xrdp
 
 
 // 60 sec auto click and keep alive
+sudo apt update && sudo apt install caffeine -y
+caffeine-indicator &
+caffeine &
+exit
+
 sudo apt install caffeine xdotool -y
 nohup caffeine-indicator > /dev/null 2>&1 &
 pgrep -fl caffeine
