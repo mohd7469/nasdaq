@@ -4,7 +4,7 @@
     'use strict';
 
     // ==========================================
-    // --- AAP KI NAYI TEST VALUES ---
+    // --- AAP KI NAYI VALUES ---
     // ==========================================
     const minVolume = [5000];
     const priceDifferenceThreshold = [50];
