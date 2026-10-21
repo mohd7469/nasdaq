@@ -138,26 +138,26 @@ export default async function handler(req, res) {
         const botText = req.body?.text !== undefined ? req.body.text : req.query?.text;
 
         const chatAction = req.body?.action || req.query?.action;
-        console.log('chatAction::', chatAction);
-        if (chatAction === 'typing' || chatAction.startsWith('..')) {
+        if (chatAction !== undefined && chatAction !== '') {
+            console.log('chatAction::', chatAction);
             if (targetBot) {
                 const targetConfig = BOTS_CONFIG[targetBot];
                 if (targetConfig) {
                     const users = await getUsersForBot(targetBot);
                     console.log('Action::', chatAction, users);
                     for (const u of users) {
-                        await sendTelegramChatAction(targetConfig.token, u.chatId, 'typing');
+                        await sendTelegramChatAction(targetConfig.token, u.chatId, chatAction);
                     }
                 }
             } else {
                 for (const [bId, cfg] of Object.entries(BOTS_CONFIG)) {
                     const users = await getUsersForBot(bId);
                     for (const u of users) {
-                        await sendTelegramChatAction(cfg.token, u.chatId, 'typing');
+                        await sendTelegramChatAction(cfg.token, u.chatId, chatAction);
                     }
                 }
             }
-            return res.status(200).json({ success: true, action: 'typing' });
+            return res.status(200).json({ success: true, action: chatAction });
         }
 
         if (botText !== undefined && botText === '') {
