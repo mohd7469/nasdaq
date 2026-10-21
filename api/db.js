@@ -21,6 +21,7 @@ const userSchema = new mongoose.Schema({
     chatId: { type: String, required: true },
     botId: { type: String, required: true },
     userInfo: { type: Object, default: {} },
+    isActive: { type: Boolean, default: false }, // default false
     updatedAt: { type: Date, default: Date.now }
 });
 userSchema.index({ botId: 1, chatId: 1 }, { unique: true });
@@ -47,7 +48,17 @@ export async function saveOrUpdateUser(botId, chatId, userInfo) {
 // Read: Get all users of specific bot
 export async function getUsersForBot(botId) {
     await connectDB();
-    return await User.find({ botId });
+    return await User.find({ botId, isActive: true });
+}
+
+// Activate or Deactivate User
+export async function setUserActiveStatus(botId, chatId, status) {
+    await connectDB();
+    return await User.findOneAndUpdate(
+        { botId, chatId },
+        { isActive: status, updatedAt: new Date() },
+        { new: true }
+    );
 }
 
 // Read: Count total users of specific bot
