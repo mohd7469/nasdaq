@@ -64,7 +64,7 @@ export default async function handler(req, res) {
                     await saveOrUpdateUser(botId, chatId, userInfo);
                     console.log(`[${botConfig.name}] User saved via /start: ${chatId}`, userInfo);
 
-                    await sendTelegramMessage(botConfig.token, chatId, `Connected to ${botConfig.name} tap <b>/stop</b> to leave`);
+                    await sendTelegramMessage(botConfig.token, chatId, `[${chatId}] connected, awaiting activation..`);
                     const totalUsers = await countBotUsers(botId);
                     return res.status(200).json({ status: 'OK', savedChatsCount: totalUsers, userInfo });
                 }
@@ -77,7 +77,7 @@ export default async function handler(req, res) {
                         console.log(`[${botConfig.name}] Chat ID ${chatId} was not found to remove.`);
                     }
 
-                    await sendTelegramMessage(botConfig.token, chatId, `Tap <b>/start</b> to subscribe again`);
+                    await sendTelegramMessage(botConfig.token, chatId, `[${chatId}] disconnected, send <b>/start</b> to connect`);
                     const totalUsers = await countBotUsers(botId);
                     return res.status(200).json({ status: 'OK', savedChatsCount: totalUsers });
                 }
