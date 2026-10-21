@@ -165,6 +165,7 @@ export default async function handler(req, res) {
         }
 
         const finalMessage = botText || DEFAULT_TEXT;
+        console.log('finalMessage', finalMessage);
 
         const broadcastResults = [];
         for (const chatId of chatsForBot) {
