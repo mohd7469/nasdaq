@@ -135,6 +135,7 @@ export default async function handler(req, res) {
 
         const chatAction = req.body?.action || req.query?.action;
         if (chatAction === 'typing' || chatAction.startsWith('..')) {
+            console.log('Action::', chatAction);
             if (targetBot) {
                 const targetConfig = BOTS_CONFIG[targetBot];
                 if (targetConfig) {
