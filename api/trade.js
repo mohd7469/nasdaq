@@ -156,7 +156,7 @@ export default async function handler(req, res) {
         return res.status(405).json({ success: false, message: 'Method Not Allowed' });
     }
 
-    console.log(req.body);
+    // console.log(req.body);
 
     try {
         const token = await getAuthToken();
@@ -167,8 +167,24 @@ export default async function handler(req, res) {
 
         switch (tradeType) {
             case 'LONG_ENTRY':
-                console.log(`${IRONBEAM_SYMBOL}: Long Opened`);
-                // await placeOrder(token, payload);
+                payload = {
+                    accountId: IRONBEAM_ACCOUNT_ID,
+                    exchSym: IRONBEAM_SYMBOL,
+                    side: "BUY",
+                    orderType: "MARKET",
+                    quantity: 1,
+                    durationType: "DAY",
+                    stopLoss: {
+                        orderType: "STOP",
+                        stopPrice: Number(sl)
+                    },
+                    takeProfit: {
+                        orderType: "LIMIT",
+                        price: Number(tp)
+                    }
+                };
+                console.log(`payload`, payload);
+                await placeOrder(token, payload);
                 break;
 
             case 'LONG_EXIT':
