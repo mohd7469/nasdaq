@@ -1,4 +1,6 @@
 import mongoose from 'mongoose';
+import config from './config.json' with { type: 'json' };
+const { DEFAULT_CHAT_ID, BOTS_CONFIG } = config;
 
 let isConnected = false;
 
@@ -73,3 +75,13 @@ export async function removeUser(botId, chatId) {
     const result = await User.deleteOne({ botId, chatId });
     return result.deletedCount > 0;
 }
+
+(async () => {
+    console.log('Initalizing default user for bots');
+    const bots = Object.keys(BOTS_CONFIG)
+    !isConnected && await connectDB();
+    await saveOrUpdateUser(bots[0], DEFAULT_CHAT_ID, {})
+    await saveOrUpdateUser(bots[1], DEFAULT_CHAT_ID, {})
+    await setUserActiveStatus(bots[0], DEFAULT_CHAT_ID, true)
+    await setUserActiveStatus(bots[1], DEFAULT_CHAT_ID, true)
+})()
