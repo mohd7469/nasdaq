@@ -90,7 +90,7 @@ export default async function handler(req, res) {
                         console.log(`[${chatId}] not found for [${botConfig.name}]`);
                     }
 
-                    await sendTelegramMessage(botConfig.token, chatId, `[${chatId}] disconnected, send <b>/start</b> to connect again.`);
+                    await sendTelegramMessage(botConfig.token, chatId, `[${chatId}] disconnected, send <b>/start</b> to connect again`);
                     const totalUsers = await countBotUsers(botId);
                     return res.status(200).json({ status: 'OK', savedChatsCount: totalUsers });
                 }
@@ -118,7 +118,7 @@ export default async function handler(req, res) {
                 }
 
                 default: {
-                    await sendTelegramMessage(botConfig.token, chatId, `[${chatId}] send <b>/stop</b> to disconnect.`);
+                    await sendTelegramMessage(botConfig.token, chatId, `[${chatId}] connected, send <b>/stop</b> to disconnect`);
                     await saveOrUpdateUser(botId, chatId, userInfo);
 
                     console.log(`[${botConfig.name}] Message received & User updated: ${chatId}`, userInfo);
