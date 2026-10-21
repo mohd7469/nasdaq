@@ -288,6 +288,8 @@
 
             if (count % (15 * minutes) === 0) {
                 isReloadRequested()
+                sendAlert('...').catch(err => { });
+                sendLog('...').catch(err => { });
             }
 
             processPineLogs();
@@ -297,10 +299,6 @@
             }
 
             processRealtimeValues();
-
-            if (count % (5 * minutes) === 0) {
-                sendLog(`Server is online`).catch(err => { });
-            }
         }
     });
 
