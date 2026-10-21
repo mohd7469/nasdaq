@@ -28,13 +28,12 @@ async function hasOpenPosition(token) {
 
         const positions = response.data.positions || response.data || [];
 
-        // Check karein ke MNQ ki koi active/open position (netQuantity != 0) hai ya nahi
         const activePosition = positions.find(
-            p => (p.symbol === IRONBEAM_SYMBOL || p.exchSym === IRONBEAM_SYMBOL) && p.netQuantity !== 0
+            p => (p.symbol === IRONBEAM_SYMBOL || p.exchSym === IRONBEAM_SYMBOL) && p.quantity !== 0
         );
 
         if (activePosition) {
-            console.log(`⚠️ Active position already exists for ${IRONBEAM_SYMBOL}. Position size: ${activePosition.netQuantity}`);
+            console.warn(`Active position already exists for ${IRONBEAM_SYMBOL}`);
             return true;
         }
 
@@ -46,6 +45,23 @@ async function hasOpenPosition(token) {
     }
 }
 
+// {
+//   "accountId": "5123345",
+//   "exchSym": "XCME:6E.U16",
+//   "side": "BUY",
+//   "quantity": 1,
+//   "limitPrice": 2000,
+//   "stopPrice": 2000,
+//   "stopLoss": 2000,
+//   "takeProfit": 2000,
+//   "stopLossOffset": 25,
+//   "takeProfitOffset": 0.01,
+//   "trailingStop": 0.25,
+//   "orderType": "LIMIT",
+//   "duration": "1",
+//   "waitForOrderId": true
+// } 
+
 // 3. Generic Order Execution Function
 async function placeOrder(token, payload) {
     // Pehle check karein ke koi open position toh nahi hai
@@ -56,7 +72,7 @@ async function placeOrder(token, payload) {
     }
 
     try {
-        const response = await axios.post(`${IRONBEAM_API_URL}/orders`, payload, {
+        const response = await axios.post(`${IRONBEAM_API_URL}/order/${IRONBEAM_ACCOUNT_ID}/place`, payload, {
             headers: {
                 "Content-Type": "application/json",
                 "Authorization": `Bearer ${token}`
@@ -74,7 +90,7 @@ async function placeOrder(token, payload) {
 //   side: "BUY",
 //   orderType: "MARKET",
 //   quantity: 1,
-//   durationType: "DAY",
+//   duration: "DAY",
 //   stopLoss: {
 //     orderType: "STOP",
 //     stopPrice: 20400.00 // SL Entry se neeche
@@ -92,7 +108,7 @@ async function placeOrder(token, payload) {
 //   orderType: "LIMIT",
 //   price: 20450.00,      // Specific Entry Price
 //   quantity: 1,
-//   durationType: "DAY",
+//   duration: "DAY",
 //   stopLoss: {
 //     orderType: "STOP",
 //     stopPrice: 20350.00 // SL Limit Price se neeche
@@ -109,7 +125,7 @@ async function placeOrder(token, payload) {
 //   side: "SELL",
 //   orderType: "MARKET",
 //   quantity: 1,
-//   durationType: "DAY",
+//   duration: "DAY",
 //   stopLoss: {
 //     orderType: "STOP",
 //     stopPrice: 20600.00 // Short mein SL Entry se upar hoga
@@ -127,7 +143,7 @@ async function placeOrder(token, payload) {
 //   orderType: "LIMIT",
 //   price: 20550.00,      // Specific Short Entry Price
 //   quantity: 1,
-//   durationType: "DAY",
+//   duration: "DAY",
 //   stopLoss: {
 //     orderType: "STOP",
 //     stopPrice: 20650.00 // SL Entry Price se upar
@@ -156,6 +172,7 @@ export default async function handler(req, res) {
         return res.status(405).json({ success: false, message: 'Method Not Allowed' });
     }
 
+    console.log('___________________________________________________');
     // console.log(req.body);
 
     try {
@@ -173,15 +190,9 @@ export default async function handler(req, res) {
                     side: "BUY",
                     orderType: "MARKET",
                     quantity: 1,
-                    durationType: "DAY",
-                    stopLoss: {
-                        orderType: "STOP",
-                        stopPrice: Number(sl)
-                    },
-                    takeProfit: {
-                        orderType: "LIMIT",
-                        price: Number(tp)
-                    }
+                    duration: "DAY",
+                    stopLoss: Number(sl),
+                    takeProfit: Number(tp)
                 };
                 console.log(`payload`, payload);
                 await placeOrder(token, payload);
@@ -209,7 +220,7 @@ export default async function handler(req, res) {
         return res.status(200).json({
             status: 'OK',
             success: true,
-            message: `${IRONBEAM_SYMBOL || 'MNQZ2026'}: ${qty} ${side} futures contract ${action.toUpperCase() === 'ENTRY' ? 'opened' : 'closed'} at ${new Date().toISOString()}`
+            message: `${IRONBEAM_SYMBOL}: ${qty} ${side} futures contract ${action.toUpperCase() === 'ENTRY' ? 'opened' : 'closed'} at ${new Date().toISOString()}`
         });
     } catch (error) {
         return res.status(500).json({ success: false, error: error.message });
