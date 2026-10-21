@@ -137,24 +137,26 @@ export default async function handler(req, res) {
         const targetBot = req.body?.bot !== undefined ? req.body.bot : req.query?.bot;
         const botText = req.body?.text !== undefined ? req.body.text : req.query?.text;
 
-        if (botText.startsWith('...') || botText.startsWith('typing')) {
-            if (targetBot) {
-                const targetConfig = BOTS_CONFIG[targetBot];
-                if (targetConfig) {
-                    const users = await getUsersForBot(targetBot);
-                    for (const u of users) {
-                        await sendTelegramChatAction(targetConfig.token, u.chatId, chatAction);
+        if (botText) {
+            if (botText.startsWith('...') || botText.startsWith('typing')) {
+                if (targetBot) {
+                    const targetConfig = BOTS_CONFIG[targetBot];
+                    if (targetConfig) {
+                        const users = await getUsersForBot(targetBot);
+                        for (const u of users) {
+                            await sendTelegramChatAction(targetConfig.token, u.chatId, chatAction);
+                        }
+                    }
+                } else {
+                    for (const [bId, cfg] of Object.entries(BOTS_CONFIG)) {
+                        const users = await getUsersForBot(bId);
+                        for (const u of users) {
+                            await sendTelegramChatAction(cfg.token, u.chatId, chatAction);
+                        }
                     }
                 }
-            } else {
-                for (const [bId, cfg] of Object.entries(BOTS_CONFIG)) {
-                    const users = await getUsersForBot(bId);
-                    for (const u of users) {
-                        await sendTelegramChatAction(cfg.token, u.chatId, chatAction);
-                    }
-                }
+                return res.status(200).json({ success: true, action: chatAction });
             }
-            return res.status(200).json({ success: true, action: chatAction });
         }
 
         if (botText !== undefined && botText === '') {
