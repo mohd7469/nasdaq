@@ -62,9 +62,8 @@ export default async function handler(req, res) {
             switch (true) {
                 case cleanText.startsWith('/start'): {
                     await saveOrUpdateUser(botId, chatId, userInfo);
-                    console.log(`[${botConfig.name}] User saved via /start: ${chatId}`, userInfo);
-
-                    await sendTelegramMessage(botConfig.token, chatId, `[${chatId}] connected, awaiting activation..`);
+                    console.log(`[${chatId}] awaiting activation,`, userInfo);
+                    await sendTelegramMessage(botConfig.token, chatId, `[${chatId}] awaiting activation, send <b>/stop</b> to disconnect.`);
                     const totalUsers = await countBotUsers(botId);
                     return res.status(200).json({ status: 'OK', savedChatsCount: totalUsers, userInfo });
                 }
@@ -72,12 +71,12 @@ export default async function handler(req, res) {
                 case cleanText.startsWith('/stop'): {
                     const isDeleted = await removeUser(botId, chatId);
                     if (isDeleted) {
-                        console.log(`[${botConfig.name}] Chat ID removed: ${chatId}`);
+                        console.log(`[${chatId}] disconnected for [${botConfig.name}]`);
                     } else {
-                        console.log(`[${botConfig.name}] Chat ID ${chatId} was not found to remove.`);
+                        console.log(`[${chatId}] not found for [${botConfig.name}]`);
                     }
 
-                    await sendTelegramMessage(botConfig.token, chatId, `[${chatId}] disconnected, send <b>/start</b> to connect`);
+                    await sendTelegramMessage(botConfig.token, chatId, `[${chatId}] disconnected, send <b>/start</b> to connect again.`);
                     const totalUsers = await countBotUsers(botId);
                     return res.status(200).json({ status: 'OK', savedChatsCount: totalUsers });
                 }
