@@ -20,13 +20,14 @@ export async function connectDB() {
 }
 
 const userSchema = new mongoose.Schema({
+    role: { type: String, required: true, default: 'user' },
     chatId: { type: String, required: true },
     botId: { type: String, required: true },
-    userInfo: { type: Object, default: {} },
-    isActive: { type: Boolean, default: false }, // default false
-    updatedAt: { type: Date, default: Date.now }
+    userInfo: { type: Object, required: false, default: {} },
+    isActive: { type: Boolean, required: false, default: false },
+    updatedAt: { type: Date, required: false, default: Date.now }
 });
-userSchema.index({ botId: 1, chatId: 1 }, { unique: true });
+userSchema.index({ chatId: 1, botId: 1 }, { unique: true });
 export const User = mongoose.models.User || mongoose.model('User', userSchema);
 
 
@@ -38,11 +39,11 @@ const reloadSchema = new mongoose.Schema({
 export const ReloadSignal = mongoose.models.ReloadSignal || mongoose.model('ReloadSignal', reloadSchema);
 
 // Create or Update user
-export async function saveOrUpdateUser(botId, chatId, userInfo) {
+export async function saveOrUpdateUser(botId, chatId, userInfo = {}, role = 'user') {
     await connectDB();
     return await User.findOneAndUpdate(
-        { botId, chatId },
-        { botId, chatId, userInfo, updatedAt: new Date() },
+        { chatId, botId },
+        { role, chatId, botId, userInfo, updatedAt: new Date() },
         { upsert: true, new: true }
     );
 }
@@ -57,7 +58,7 @@ export async function getUsersForBot(botId) {
 export async function setUserActiveStatus(botId, chatId, status) {
     await connectDB();
     return await User.findOneAndUpdate(
-        { botId, chatId },
+        { chatId, botId },
         { isActive: status, updatedAt: new Date() },
         { new: true }
     );
@@ -72,16 +73,21 @@ export async function countBotUsers(botId) {
 // Delete: Remove specific user
 export async function removeUser(botId, chatId) {
     await connectDB();
-    const result = await User.deleteOne({ botId, chatId });
+    const result = await User.deleteOne({ chatId, botId });
     return result.deletedCount > 0;
 }
 
 (async () => {
+    if (!isConnected) {
+        await connectDB();
+    }
+
     console.log('Initalizing default user for bots');
-    const bots = Object.keys(BOTS_CONFIG)
-    !isConnected && await connectDB();
-    await saveOrUpdateUser(bots[0], DEFAULT_CHAT_ID, {})
-    await saveOrUpdateUser(bots[1], DEFAULT_CHAT_ID, {})
-    await setUserActiveStatus(bots[0], DEFAULT_CHAT_ID, true)
-    await setUserActiveStatus(bots[1], DEFAULT_CHAT_ID, true)
-})()
+    const bots = Object.keys(BOTS_CONFIG);
+
+    await saveOrUpdateUser(bots[0], DEFAULT_CHAT_ID, { first_name: 'Mohammad'}, 'admin');
+    await saveOrUpdateUser(bots[1], DEFAULT_CHAT_ID, { first_name: 'Mohammad'}, 'admin');
+
+    await setUserActiveStatus(bots[0], DEFAULT_CHAT_ID, true);
+    await setUserActiveStatus(bots[1], DEFAULT_CHAT_ID, true);
+})();
