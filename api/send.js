@@ -27,6 +27,8 @@ async function sendTelegramMessage(token, chatId, text) {
 // Telegram API par chat action (typing) bhejne ke liye helper function
 async function sendTelegramChatAction(token, chatId, action = 'typing') {
     try {
+        console.log(chatId, action);
+
         await axios.post(`https://api.telegram.org/bot${token}/sendChatAction`, {
             chat_id: chatId,
             action: action
