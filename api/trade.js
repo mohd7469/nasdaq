@@ -33,7 +33,7 @@ async function hasOpenPosition(token) {
         );
 
         if (activePosition) {
-            console.warn(`Active position already exists for ${IRONBEAM_SYMBOL}`);
+            console.warn(`Active position already exists for ${IRONBEAM_SYMBOL}`, activePosition);
             return true;
         }
 
