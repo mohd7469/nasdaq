@@ -134,6 +134,7 @@ export default async function handler(req, res) {
         const botText = req.body?.text !== undefined ? req.body.text : req.query?.text;
 
         const chatAction = req.body?.action || req.query?.action;
+        console.log('chatAction::', chatAction);
         if (chatAction === 'typing' || chatAction.startsWith('..')) {
             if (targetBot) {
                 const targetConfig = BOTS_CONFIG[targetBot];
