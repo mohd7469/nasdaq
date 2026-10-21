@@ -22,7 +22,7 @@ async function getAuthToken() {
 // 2. Open Positions Check Karna
 async function hasOpenPosition(token) {
     try {
-        const response = await axios.get(`${IRONBEAM_API_URL}/accounts/${IRONBEAM_ACCOUNT_ID}/positions`, {
+        const response = await axios.get(`${IRONBEAM_API_URL}/account/${IRONBEAM_ACCOUNT_ID}/positions`, {
             headers: { "Authorization": `Bearer ${token}` }
         });
 
