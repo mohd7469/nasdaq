@@ -138,8 +138,8 @@ export default async function handler(req, res) {
             if (targetBot) {
                 const targetConfig = BOTS_CONFIG[targetBot];
                 if (targetConfig) {
-                    console.log('Action::', targetConfig);
                     const users = await getUsersForBot(targetBot);
+                    console.log('Action::', chatAction, users);
                     for (const u of users) {
                         await sendTelegramChatAction(targetConfig.token, u.chatId, chatAction);
                     }
