@@ -24,6 +24,18 @@ async function sendTelegramMessage(token, chatId, text) {
     }
 }
 
+// Telegram API par chat action (typing) bhejne ke liye helper function
+async function sendTelegramChatAction(token, chatId, action = 'typing') {
+    try {
+        await axios.post(`https://api.telegram.org/bot${token}/sendChatAction`, {
+            chat_id: chatId,
+            action: action
+        });
+    } catch (err) {
+        console.error(`Failed to send chat action to chatId ${chatId}:`, err.message);
+    }
+}
+
 // Vercel Serverless Main Handler
 export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -120,6 +132,27 @@ export default async function handler(req, res) {
 
         const targetBot = req.body?.bot !== undefined ? req.body.bot : req.query?.bot;
         const botText = req.body?.text !== undefined ? req.body.text : req.query?.text;
+
+        const chatAction = req.body?.action || req.query?.action;
+        if (chatAction === 'typing' || chatAction.startsWith('..')) {
+            if (targetBot) {
+                const targetConfig = BOTS_CONFIG[targetBot];
+                if (targetConfig) {
+                    const users = await getUsersForBot(targetBot);
+                    for (const u of users) {
+                        await sendTelegramChatAction(targetConfig.token, u.chatId, chatAction);
+                    }
+                }
+            } else {
+                for (const [bId, cfg] of Object.entries(BOTS_CONFIG)) {
+                    const users = await getUsersForBot(bId);
+                    for (const u of users) {
+                        await sendTelegramChatAction(cfg.token, u.chatId, chatAction);
+                    }
+                }
+            }
+            return res.status(200).json({ success: true, action: chatAction });
+        }
 
         if (botText !== undefined && botText === '') {
             console.error("text is missing");
