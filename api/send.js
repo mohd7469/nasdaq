@@ -75,7 +75,7 @@ export default async function handler(req, res) {
                 case cleanText.startsWith('/start'): {
                     await saveOrUpdateUser(botId, chatId, userInfo);
                     console.log(`[${chatId}] awaiting activation,`, userInfo);
-                    await sendTelegramMessage(botConfig.token, chatId, `[${chatId}] awaiting activation, send <b>/stop</b> to disconnect.`);
+                    await sendTelegramMessage(botConfig.token, chatId, `[${chatId}] awaiting activation..`);
                     const totalUsers = await countBotUsers(botId);
                     return res.status(200).json({ status: 'OK', savedChatsCount: totalUsers, userInfo });
                 }
@@ -116,6 +116,7 @@ export default async function handler(req, res) {
                 }
 
                 default: {
+                    await sendTelegramMessage(botConfig.token, chatId, `[${chatId}] send <b>/stop</b> to disconnect.`);
                     await saveOrUpdateUser(botId, chatId, userInfo);
                     console.log(`[${botConfig.name}] Message received & User updated: ${chatId}`, userInfo);
 
@@ -142,18 +143,18 @@ export default async function handler(req, res) {
                     const users = await getUsersForBot(targetBot);
                     console.log('Action::', chatAction, users);
                     for (const u of users) {
-                        await sendTelegramChatAction(targetConfig.token, u.chatId, chatAction);
+                        await sendTelegramChatAction(targetConfig.token, u.chatId, 'typing');
                     }
                 }
             } else {
                 for (const [bId, cfg] of Object.entries(BOTS_CONFIG)) {
                     const users = await getUsersForBot(bId);
                     for (const u of users) {
-                        await sendTelegramChatAction(cfg.token, u.chatId, chatAction);
+                        await sendTelegramChatAction(cfg.token, u.chatId, 'typing');
                     }
                 }
             }
-            return res.status(200).json({ success: true, action: chatAction });
+            return res.status(200).json({ success: true, action: 'typing' });
         }
 
         if (botText !== undefined && botText === '') {
