@@ -2,12 +2,12 @@ import axios from 'axios';
 import config from './config.json' with { type: 'json' };
 const { WEBHOOK_SECRET, BOTS_CONFIG } = config;
 
-const IRONBEAM_API_URL = "https://demo.ironbeamapi.com/v2";
-const IRONBEAM_ACCOUNT_ID = "YOUR_ACCOUNT_ID";
-const IRONBEAM_USERNAME = "YOUR_ACCOUNT_ID";
-const IRONBEAM_PASSWORD = "YOUR_PASSWORD";
-const IRONBEAM_API_KEY = "YOUR_API_KEY";
-const IRONBEAM_SYMBOL = "XCME:MNQ"; // Micro E-mini Nasdaq-100
+const IRONBEAM_API_URL = process.env.IRONBEAM_API_URL;
+const IRONBEAM_ACCOUNT_ID = process.env.IRONBEAM_ACCOUNT_ID;
+const IRONBEAM_USERNAME = process.env.IRONBEAM_USERNAME;
+const IRONBEAM_PASSWORD = process.env.IRONBEAM_PASSWORD;
+const IRONBEAM_API_KEY = process.env.IRONBEAM_API_KEY;
+const IRONBEAM_SYMBOL = process.env.IRONBEAM_SYMBOL;
 
 // 1. Authentication (Token Lena)
 async function getAuthToken() {
