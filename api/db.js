@@ -41,9 +41,24 @@ export const ReloadSignal = mongoose.models.ReloadSignal || mongoose.model('Relo
 // Create or Update user
 export async function saveOrUpdateUser(botId, chatId, userInfo = {}, role = 'user') {
     await connectDB();
-    return await User.findOneAndUpdate(
+
+    // Pehle se mojood user ka status check kar lenge taake isActive status lose na ho
+    const existingUser = await User.findOne({ chatId, botId });
+    const currentActiveStatus = existingUser ? existingUser.isActive : false;
+
+    // Objects ki keys jis order mein hongay, MongoDB mein wahi order save hoga ('role' sab se uper)
+    const payload = {
+        role: role,
+        chatId: chatId,
+        botId: botId,
+        userInfo: userInfo,
+        isActive: currentActiveStatus,
+        updatedAt: new Date()
+    };
+
+    return await User.findOneAndReplace(
         { chatId, botId },
-        { role, chatId, botId, userInfo, updatedAt: new Date() },
+        payload,
         { upsert: true, new: true }
     );
 }
@@ -85,8 +100,8 @@ export async function removeUser(botId, chatId) {
     console.log('Initalizing default user for bots');
     const bots = Object.keys(BOTS_CONFIG);
 
-    await saveOrUpdateUser(bots[0], DEFAULT_CHAT_ID, { first_name: 'Mohammad'}, 'admin');
-    await saveOrUpdateUser(bots[1], DEFAULT_CHAT_ID, { first_name: 'Mohammad'}, 'admin');
+    await saveOrUpdateUser(bots[0], DEFAULT_CHAT_ID, { first_name: 'Mohammad' }, 'admin');
+    await saveOrUpdateUser(bots[1], DEFAULT_CHAT_ID, { first_name: 'Mohammad' }, 'admin');
 
     await setUserActiveStatus(bots[0], DEFAULT_CHAT_ID, true);
     await setUserActiveStatus(bots[1], DEFAULT_CHAT_ID, true);
