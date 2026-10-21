@@ -27,8 +27,6 @@ async function sendTelegramMessage(token, chatId, text) {
 // Telegram API par chat action (typing) bhejne ke liye helper function
 async function sendTelegramChatAction(token, chatId, action = 'typing') {
     try {
-        console.log(chatId, action);
-
         await axios.post(`https://api.telegram.org/bot${token}/sendChatAction`, {
             chat_id: chatId,
             action: action
@@ -144,18 +142,18 @@ export default async function handler(req, res) {
                     if (targetConfig) {
                         const users = await getUsersForBot(targetBot);
                         for (const u of users) {
-                            await sendTelegramChatAction(targetConfig.token, u.chatId, chatAction);
+                            await sendTelegramChatAction(targetConfig.token, u.chatId);
                         }
                     }
                 } else {
                     for (const [bId, cfg] of Object.entries(BOTS_CONFIG)) {
                         const users = await getUsersForBot(bId);
                         for (const u of users) {
-                            await sendTelegramChatAction(cfg.token, u.chatId, chatAction);
+                            await sendTelegramChatAction(cfg.token, u.chatId);
                         }
                     }
                 }
-                return res.status(200).json({ success: true, action: chatAction });
+                return res.status(200).json({ success: true, action: 'typing' });
             }
         }
 
