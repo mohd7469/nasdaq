@@ -80,6 +80,14 @@
         }
     };
 
+    const handleTrade = async (payload) => {
+        try {
+            await axios.post(`${config.API_URL}/trade`, payload);
+        } catch (err) {
+            console.error('Trade Error:', err?.message);
+        }
+    }
+
     const sendAlert = async (text = 'Test Alert') => {
         try {
             await axios.post(`${config.API_URL}/send`, { bot: 'dxbmnq_bot', text });
@@ -194,7 +202,8 @@
 
                     if (!isWeekend()) {
                         // showDesktopAlert('Setup is executed');
-                        sendAlert(`<pre><code>${JSON.stringify(cleanData, null, 1)}</code></pre>`);
+                        handleTrade(cleanData).catch(err => { });
+                        sendAlert(`<pre><code>${JSON.stringify(cleanData, null, 1)}</code></pre>`).catch(err => { });
                     } else {
                         console.log('Skipping Trade | Market Closed')
                     }
