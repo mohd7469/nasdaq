@@ -1,127 +1,139 @@
 //@version=5
 strategy("5m OC Diff Strategy", overlay=true, initial_capital=1000, default_qty_type=strategy.fixed, default_qty_value=1, process_orders_on_close=true)
 
-// Volume and Threshold Inputs
-minVolume = input.int(5000, title="Minimum Volume Threshold")
+// ============================================================================
+// --- 1. INPUTS & CONFIGURATION ---
+// ============================================================================
+
+// Volume & Threshold Inputs
+minVolume                = input.int(5000, title="Minimum Volume Threshold")
 priceDifferenceThreshold = input.float(50.0, title="Price Difference Threshold", step=0.5)
 
 // Reward Inputs
-longReward   = input.float(1.0, title="longReward", step=0.1)
-shortReward  = input.float(0.6, title="shortReward", step=0.1)
+longReward               = input.float(1.0, title="Long Reward", step=0.1)
+shortReward              = input.float(0.6, title="Short Reward", step=0.1)
 
 // Entry Method Inputs
-use50PctEntryLong  = input.bool(false, title="use50PctEntryLong")
-use50PctEntryShort = input.bool(false, title="use50PctEntryShort")
+use50PctEntryLong        = input.bool(false, title="Use 50% Entry Long")
+use50PctEntryShort       = input.bool(false, title="Use 50% Entry Short")
 
-// 5m Open/Close Difference Calculation
-ocDiff = close - open
+// Live Execution Date Filter
+useDateFilter            = input.bool(false, title="Restrict Logs to Live Mode?", group="Execution Filter")
+startTime                = input.time(timestamp("01 Oct 2026 00:00 +0500"), title="Live Mode Start Date/Time", group="Execution Filter")
 
-// Check candle confirmation to avoid fake mid-candle triggers on live chart
+
+// ============================================================================
+// --- 2. CORE CALCULATIONS & STATE TRACKING ---
+// ============================================================================
+
+// Open/Close Candle Difference
+ocDiff         = close - open
 isCandleClosed = barstate.isconfirmed
 
-// Check weekend (timezone UTC+5)
-UTC5 = dayofweek(time, "UTC+5")
+// Weekend Check (UTC+5 Timezone)
+UTC5    = dayofweek(time, "UTC+5")
 weekend = (UTC5 == dayofweek.saturday) or (UTC5 == dayofweek.sunday) or (UTC5 == 7) or (UTC5 == 1)
 
-// Global flag to track active trade state across candles
+// Global Trade Tracker Flag
 var bool isPositionActive = false
 
-// Detect if trade closed on current candle
-bool tradeClosedOnThisBar = (strategy.closedtrades > strategy.closedtrades[1]) and barstate.isconfirmed
+// Detect Trade Closure on Current Bar (execution of either tp or sl)
+bool tradeClosedOnThisBar = (strategy.closedtrades > strategy.closedtrades[1]) and isCandleClosed
 
-// Reset flag if TP/SL hit or no active trades
+// Reset Active Position Flag on Closure or Empty Position
 if tradeClosedOnThisBar or (strategy.position_size == 0 and strategy.opentrades == 0)
     isPositionActive := false
 
-// Base Conditions
+// Base Signal Criteria
 bool validLongConditions  = (volume >= minVolume) and (ocDiff >= priceDifferenceThreshold) and isCandleClosed and not weekend
 bool validShortConditions = (volume >= minVolume) and (ocDiff <= -priceDifferenceThreshold) and isCandleClosed and not weekend
 
-// Allow entry signal if position is inactive OR if trade closed on current bar
-isBullishTarget = (not isPositionActive or tradeClosedOnThisBar) and validLongConditions
-isBearishTarget = (not isPositionActive or tradeClosedOnThisBar) and validShortConditions
+// Final Entry Signal Logic
+bool isBullishTarget = (not isPositionActive or tradeClosedOnThisBar) and validLongConditions
+bool isBearishTarget = (not isPositionActive or tradeClosedOnThisBar) and validShortConditions
 
-// Persistent variables for active TP and SL prices
+// Active Target/Stop Variables
 var float activeTP = na
 var float activeSL = na
 
+
+// ============================================================================
+// --- 3. STRATEGY EXECUTION & MARKERS ---
+// ============================================================================
+
 // Bullish Signal (Upward Triangle - Below Candle)
 plotshape(isBullishTarget, title="Bullish Marker", style=shape.triangleup, location=location.belowbar, color=color.yellow, size=size.small)
+
 // Bullish Strategy
 if isBullishTarget
     // 1. Get range (for long)
     candleRange = high - low
     // 2. Set entry (50% range or at closing price)
-    entryPrice = math.round_to_mintick(use50PctEntryLong ? (high + low) / 2 : close)
+    entryPrice  = math.round_to_mintick(use50PctEntryLong ? (high + low) / 2 : close)
     // 3. SL at low (for long)
-    slPrice = math.round_to_mintick(low)
-    // 4. TP based on input
-    tpPrice = math.round_to_mintick(high + (candleRange * longReward))
+    slPrice     = math.round_to_mintick(low)
+	// 4. TP based on input
+    tpPrice     = math.round_to_mintick(high + (candleRange * longReward))
     // 5. Calculate risk
-    risk = entryPrice - slPrice
+	risk        = entryPrice - slPrice
 
     if risk > 0 and tpPrice > entryPrice
-        activeTP := tpPrice
-        activeSL := slPrice
+        activeTP         := tpPrice
+        activeSL         := slPrice
         isPositionActive := true
         strategy.entry("Long", strategy.long, qty=1, limit=entryPrice)
         strategy.exit("TP/SL", "Long", stop=slPrice, limit=tpPrice)
 
-
 // Bearish Signal (Downward Triangle - Above Candle)
 plotshape(isBearishTarget, title="Bearish Marker", style=shape.triangledown, location=location.abovebar, color=color.yellow, size=size.small)
+
 // Bearish Strategy
 if isBearishTarget
     // 1. Get range (for short)
-    candleRange = high - close
+	candleRange = high - close
     // 2. Set entry (50% range or at closing price)
-    entryPrice = math.round_to_mintick(use50PctEntryShort ? (high + low) / 2 : close)
+	entryPrice  = math.round_to_mintick(use50PctEntryShort ? (high + low) / 2 : close)
     // 3. SL at high (for short)
-    slPrice = math.round_to_mintick(high)
-    // 4. TP based on input
-    tpPrice = math.round_to_mintick(entryPrice - (candleRange * shortReward))
+	slPrice     = math.round_to_mintick(high)
+	// 4. TP based on input
+    tpPrice     = math.round_to_mintick(entryPrice - (candleRange * shortReward))
     // 5. Calculate risk
-    risk = slPrice - entryPrice
-    
+	risk        = slPrice - entryPrice
+
     if risk > 0 and tpPrice < entryPrice
-        activeTP := tpPrice
-        activeSL := slPrice
+        activeTP         := tpPrice
+        activeSL         := slPrice
         isPositionActive := true
         strategy.entry("Short", strategy.short, qty=1)
         strategy.exit("TP/SL", "Short", stop=slPrice, limit=tpPrice)
 
 
 // ============================================================================
-// --- ENTRY & EXIT LOGS / ALERTS TRACKER ---
+// --- 4. LOGS & ALERTS TRACKER ---
 // ============================================================================
 
-// For Live Execution Date Filter
-useDateFilter = input.bool(false, title="Restrict Logs to Live Mode?", group="Execution Filter")
-startTime     = input.time(timestamp("04 Oct 2026 00:00 +0500"), title="Live Mode Start Date/Time", group="Execution Filter")
-
-// useDateFilter (true: live, false: historical)
 inDateRange = not useDateFilter or (time >= startTime)
 
-bool isLongOpened  = isBullishTarget and barstate.isconfirmed
-bool isShortOpened = isBearishTarget and barstate.isconfirmed
+// Event Trigger Checks
+bool isLongOpened  = isBullishTarget and isCandleClosed
+bool isShortOpened = isBearishTarget and isCandleClosed
 
 string lastClosedEntryId = strategy.closedtrades > 0 ? strategy.closedtrades.entry_id(strategy.closedtrades - 1) : ""
+bool isLongClosed        = tradeClosedOnThisBar and (lastClosedEntryId == "Long")
+bool isShortClosed       = tradeClosedOnThisBar and (lastClosedEntryId == "Short")
 
-bool isLongClosed  = tradeClosedOnThisBar and (lastClosedEntryId == "Long")
-bool isShortClosed = tradeClosedOnThisBar and (lastClosedEntryId == "Short")
-
-// Exact open trade price and last closed trade price fetching
+// Executed Price Fetching
 float actualEntryPrice = strategy.opentrades > 0 ? strategy.opentrades.entry_price(strategy.opentrades - 1) : na
 float actualExitPrice  = strategy.closedtrades > 0 ? strategy.closedtrades.exit_price(strategy.closedtrades - 1) : na
 
-// Deduplication tracker
+// Deduplication Bar Index Tracker
 var int lastLoggedBar = -1
 
-if inDateRange and barstate.isconfirmed and (bar_index != lastLoggedBar)
+if inDateRange and isCandleClosed and (bar_index != lastLoggedBar)
     float entryP = nz(actualEntryPrice, close)
     float exitP  = nz(actualExitPrice, close)
 
-    // 1. First check Exits independently
+    // 1. Log Exits
     if isLongClosed
         string exitStatus = "\nLONG_EXIT: " + str.tostring(exitP) + "\nTP: null\nSL: null"
         log.info(exitStatus)
@@ -131,7 +143,7 @@ if inDateRange and barstate.isconfirmed and (bar_index != lastLoggedBar)
         log.info(exitStatus)
         alert(exitStatus, alert.freq_once_per_bar)
 
-    // 2. Check Entries independently on the same bar
+    // 2. Log Entries (Independently evaluate on same bar)
     if isLongOpened
         string entryStatus = "\nLONG_ENTRY: " + str.tostring(entryP) + "\nTP: " + str.tostring(activeTP) + "\nSL: " + str.tostring(activeSL)
         log.info(entryStatus)
@@ -141,5 +153,6 @@ if inDateRange and barstate.isconfirmed and (bar_index != lastLoggedBar)
         log.info(entryStatus)
         alert(entryStatus, alert.freq_once_per_bar)
 
+    // Prevent duplicate logs on same candle
     if isLongClosed or isShortClosed or isLongOpened or isShortOpened
         lastLoggedBar := bar_index
