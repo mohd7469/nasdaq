@@ -261,7 +261,7 @@ export default async function handler(req, res) {
                 break;
 
             case 'LONG_EXIT':
-                console.log(`${IRONBEAM_SYMBOL}: Long Closed`);
+                console.log(`${IRONBEAM_SYMBOL}: Position Closed`);
                 await flattenAll(token);
                 break;
 
@@ -271,7 +271,7 @@ export default async function handler(req, res) {
                 break;
 
             case 'SHORT_EXIT':
-                console.log(`${IRONBEAM_SYMBOL}: Short Closed`);
+                console.log(`${IRONBEAM_SYMBOL}: Position Closed`);
                 await flattenAll(token);
                 break;
 
