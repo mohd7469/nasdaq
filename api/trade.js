@@ -11,12 +11,17 @@ const IRONBEAM_SYMBOL = process.env.IRONBEAM_SYMBOL;
 
 // 1. Authentication (Token Lena)
 async function getAuthToken() {
-    const response = await axios.post(`${IRONBEAM_API_URL}/auth`, {
-        username: IRONBEAM_USERNAME,
-        password: IRONBEAM_PASSWORD,
-        apiKey: IRONBEAM_API_KEY
-    });
-    return response.data.token;
+    try {
+        const response = await axios.post(`${IRONBEAM_API_URL}/auth`, {
+            username: IRONBEAM_USERNAME,
+            password: IRONBEAM_PASSWORD,
+            apiKey: IRONBEAM_API_KEY
+        });
+        return response.data.token;
+    } catch (error) {
+        console.error("Auth Token Error:", error.response?.data || error.message);
+        throw new Error("Failed to authenticate with Ironbeam API");
+    }
 }
 
 // 2. Open Positions Check Karna
@@ -27,7 +32,6 @@ async function hasOpenPosition(token) {
         });
 
         const positions = response.data.positions || response.data || [];
-
         const activePosition = positions.find(
             p => (p.symbol === IRONBEAM_SYMBOL || p.exchSym === IRONBEAM_SYMBOL) && p.quantity !== 0
         );
@@ -40,7 +44,7 @@ async function hasOpenPosition(token) {
         return false;
     } catch (error) {
         console.error("Error checking positions:", error.response?.data || error.message);
-        // Safety check: agar endpoint error de toh nayi trade mat lagayein
+        // Safety check: agar endpoint error de toh accidental double trade rokne ke liye true return karein
         return true;
     }
 }
@@ -54,11 +58,10 @@ async function flattenAll(token) {
         const ordersRes = await axios.get(`${IRONBEAM_API_URL}/order/${IRONBEAM_ACCOUNT_ID}/ANY`, { headers });
         const ordersData = ordersRes.data.orders || ordersRes.data || [];
 
-        const activeOrders = ordersData
-            .filter(o => o.status === "NEW" || o.status === "SUBMITTED" || o.status === "PENDING_NEW" || o.st === "NEW" || o.st === "SUBMITTED");
-        const activeOrderIds = activeOrders
-            .map(o => o.orderId || o.oid);
-
+        const activeOrders = ordersData.filter(o =>
+            ["NEW", "SUBMITTED", "PENDING_NEW"].includes(o.status || o.st)
+        );
+        const activeOrderIds = activeOrders.map(o => o.orderId || o.oid);
 
         if (activeOrderIds.length > 0) {
             await axios.delete(`${IRONBEAM_API_URL}/order/${IRONBEAM_ACCOUNT_ID}/cancelMultiple`, {
@@ -68,7 +71,6 @@ async function flattenAll(token) {
                     orderIds: activeOrderIds
                 }
             });
-            // console.log("activeOrders:", activeOrders);
             console.log("✅ All active orders cancelled.");
         }
 
@@ -81,9 +83,7 @@ async function flattenAll(token) {
             const qty = pos.quantity !== undefined ? pos.quantity : pos.q;
 
             if (sym === IRONBEAM_SYMBOL && qty && qty !== 0) {
-                // Agar quantity positive hai toh LONG (SELL se close hoga), negative hai toh SHORT (BUY se close hoga)
                 const closingSide = qty > 0 ? "SELL" : "BUY";
-
                 const closePayload = {
                     accountId: IRONBEAM_ACCOUNT_ID,
                     exchSym: IRONBEAM_SYMBOL,
@@ -104,37 +104,18 @@ async function flattenAll(token) {
             }
         }
 
-        console.log("activeOrders:", activeOrders);
-        console.log("positions:", positions);
+        return { success: true, message: "Positions flattened successfully." };
     } catch (error) {
-        console.error("❌ Error in flattenAll:", error.response?.data || error.message);
-        return res.status(500).json({ success: false, error: error.message });
+        console.error("Error in flattenAll:", error.response?.data || error.message);
+        throw new Error(error.response?.data?.message || error.message);
     }
 }
 
-// {
-//   "accountId": "5123345",
-//   "exchSym": "XCME:6E.U16",
-//   "side": "BUY",
-//   "quantity": 1,
-//   "limitPrice": 2000,
-//   "stopPrice": 2000,
-//   "stopLoss": 2000,
-//   "takeProfit": 2000,
-//   "stopLossOffset": 25,
-//   "takeProfitOffset": 0.01,
-//   "trailingStop": 0.25,
-//   "orderType": "LIMIT",
-//   "duration": "1",
-//   "waitForOrderId": true
-// } 
-
-// 3. Generic Order Execution Function
+// 4. Generic Order Execution Function
 async function placeOrder(token, payload) {
-    // Pehle check karein ke koi open position toh nahi hai
     const isPositionOpen = await hasOpenPosition(token);
     if (isPositionOpen) {
-        return;
+        return { success: false, message: "Rejected: Position currently active" };
     }
 
     try {
@@ -145,81 +126,12 @@ async function placeOrder(token, payload) {
             }
         });
         console.log("✅ Order Placed Successfully:", response.data);
+        return { success: true, data: response.data };
     } catch (error) {
         console.error("❌ Order Execution Error:", error.response?.data || error.message);
+        throw new Error(error.response?.data?.message || error.message);
     }
 }
-
-// const longMarketPayload = {
-//   accountId: IRONBEAM_ACCOUNT_ID,
-//   exchSym: IRONBEAM_SYMBOL,
-//   side: "BUY",
-//   orderType: "MARKET",
-//   quantity: 1,
-//   duration: "DAY",
-//   stopLoss: {
-//     orderType: "STOP",
-//     stopPrice: 20400.00 // SL Entry se neeche
-//   },
-//   takeProfit: {
-//     orderType: "LIMIT",
-//     price: 20600.00     // TP Entry se upar
-//   }
-// };
-
-// const longLimitPayload = {
-//   accountId: IRONBEAM_ACCOUNT_ID,
-//   exchSym: IRONBEAM_SYMBOL,
-//   side: "BUY",
-//   orderType: "LIMIT",
-//   price: 20450.00,      // Specific Entry Price
-//   quantity: 1,
-//   duration: "DAY",
-//   stopLoss: {
-//     orderType: "STOP",
-//     stopPrice: 20350.00 // SL Limit Price se neeche
-//   },
-//   takeProfit: {
-//     orderType: "LIMIT",
-//     price: 20650.00     // TP Limit Price se upar
-//   }
-// };
-
-// const shortMarketPayload = {
-//   accountId: IRONBEAM_ACCOUNT_ID,
-//   exchSym: IRONBEAM_SYMBOL,
-//   side: "SELL",
-//   orderType: "MARKET",
-//   quantity: 1,
-//   duration: "DAY",
-//   stopLoss: {
-//     orderType: "STOP",
-//     stopPrice: 20600.00 // Short mein SL Entry se upar hoga
-//   },
-//   takeProfit: {
-//     orderType: "LIMIT",
-//     price: 20400.00     // Short mein TP Entry se neeche hoga
-//   }
-// };
-
-// const shortLimitPayload = {
-//   accountId: IRONBEAM_ACCOUNT_ID,
-//   exchSym: IRONBEAM_SYMBOL,
-//   side: "SELL",
-//   orderType: "LIMIT",
-//   price: 20550.00,      // Specific Short Entry Price
-//   quantity: 1,
-//   duration: "DAY",
-//   stopLoss: {
-//     orderType: "STOP",
-//     stopPrice: 20650.00 // SL Entry Price se upar
-//   },
-//   takeProfit: {
-//     orderType: "LIMIT",
-//     price: 20350.00     // TP Entry Price se neeche
-//   }
-// };
-
 
 export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Credentials', true);
@@ -239,17 +151,24 @@ export default async function handler(req, res) {
     }
 
     console.log('___________________________________________________');
-    console.log(req.body);
-    console.log('\n');
+    console.log('body:', req.body);
+    console.log('___________________________________________________');
 
     try {
+        const { timestamp, side, action, price, tp, sl } = req.body || {};
+
+        if (!action) {
+            return res.status(400).json({ success: false, message: 'Missing "action" in request body' });
+        }
+
         const token = await getAuthToken();
+        let resultMessage = '';
 
-        const { timestamp, side, action, price, tp, sl } = req.body;
-
-        switch (action?.toUpperCase()) {
+        switch (action.toUpperCase()) {
             case 'ENTRY': {
-                if (side?.toUpperCase() !== 'LONG' && side?.toUpperCase() !== 'SHORT') break;
+                if (side?.toUpperCase() !== 'LONG' && side?.toUpperCase() !== 'SHORT') {
+                    return res.status(400).json({ success: false, message: 'Invalid side. Must be LONG or SHORT.' });
+                }
 
                 const payload = {
                     accountId: IRONBEAM_ACCOUNT_ID,
@@ -262,22 +181,35 @@ export default async function handler(req, res) {
                     duration: "DAY"
                 };
 
-                console.log(`payload`, payload);
-                return await placeOrder(token, payload);
+                const orderResult = await placeOrder(token, payload);
+                if (!orderResult.success) {
+                    return res.status(400).json(orderResult);
+                }
+
+                resultMessage = `${IRONBEAM_SYMBOL}: 1 ${side} futures contract opened at ${new Date().toISOString()}`;
+                break;
             }
 
             case 'EXIT': {
                 console.log(`Closing ${IRONBEAM_SYMBOL} Position..`);
                 await flattenAll(token);
+                resultMessage = `${IRONBEAM_SYMBOL}: Position closed at ${new Date().toISOString()}`;
+                break;
+            }
+
+            default: {
+                return res.status(400).json({ success: false, message: `Unsupported action: ${action}` });
             }
         }
 
         return res.status(200).json({
             status: 'OK',
             success: true,
-            message: `${IRONBEAM_SYMBOL}: 1 ${side} futures contract ${action.toUpperCase() === 'ENTRY' ? 'opened' : 'closed'} at ${new Date().toISOString()}`
+            message: resultMessage
         });
+
     } catch (error) {
+        console.error("Handler Error:", error.message);
         return res.status(500).json({ success: false, error: error.message });
     }
 }
