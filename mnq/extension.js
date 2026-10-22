@@ -82,7 +82,8 @@
 
     const handleTrade = async (payload) => {
         try {
-            await axios.post(`${config.API_URL}/trade`, payload);
+            await axios.post(`http://127.0.0.1:4782/trade`, payload);
+            // await axios.post(`${config.API_URL}/trade`, payload);
         } catch (err) {
             console.error('Trade Error:', err?.message);
         }
