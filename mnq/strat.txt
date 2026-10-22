@@ -23,9 +23,23 @@ isCandleClosed = barstate.isconfirmed
 UTC5 = dayofweek(time, "UTC+5")
 weekend = (UTC5 == dayofweek.saturday) or (UTC5 == dayofweek.sunday) or (UTC5 == 7) or (UTC5 == 1)
 
-// Pehle position size check, phir volume, phir price difference
-isBullishTarget = (strategy.position_size == 0) and (volume >= minVolume) and (ocDiff >= priceDifferenceThreshold) and isCandleClosed and not weekend
-isBearishTarget = (strategy.position_size == 0) and (volume >= minVolume) and (ocDiff <= -priceDifferenceThreshold) and isCandleClosed and not weekend
+// Global flag to track active trade state across candles
+var bool isPositionActive = false
+
+// Detect if trade closed on current candle
+bool tradeClosedOnThisBar = (strategy.closedtrades > strategy.closedtrades[1]) and barstate.isconfirmed
+
+// Reset flag if TP/SL hit or no active trades
+if tradeClosedOnThisBar or (strategy.position_size == 0 and strategy.opentrades == 0)
+    isPositionActive := false
+
+// Base Conditions
+bool validLongConditions  = (volume >= minVolume) and (ocDiff >= priceDifferenceThreshold) and isCandleClosed and not weekend
+bool validShortConditions = (volume >= minVolume) and (ocDiff <= -priceDifferenceThreshold) and isCandleClosed and not weekend
+
+// Allow entry signal if position is inactive OR if trade closed on current bar
+isBullishTarget = (not isPositionActive or tradeClosedOnThisBar) and validLongConditions
+isBearishTarget = (not isPositionActive or tradeClosedOnThisBar) and validShortConditions
 
 // Persistent variables for active TP and SL prices
 var float activeTP = na
@@ -34,7 +48,7 @@ var float activeSL = na
 // Bullish Signal (Upward Triangle - Below Candle)
 plotshape(isBullishTarget, title="Bullish Marker", style=shape.triangleup, location=location.belowbar, color=color.yellow, size=size.small)
 // Bullish Strategy
-if isBullishTarget and strategy.position_size == 0
+if isBullishTarget
     // 1. Get range (for long)
     candleRange = high - low
     // 2. Set entry (50% range or at closing price)
@@ -49,6 +63,7 @@ if isBullishTarget and strategy.position_size == 0
     if risk > 0 and tpPrice > entryPrice
         activeTP := tpPrice
         activeSL := slPrice
+        isPositionActive := true
         strategy.entry("Long", strategy.long, qty=1, limit=entryPrice)
         strategy.exit("TP/SL", "Long", stop=slPrice, limit=tpPrice)
 
@@ -56,7 +71,7 @@ if isBullishTarget and strategy.position_size == 0
 // Bearish Signal (Downward Triangle - Above Candle)
 plotshape(isBearishTarget, title="Bearish Marker", style=shape.triangledown, location=location.abovebar, color=color.yellow, size=size.small)
 // Bearish Strategy
-if isBearishTarget and strategy.position_size == 0
+if isBearishTarget
     // 1. Get range (for short)
     candleRange = high - close
     // 2. Set entry (50% range or at closing price)
@@ -71,6 +86,7 @@ if isBearishTarget and strategy.position_size == 0
     if risk > 0 and tpPrice < entryPrice
         activeTP := tpPrice
         activeSL := slPrice
+        isPositionActive := true
         strategy.entry("Short", strategy.short, qty=1)
         strategy.exit("TP/SL", "Short", stop=slPrice, limit=tpPrice)
 
@@ -86,12 +102,13 @@ startTime     = input.time(timestamp("04 Oct 2026 00:00 +0500"), title="Live Mod
 // useDateFilter (true: live, false: historical)
 inDateRange = not useDateFilter or (time >= startTime)
 
-bool isLongOpened  = (strategy.position_size > 0) and (strategy.position_size[1] <= 0) and barstate.isconfirmed
-bool isLongClosed  = (strategy.position_size == 0) and (strategy.position_size[1] > 0) and barstate.isconfirmed
-bool isShortOpened = (strategy.position_size < 0) and (strategy.position_size[1] >= 0) and barstate.isconfirmed
-bool isShortClosed = (strategy.position_size == 0) and (strategy.position_size[1] < 0) and barstate.isconfirmed
+bool isLongOpened  = isBullishTarget and barstate.isconfirmed
+bool isShortOpened = isBearishTarget and barstate.isconfirmed
 
-string currentStatus = ""
+string lastClosedEntryId = strategy.closedtrades > 0 ? strategy.closedtrades.entry_id(strategy.closedtrades - 1) : ""
+
+bool isLongClosed  = tradeClosedOnThisBar and (lastClosedEntryId == "Long")
+bool isShortClosed = tradeClosedOnThisBar and (lastClosedEntryId == "Short")
 
 // Exact open trade price and last closed trade price fetching
 float actualEntryPrice = strategy.opentrades > 0 ? strategy.opentrades.entry_price(strategy.opentrades - 1) : na
@@ -101,17 +118,28 @@ float actualExitPrice  = strategy.closedtrades > 0 ? strategy.closedtrades.exit_
 var int lastLoggedBar = -1
 
 if inDateRange and barstate.isconfirmed and (bar_index != lastLoggedBar)
-    if isLongOpened
-        currentStatus := "\nLONG_ENTRY: "     + str.tostring(actualEntryPrice) + "\nTP: " + str.tostring(activeTP) + "\nSL: " + str.tostring(activeSL)
-    else if isLongClosed
-        currentStatus := "\nLONG_EXIT: "      + str.tostring(actualExitPrice) + "\nTP: null" + "\nSL: null"
-    else if isShortOpened
-        currentStatus := "\nSHORT_ENTRY: "    + str.tostring(actualEntryPrice) + "\nTP: " + str.tostring(activeTP) + "\nSL: " + str.tostring(activeSL)
-    else if isShortClosed
-        currentStatus := "\nSHORT_EXIT: "     + str.tostring(actualExitPrice) + "\nTP: null" + "\nSL: null"
+    float entryP = nz(actualEntryPrice, close)
+    float exitP  = nz(actualExitPrice, close)
 
-    // Trigger log and alert only once per bar index
-    if currentStatus != ""
-        log.info(currentStatus)
-        alert(currentStatus, alert.freq_once_per_bar)
+    // 1. First check Exits independently
+    if isLongClosed
+        string exitStatus = "\nLONG_EXIT: " + str.tostring(exitP) + "\nTP: null\nSL: null"
+        log.info(exitStatus)
+        alert(exitStatus, alert.freq_once_per_bar)
+    else if isShortClosed
+        string exitStatus = "\nSHORT_EXIT: " + str.tostring(exitP) + "\nTP: null\nSL: null"
+        log.info(exitStatus)
+        alert(exitStatus, alert.freq_once_per_bar)
+
+    // 2. Check Entries independently on the same bar
+    if isLongOpened
+        string entryStatus = "\nLONG_ENTRY: " + str.tostring(entryP) + "\nTP: " + str.tostring(activeTP) + "\nSL: " + str.tostring(activeSL)
+        log.info(entryStatus)
+        alert(entryStatus, alert.freq_once_per_bar)
+    else if isShortOpened
+        string entryStatus = "\nSHORT_ENTRY: " + str.tostring(entryP) + "\nTP: " + str.tostring(activeTP) + "\nSL: " + str.tostring(activeSL)
+        log.info(entryStatus)
+        alert(entryStatus, alert.freq_once_per_bar)
+
+    if isLongClosed or isShortClosed or isLongOpened or isShortOpened
         lastLoggedBar := bar_index
