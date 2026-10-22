@@ -185,13 +185,13 @@ export default async function handler(req, res) {
             case 'LONG_ENTRY':
                 payload = {
                     accountId: IRONBEAM_ACCOUNT_ID,
-                    exchSym: IRONBEAM_SYMBOL,
-                    side: "BUY",
                     orderType: type || "MARKET",
+                    exchSym: IRONBEAM_SYMBOL,
                     quantity: 1,
-                    duration: "DAY",
+                    side: "BUY",
+                    takeProfit: Number(tp),
                     stopLoss: Number(sl),
-                    takeProfit: Number(tp)
+                    duration: "DAY"
                 };
                 console.log(`payload`, payload);
                 await placeOrder(token, payload);
