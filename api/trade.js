@@ -45,6 +45,7 @@ async function hasOpenPosition(token) {
     }
 }
 
+// 3. Close All Open Positions and Orders 
 async function flattenAll(token) {
     try {
         const headers = { "Authorization": `Bearer ${token}` };
@@ -52,10 +53,12 @@ async function flattenAll(token) {
         // 1. Saare active orders fetch karke cancel karna
         const ordersRes = await axios.get(`${IRONBEAM_API_URL}/order/${IRONBEAM_ACCOUNT_ID}/ANY`, { headers });
         const ordersData = ordersRes.data.orders || ordersRes.data || [];
-        
-        const activeOrderIds = ordersData
+
+        const activeOrders = ordersData
             .filter(o => o.status === "NEW" || o.status === "SUBMITTED" || o.status === "PENDING_NEW" || o.st === "NEW" || o.st === "SUBMITTED")
+        const activeOrderIds = activeOrders
             .map(o => o.orderId || o.oid);
+
 
         if (activeOrderIds.length > 0) {
             await axios.delete(`${IRONBEAM_API_URL}/order/${IRONBEAM_ACCOUNT_ID}/cancelMultiple`, {
@@ -65,21 +68,21 @@ async function flattenAll(token) {
                     orderIds: activeOrderIds
                 }
             });
+            // console.log("activeOrders:", activeOrders);
             console.log("✅ All active orders cancelled.");
         }
 
-        // 2. Open positions fetch karke opposite market order se close karna
+        // 2. Open positions fetch karke quantity ke sign se close karna
         const posRes = await axios.get(`${IRONBEAM_API_URL}/account/${IRONBEAM_ACCOUNT_ID}/positions`, { headers });
         const positions = posRes.data.positions || posRes.data || [];
 
         for (let pos of positions) {
-            const sym = pos.symbol || pos.exchSym;
-            const qty = pos.quantity || pos.q;
-            const posSide = pos.side || pos.sd;
+            const sym = pos.symbol || pos.exchSym || pos.s;
+            const qty = pos.quantity !== undefined ? pos.quantity : pos.q;
 
             if (sym === IRONBEAM_SYMBOL && qty && qty !== 0) {
-                // Agar LONG hai toh SELL, agar SHORT hai toh BUY karenge
-                const closingSide = (posSide === "LONG" || posSide === "B") ? "SELL" : "BUY";
+                // Agar quantity positive hai toh LONG (SELL se close hoga), negative hai toh SHORT (BUY se close hoga)
+                const closingSide = qty > 0 ? "SELL" : "BUY";
 
                 const closePayload = {
                     accountId: IRONBEAM_ACCOUNT_ID,
