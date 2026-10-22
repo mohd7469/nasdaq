@@ -55,7 +55,7 @@ async function flattenAll(token) {
         const ordersData = ordersRes.data.orders || ordersRes.data || [];
 
         const activeOrders = ordersData
-            .filter(o => o.status === "NEW" || o.status === "SUBMITTED" || o.status === "PENDING_NEW" || o.st === "NEW" || o.st === "SUBMITTED")
+            .filter(o => o.status === "NEW" || o.status === "SUBMITTED" || o.status === "PENDING_NEW" || o.st === "NEW" || o.st === "SUBMITTED");
         const activeOrderIds = activeOrders
             .map(o => o.orderId || o.oid);
 
@@ -108,6 +108,7 @@ async function flattenAll(token) {
         console.log("positions:", positions);
     } catch (error) {
         console.error("❌ Error in flattenAll:", error.response?.data || error.message);
+        return res.status(500).json({ success: false, error: error.message });
     }
 }
 
@@ -267,11 +268,7 @@ export default async function handler(req, res) {
 
             case 'EXIT': {
                 console.log(`Closing ${IRONBEAM_SYMBOL} Position..`);
-                return await flattenAll(token);
-            }
-
-            default: {
-                return res.status(400).json({ success: false, message: 'Invalid Action Type' });
+                await flattenAll(token);
             }
         }
 
