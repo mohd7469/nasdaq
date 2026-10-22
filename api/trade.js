@@ -177,7 +177,7 @@ export default async function handler(req, res) {
     try {
         const token = await getAuthToken();
 
-        const { qty, side, action, tp, sl } = req.body;
+        const { qty, type, side, action, tp, sl } = req.body;
         const tradeType = `${side.toUpperCase()}_${action.toUpperCase()}`;
         let payload;
 
@@ -187,7 +187,7 @@ export default async function handler(req, res) {
                     accountId: IRONBEAM_ACCOUNT_ID,
                     exchSym: IRONBEAM_SYMBOL,
                     side: "BUY",
-                    orderType: "MARKET",
+                    orderType: type || "MARKET",
                     quantity: 1,
                     duration: "DAY",
                     stopLoss: Number(sl),
