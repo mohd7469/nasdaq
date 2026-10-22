@@ -103,6 +103,9 @@ async function flattenAll(token) {
                 console.log(`✅ Position closed successfully for ${IRONBEAM_SYMBOL}`);
             }
         }
+
+        console.log("activeOrders:", activeOrders);
+        console.log("positions:", positions);
     } catch (error) {
         console.error("❌ Error in flattenAll:", error.response?.data || error.message);
     }
@@ -235,54 +238,47 @@ export default async function handler(req, res) {
     }
 
     console.log('___________________________________________________');
-    // console.log(req.body);
+    console.log(req.body);
+    console.log('\n');
 
     try {
         const token = await getAuthToken();
 
-        const { qty, type, side, action, tp, sl } = req.body;
-        const tradeType = `${side.toUpperCase()}_${action.toUpperCase()}`;
-        let payload;
+        const { timestamp, side, action, price, tp, sl } = req.body;
 
-        switch (tradeType) {
-            case 'LONG_ENTRY':
-                payload = {
+        switch (action?.toUpperCase()) {
+            case 'ENTRY': {
+                if (side?.toUpperCase() !== 'LONG' && side?.toUpperCase() !== 'SHORT') break;
+
+                const payload = {
                     accountId: IRONBEAM_ACCOUNT_ID,
-                    orderType: type || "MARKET",
+                    orderType: "MARKET",
                     exchSym: IRONBEAM_SYMBOL,
                     quantity: 1,
-                    side: "BUY",
+                    side: side === 'LONG' ? "BUY" : "SELL",
                     takeProfit: Number(tp),
                     stopLoss: Number(sl),
                     duration: "DAY"
                 };
+
                 console.log(`payload`, payload);
-                await placeOrder(token, payload);
-                break;
+                return await placeOrder(token, payload);
+            }
 
-            case 'LONG_EXIT':
+            case 'EXIT': {
                 console.log(`Closing ${IRONBEAM_SYMBOL} Position..`);
-                await flattenAll(token);
-                break;
+                return await flattenAll(token);
+            }
 
-            case 'SHORT_ENTRY':
-                console.log(`${IRONBEAM_SYMBOL}: Short Opened`);
-                // await placeOrder(token, payload);
-                break;
-
-            case 'SHORT_EXIT':
-                console.log(`Closing ${IRONBEAM_SYMBOL} Position..`);
-                await flattenAll(token);
-                break;
-
-            default:
+            default: {
                 return res.status(400).json({ success: false, message: 'Invalid Action Type' });
+            }
         }
 
         return res.status(200).json({
             status: 'OK',
             success: true,
-            message: `${IRONBEAM_SYMBOL}: ${qty} ${side} futures contract ${action.toUpperCase() === 'ENTRY' ? 'opened' : 'closed'} at ${new Date().toISOString()}`
+            message: `${IRONBEAM_SYMBOL}: 1 ${side} futures contract ${action.toUpperCase() === 'ENTRY' ? 'opened' : 'closed'} at ${new Date().toISOString()}`
         });
     } catch (error) {
         return res.status(500).json({ success: false, error: error.message });
