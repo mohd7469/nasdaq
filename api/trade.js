@@ -45,6 +45,10 @@ async function hasOpenPosition(token) {
     }
 }
 
+async function flattenAll(token) {
+
+}
+
 // {
 //   "accountId": "5123345",
 //   "exchSym": "XCME:6E.U16",
