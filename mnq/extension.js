@@ -82,8 +82,9 @@
 
     const handleTrade = async (payload) => {
         try {
-            await axios.post(`http://localhost:3000/api/trade`, payload);
-            // await axios.post(`${config.API_URL}/trade`, payload);
+            const isWindows = /Win/i.test(navigator.userAgent || navigator.platform);
+            const endpointUrl = isWindows ? `http://localhost:3000/api` : config.API_URL;
+            await axios.post(`${endpointUrl}/trade`, payload);
         } catch (err) {
             console.error('Trade Error:', err?.message);
         }
