@@ -46,7 +46,63 @@ async function hasOpenPosition(token) {
 }
 
 async function flattenAll(token) {
+    try {
+        const headers = { "Authorization": `Bearer ${token}` };
 
+        // 1. Saare active orders fetch karke cancel karna
+        const ordersRes = await axios.get(`${IRONBEAM_API_URL}/order/${IRONBEAM_ACCOUNT_ID}/ANY`, { headers });
+        const ordersData = ordersRes.data.orders || ordersRes.data || [];
+        
+        const activeOrderIds = ordersData
+            .filter(o => o.status === "NEW" || o.status === "SUBMITTED" || o.status === "PENDING_NEW" || o.st === "NEW" || o.st === "SUBMITTED")
+            .map(o => o.orderId || o.oid);
+
+        if (activeOrderIds.length > 0) {
+            await axios.delete(`${IRONBEAM_API_URL}/order/${IRONBEAM_ACCOUNT_ID}/cancelMultiple`, {
+                headers,
+                data: {
+                    accountId: IRONBEAM_ACCOUNT_ID,
+                    orderIds: activeOrderIds
+                }
+            });
+            console.log("✅ All active orders cancelled.");
+        }
+
+        // 2. Open positions fetch karke opposite market order se close karna
+        const posRes = await axios.get(`${IRONBEAM_API_URL}/account/${IRONBEAM_ACCOUNT_ID}/positions`, { headers });
+        const positions = posRes.data.positions || posRes.data || [];
+
+        for (let pos of positions) {
+            const sym = pos.symbol || pos.exchSym;
+            const qty = pos.quantity || pos.q;
+            const posSide = pos.side || pos.sd;
+
+            if (sym === IRONBEAM_SYMBOL && qty && qty !== 0) {
+                // Agar LONG hai toh SELL, agar SHORT hai toh BUY karenge
+                const closingSide = (posSide === "LONG" || posSide === "B") ? "SELL" : "BUY";
+
+                const closePayload = {
+                    accountId: IRONBEAM_ACCOUNT_ID,
+                    exchSym: IRONBEAM_SYMBOL,
+                    side: closingSide,
+                    quantity: Math.abs(qty),
+                    orderType: "MARKET",
+                    duration: "DAY",
+                    waitForOrderId: true
+                };
+
+                await axios.post(`${IRONBEAM_API_URL}/order/${IRONBEAM_ACCOUNT_ID}/place`, closePayload, {
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    }
+                });
+                console.log(`✅ Position closed successfully for ${IRONBEAM_SYMBOL}`);
+            }
+        }
+    } catch (error) {
+        console.error("❌ Error in flattenAll:", error.response?.data || error.message);
+    }
 }
 
 // {
@@ -203,7 +259,7 @@ export default async function handler(req, res) {
 
             case 'LONG_EXIT':
                 console.log(`${IRONBEAM_SYMBOL}: Long Closed`);
-                // trigger close all
+                await flattenAll(token);
                 break;
 
             case 'SHORT_ENTRY':
@@ -213,7 +269,7 @@ export default async function handler(req, res) {
 
             case 'SHORT_EXIT':
                 console.log(`${IRONBEAM_SYMBOL}: Short Closed`);
-                // trigger close all
+                await flattenAll(token);
                 break;
 
             default:
