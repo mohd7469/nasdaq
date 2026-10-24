@@ -149,103 +149,85 @@ export default async function handler(req, res) {
         // SCENARIO B: CLIENT SIDE SE CALLING (GET / POST)
         // ==========================================
 
-        const targetBot = req.body?.bot !== undefined ? req.body.bot : req.query?.bot;
-        const botText = req.body?.text !== undefined ? req.body.text : req.query?.text;
-        const targetChatId = req.body?.chatId !== undefined ? req.body.chatId : req.query?.chatId;
+        const text = req.body?.text !== undefined ? req.body.text : req.query?.text;
+        const bot = req.body?.bot !== undefined ? req.body.bot : req.query?.bot;
+        const chatId = req.body?.chatId !== undefined ? req.body.chatId : req.query?.chatId;
 
-        if (botText) {
-            if (botText.startsWith('...') || botText.startsWith('typing')) {
-                if (targetBot) {
-                    const targetConfig = BOTS_CONFIG[targetBot];
-                    if (targetConfig) {
-                        const users = await getUsersForBot(targetBot);
-                        for (const u of users) {
-                            await sendTelegramChatAction(targetConfig.token, u.chatId);
-                        }
-                    }
-                } else {
-                    for (const [bId, cfg] of Object.entries(BOTS_CONFIG)) {
-                        const users = await getUsersForBot(bId);
-                        for (const u of users) {
-                            await sendTelegramChatAction(cfg.token, u.chatId);
-                        }
-                    }
-                }
-                return res.status(200).json({ success: true, action: 'typing' });
-            }
-        }
-
-        if (botText !== undefined && botText === '') {
-            console.error("text is missing");
+        // Basic validations
+        if (text !== undefined && text === '') {
             throw new Error("text is missing");
         }
-
-        if (targetBot !== undefined && targetBot === '') {
-            console.error("bot is missing");
+        if (bot !== undefined && bot === '') {
             throw new Error("bot is missing");
         }
+        if (chatId !== undefined && chatId === '') {
+            throw new Error("chatId is missing");
+        }
 
-        // Broadcast to all bots if no targetBot specified
-        if (targetBot === undefined && (req.method === 'GET' || req.body?.bot === undefined)) {
-            const results = {};
-            const textToSend = botText || DEFAULT_TEXT;
+        const finalMessage = text || DEFAULT_TEXT;
+        const isTyping = text && (text.startsWith('...') || text.startsWith('typing'));
 
-            for (const [bId, config] of Object.entries(BOTS_CONFIG)) {
-                results[bId] = [];
+        // Target lists tayyar karna
+        const targetBots = bot ? (Array.isArray(bot) ? bot : [bot]) : Object.keys(BOTS_CONFIG);
+        const targetChatIds = chatId ? (Array.isArray(chatId) ? chatId : [chatId]) : [];
+
+        // Validate bots existence
+        for (const bId of targetBots) {
+            if (!BOTS_CONFIG[bId]) {
+                return res.status(400).json({ error: `Invalid or missing bot identifier: ${bId}` });
+            }
+        }
+
+        // STEP 1: Active users ko filter kar ke list banana
+        const filterActiveUsers = [];
+
+        for (const bId of targetBots) {
+            const token = BOTS_CONFIG[bId]?.token;
+            if (!token) continue;
+
+            if (targetChatIds.length > 0) {
+                for (const id of targetChatIds) {
+                    const user = await User.findOne({ chatId: String(id), botId: bId, isActive: true });
+                    if (user) {
+                        filterActiveUsers.push({ bId, token, chatId: user.chatId });
+                    }
+                }
+            } else {
                 const users = await getUsersForBot(bId);
-                const chats = users.map(u => u.chatId);
-
-                for (const chatId of chats) {
-                    const resMsg = await sendTelegramMessage(config.token, chatId, textToSend);
-                    results[bId].push({ chatId, result: resMsg });
+                for (const u of users) {
+                    filterActiveUsers.push({ bId, token, chatId: u.chatId });
                 }
             }
-            return res.status(200).json({ success: true, scope: 'broadcast', results });
         }
 
-        const targetConfig = BOTS_CONFIG[targetBot];
-        if (!targetConfig) {
-            return res.status(400).json({ error: `Invalid or missing bot identifier: ${targetBot}` });
-        }
-
-        const finalMessage = botText || DEFAULT_TEXT;
-        console.log('finalMessage:', finalMessage);
-
-        // Agar specific chatId di gayi ho toh sirf ussi user ko message jaye ga
-        if (targetChatId) {
-            const resMsg = await sendTelegramMessage(targetConfig.token, String(targetChatId), finalMessage);
-            return res.status(200).json({
-                success: true,
-                bot: targetBot,
-                botName: targetConfig.name,
-                chatId: targetChatId,
-                sentText: finalMessage,
-                result: resMsg
+        if (targetChatIds.length > 0 && filterActiveUsers.length === 0) {
+            return res.status(404).json({
+                success: false,
+                error: `Active user not found for the given chatId`
             });
         }
 
-        const usersForBot = await getUsersForBot(targetBot);
-        const chatsForBot = usersForBot.map(u => u.chatId);
+        // STEP 2: Execution sabse end mein sirf ek hi jagah hogi
+        const results = {};
 
-        if (chatsForBot.length === 0) {
-            return res.status(200).json({
-                success: true,
-                message: `No chat IDs registered for ${targetConfig.name} yet. Send /start to the bot first!`
-            });
-        }
+        for (const target of filterActiveUsers) {
+            if (!results[target.bId]) results[target.bId] = [];
 
-        const broadcastResults = [];
-        for (const chatId of chatsForBot) {
-            const resMsg = await sendTelegramMessage(targetConfig.token, chatId, finalMessage);
-            broadcastResults.push({ chatId, result: resMsg });
+            if (isTyping) {
+                await sendTelegramChatAction(target.token, target.chatId);
+                results[target.bId].push({ chatId: target.chatId, action: 'typing' });
+            } else {
+                const resMsg = await sendTelegramMessage(target.token, target.chatId, finalMessage);
+                results[target.bId].push({ chatId: target.chatId, result: resMsg });
+            }
         }
 
         return res.status(200).json({
             success: true,
-            bot: targetBot,
-            botName: targetConfig.name,
-            sentText: finalMessage,
-            results: broadcastResults
+            action: isTyping ? 'typing' : 'message',
+            bot: bot || 'all_bots',
+            chatId: chatId || 'all_active_users',
+            results
         });
 
     } catch (err) {
