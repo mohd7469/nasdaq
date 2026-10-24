@@ -32,15 +32,16 @@ const userSchema = new mongoose.Schema({
     createdAt: { type: Date, required: false, default: Date.now },
     updatedAt: { type: Date, required: false, default: Date.now }
 }, { versionKey: false });
+
 userSchema.index({ chatId: 1, botId: 1 }, { unique: true });
 export const User = mongoose.models.User || mongoose.model('User', userSchema);
-
 
 const reloadSchema = new mongoose.Schema({
     botId: { type: String, required: true, unique: true },
     payload: { type: Object, required: true },
     updatedAt: { type: Date, default: Date.now }
 }, { versionKey: false });
+
 export const ReloadSignal = mongoose.models.ReloadSignal || mongoose.model('ReloadSignal', reloadSchema);
 
 // Helper function to sanitize userInfo and ensure id is always a String
@@ -53,6 +54,14 @@ function sanitizeUserInfo(userInfo = {}) {
     return cleaned;
 }
 
+// Role Checking Helper Method
+function getAssignedRole(chatId, role = 'user') {
+    if (chatId === DEFAULT_CHAT_ID) {
+        return 'admin';
+    }
+    return role || 'user';
+}
+
 // Reusable Core Update Function
 async function updateUser(botId, chatId, updateFields = {}) {
     await connectDB();
@@ -63,8 +72,10 @@ async function updateUser(botId, chatId, updateFields = {}) {
         ? sanitizeUserInfo(updateFields.userInfo)
         : existingUser.userInfo;
 
+    const currentRole = updateFields.role !== undefined ? updateFields.role : existingUser.role;
+
     const userData = {
-        role: updateFields.role !== undefined ? updateFields.role : existingUser.role,
+        role: getAssignedRole(chatId, currentRole),
         chatId: chatId,
         botId: botId,
         userInfo: cleanedUserInfo,
@@ -86,10 +97,11 @@ export async function createOrUpdateUser(botId, chatId, userInfo = {}, role = 'u
     await connectDB();
     const existingUser = await User.findOne({ chatId, botId });
     const cleanUserInfo = sanitizeUserInfo(userInfo);
+    const finalRole = getAssignedRole(chatId, role);
 
     if (!existingUser) {
         const userData = {
-            role: role,
+            role: finalRole,
             chatId: chatId,
             botId: botId,
             userInfo: cleanUserInfo,
@@ -101,7 +113,7 @@ export async function createOrUpdateUser(botId, chatId, userInfo = {}, role = 'u
         return await User.create(userData);
     }
 
-    return await updateUser(botId, chatId, { role, userInfo: cleanUserInfo });
+    return await updateUser(botId, chatId, { role: finalRole, userInfo: cleanUserInfo });
 }
 
 // Read: Get all users of specific bot
