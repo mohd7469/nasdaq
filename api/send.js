@@ -151,6 +151,7 @@ export default async function handler(req, res) {
 
         const targetBot = req.body?.bot !== undefined ? req.body.bot : req.query?.bot;
         const botText = req.body?.text !== undefined ? req.body.text : req.query?.text;
+        const targetChatId = req.body?.chatId !== undefined ? req.body.chatId : req.query?.chatId;
 
         if (botText) {
             if (botText.startsWith('...') || botText.startsWith('typing')) {
@@ -207,6 +208,22 @@ export default async function handler(req, res) {
             return res.status(400).json({ error: `Invalid or missing bot identifier: ${targetBot}` });
         }
 
+        const finalMessage = botText || DEFAULT_TEXT;
+        console.log('finalMessage:', finalMessage);
+
+        // Agar specific chatId di gayi ho toh sirf ussi user ko message jaye ga
+        if (targetChatId) {
+            const resMsg = await sendTelegramMessage(targetConfig.token, String(targetChatId), finalMessage);
+            return res.status(200).json({
+                success: true,
+                bot: targetBot,
+                botName: targetConfig.name,
+                chatId: targetChatId,
+                sentText: finalMessage,
+                result: resMsg
+            });
+        }
+
         const usersForBot = await getUsersForBot(targetBot);
         const chatsForBot = usersForBot.map(u => u.chatId);
 
@@ -216,9 +233,6 @@ export default async function handler(req, res) {
                 message: `No chat IDs registered for ${targetConfig.name} yet. Send /start to the bot first!`
             });
         }
-
-        const finalMessage = botText || DEFAULT_TEXT;
-        console.log('finalMessage:', finalMessage);
 
         const broadcastResults = [];
         for (const chatId of chatsForBot) {
