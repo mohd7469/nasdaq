@@ -115,11 +115,28 @@ async function flattenAll(token) {
     }
 }
 
-// 4. Generic Order Execution Function
+// 4. Generic Order Execution Function (with Wait/Retry for Exit completion)
 async function placeOrder(token, payload) {
-    const isPositionOpen = await hasOpenPosition(token);
-    if (isPositionOpen) {
-        return { success: false, message: "Rejected: Position currently active" };
+    const maxRetries = 5;
+    const delaySeconds = 1;
+
+    for (let i = 0; i < maxRetries; i++) {
+        const isPositionOpen = await hasOpenPosition(token);
+
+        if (!isPositionOpen) {
+            // Position close ho chuki hai, ab loop se nikal kar order place karo
+            break;
+        }
+
+        if (i === maxRetries - 1) {
+            // Agar saari retries khatam ho jayen phir bhi position close nahi hui
+            const message = "Order Rejected: Position currently active after several retry attemps";
+            console.log(message);
+            return { success: false, message };
+        }
+
+        console.log(`⏳ Waiting for previous position to close.. (Attempt ${i + 1}/${maxRetries})`);
+        await wait(delaySeconds);
     }
 
     try {
