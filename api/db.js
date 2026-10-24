@@ -2,6 +2,8 @@ import mongoose from 'mongoose';
 import config from './config.json' with { type: 'json' };
 const { DEFAULT_CHAT_ID, BOTS_CONFIG } = config;
 
+const bots = Object.keys(BOTS_CONFIG);
+
 let isConnected = false;
 
 // Centralized DB connection
@@ -23,8 +25,8 @@ const userSchema = new mongoose.Schema({
     role: { type: String, required: true, default: 'user' },
     chatId: { type: String, required: true },
     botId: { type: String, required: true },
-    userName: { type: String, required: false, default: '' },
     userInfo: { type: Object, required: false, default: {} },
+    userName: { type: String, required: false, default: '' },
     isActive: { type: Boolean, required: false, default: false },
     updatedAt: { type: Date, required: false, default: Date.now }
 });
@@ -39,30 +41,48 @@ const reloadSchema = new mongoose.Schema({
 });
 export const ReloadSignal = mongoose.models.ReloadSignal || mongoose.model('ReloadSignal', reloadSchema);
 
-// Create or Update user
-export async function saveOrUpdateUser(botId, chatId, userInfo = {}, role = 'user') {
+// Reusable Core Update Function (Sare updates ishi ke through honge taake code DRY rahy aur order maintain rahy)
+async function updateUser(botId, chatId, updateFields = {}) {
     await connectDB();
-
-    // Pehle se isActive or userName preserve karlo
     const existingUser = await User.findOne({ chatId, botId });
-    const currentActiveStatus = existingUser ? existingUser.isActive : false;
-    const currentUserName = existingUser ? existingUser.userName : '';
+    if (!existingUser) return null;
 
     const userData = {
-        role: role,
+        role: updateFields.role !== undefined ? updateFields.role : existingUser.role,
         chatId: chatId,
         botId: botId,
-        userName: currentUserName,
-        userInfo: userInfo,
-        isActive: currentActiveStatus,
+        userInfo: updateFields.userInfo !== undefined ? updateFields.userInfo : existingUser.userInfo,
+        userName: updateFields.userName !== undefined ? updateFields.userName : existingUser.userName,
+        isActive: updateFields.isActive !== undefined ? updateFields.isActive : existingUser.isActive,
         updatedAt: new Date()
     };
 
     return await User.findOneAndReplace(
         { chatId, botId },
         userData,
-        { upsert: true, returnDocument: 'after' }
+        { returnDocument: 'after' }
     );
+}
+
+// Create or Update user (Reusable implementation)
+export async function saveOrUpdateUser(botId, chatId, userInfo = {}, role = 'user') {
+    await connectDB();
+    const existingUser = await User.findOne({ chatId, botId });
+
+    if (!existingUser) {
+        const userData = {
+            role: role,
+            chatId: chatId,
+            botId: botId,
+            userInfo: userInfo,
+            userName: '',
+            isActive: false,
+            updatedAt: new Date()
+        };
+        return await User.create(userData);
+    }
+
+    return await updateUser(botId, chatId, { role, userInfo });
 }
 
 // Read: Get all users of specific bot
@@ -71,24 +91,14 @@ export async function getUsersForBot(botId) {
     return await User.find({ botId, isActive: true });
 }
 
-// Activate or Deactivate User
+// Activate or Deactivate User (Reusable implementation)
 export async function setUserActiveStatus(botId, chatId, status) {
-    await connectDB();
-    return await User.findOneAndUpdate(
-        { chatId, botId },
-        { isActive: status, updatedAt: new Date() },
-        { returnDocument: 'after' }
-    );
+    return await updateUser(botId, chatId, { isActive: status });
 }
 
-// Manual Update: Set or update userName manually
-export async function setUserName(botId, chatId, userName) {
-    await connectDB();
-    return await User.findOneAndUpdate(
-        { chatId, botId },
-        { userName: userName, updatedAt: new Date() },
-        { returnDocument: 'after' }
-    );
+// Manual Update: Set or update userName manually (Reusable implementation)
+export async function setUserName(botId, chatId, name) {
+    return await updateUser(botId, chatId, { userName: name });
 }
 
 // Read: Count total users of specific bot
@@ -109,15 +119,15 @@ export async function removeUser(botId, chatId) {
         await connectDB();
     }
 
-    console.log('Initalizing default user for bots');
-    const bots = Object.keys(BOTS_CONFIG);
-
     await saveOrUpdateUser(bots[0], DEFAULT_CHAT_ID, { first_name: 'mohd' }, 'admin');
     await saveOrUpdateUser(bots[1], DEFAULT_CHAT_ID, { first_name: 'mohd' }, 'admin');
 
     await setUserActiveStatus(bots[0], DEFAULT_CHAT_ID, true);
     await setUserActiveStatus(bots[1], DEFAULT_CHAT_ID, true);
 
-    await setUserName(bots[0], DEFAULT_CHAT_ID, 'mohd')
-    await setUserName(bots[1], DEFAULT_CHAT_ID, 'mohd')
+    await setUserName(bots[0], DEFAULT_CHAT_ID, 'mohd');
+    await setUserName(bots[1], DEFAULT_CHAT_ID, 'mohd');
+
+    await setUserName(bots[0], '8973124597', 'khurram')
+    await setUserName(bots[1], '8973124597', 'khurram')
 })();
