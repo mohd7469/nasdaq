@@ -31,7 +31,7 @@ const userSchema = new mongoose.Schema({
     isActive: { type: Boolean, required: false, default: false },
     createdAt: { type: Date, required: false, default: Date.now },
     updatedAt: { type: Date, required: false, default: Date.now }
-});
+}, { versionKey: false });
 userSchema.index({ chatId: 1, botId: 1 }, { unique: true });
 export const User = mongoose.models.User || mongoose.model('User', userSchema);
 
@@ -40,7 +40,7 @@ const reloadSchema = new mongoose.Schema({
     botId: { type: String, required: true, unique: true },
     payload: { type: Object, required: true },
     updatedAt: { type: Date, default: Date.now }
-});
+}, { versionKey: false });
 export const ReloadSignal = mongoose.models.ReloadSignal || mongoose.model('ReloadSignal', reloadSchema);
 
 // Helper function to sanitize userInfo and ensure id is always a String
