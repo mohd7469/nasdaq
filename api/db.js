@@ -17,7 +17,7 @@ export async function connectDB() {
         isConnected = true;
         console.log("Database connected");
     } catch (error) {
-        console.error("MongoDB connection error:", error);
+        console.error("Database connection error:", error);
         throw error;
     }
 }
@@ -153,14 +153,23 @@ if (import.meta.url === url.pathToFileURL(process.argv[1]).href) {
                 await connectDB();
             }
 
-            await createOrUpdateUser(bots[0], DEFAULT_CHAT_ID, { first_name: 'mohd' }, 'admin');
-            await createOrUpdateUser(bots[1], DEFAULT_CHAT_ID, { first_name: 'mohd' }, 'admin');
+            for (const bot of bots) {
+                await createOrUpdateUser(bot, DEFAULT_CHAT_ID, { first_name: 'mohd' }, 'admin');
+            }
 
             await batchUpdateUsers([
-                { botId: bots[0], isActive: true, chatId: DEFAULT_CHAT_ID, name: 'mohd' },
-                { botId: bots[1], isActive: true, chatId: DEFAULT_CHAT_ID, name: 'mohd' },
-                { botId: bots[0], isActive: true, chatId: '', name: '' },
-                { botId: bots[1], isActive: true, chatId: '', name: '' },
+                ...bots.map(bot => ({
+                    botId: bot,
+                    isActive: true,
+                    chatId: DEFAULT_CHAT_ID,
+                    name: 'mohd'
+                })),
+                ...bots.map(bot => ({
+                    botId: bot,
+                    isActive: true,
+                    chatId: '',
+                    name: ''
+                })),
             ]);
 
             console.log("User Updated");
