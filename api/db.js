@@ -136,9 +136,8 @@ export async function removeUser(botId, chatId) {
 (async () => {
     if (!isConnected) {
         await connectDB();
+        console.log("MongoDB init");
     }
-
-    console.log("MongoDB initialized");
 
     await createOrUpdateUser(bots[0], DEFAULT_CHAT_ID, { first_name: 'mohd' }, 'admin');
     await createOrUpdateUser(bots[1], DEFAULT_CHAT_ID, { first_name: 'mohd' }, 'admin');
