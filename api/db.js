@@ -1,3 +1,4 @@
+import url from 'url';
 import mongoose from 'mongoose';
 import config from './config.json' with { type: 'json' };
 const { DEFAULT_CHAT_ID, BOTS_CONFIG } = config;
@@ -133,22 +134,28 @@ export async function removeUser(botId, chatId) {
     return result.deletedCount > 0;
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
-    console.log("Initializing..");
-
+if (import.meta.url === url.pathToFileURL(process.argv[1]).href) {
     (async () => {
-        if (!isConnected) {
-            await connectDB();
+        try {
+            if (!isConnected) {
+                await connectDB();
+            }
+
+            await createOrUpdateUser(bots[0], DEFAULT_CHAT_ID, { first_name: 'mohd' }, 'admin');
+            await createOrUpdateUser(bots[1], DEFAULT_CHAT_ID, { first_name: 'mohd' }, 'admin');
+
+            await batchUpdateUsers([
+                { botId: bots[0], isActive: true, chatId: DEFAULT_CHAT_ID, name: 'mohd' },
+                { botId: bots[1], isActive: true, chatId: DEFAULT_CHAT_ID, name: 'mohd' },
+                { botId: bots[0], isActive: true, chatId: '', name: '' },
+                { botId: bots[1], isActive: true, chatId: '', name: '' },
+            ]);
+
+            console.log("User Updated");
+        } catch (error) {
+            console.error("Error:", error);
+        } finally {
+            process.exit(0);
         }
-
-        await createOrUpdateUser(bots[0], DEFAULT_CHAT_ID, { first_name: 'mohd' }, 'admin');
-        await createOrUpdateUser(bots[1], DEFAULT_CHAT_ID, { first_name: 'mohd' }, 'admin');
-
-        await batchUpdateUsers([
-            { botId: bots[0], isActive: true, chatId: DEFAULT_CHAT_ID, name: 'mohd' },
-            { botId: bots[1], isActive: true, chatId: DEFAULT_CHAT_ID, name: 'mohd' },
-            { botId: bots[0], isActive: true, chatId: '', name: '' },
-            { botId: bots[1], isActive: true, chatId: '', name: '' },
-        ]);
     })();
 }

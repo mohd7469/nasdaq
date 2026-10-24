@@ -2,6 +2,7 @@
   "name": "nasdaq",
   "version": "1.0.0",
   "url": "https://app-nasdaq.vercel.app/api",
+  "type": "module",
   "private": true,
   "scripts": {
     "start": "vercel dev",
