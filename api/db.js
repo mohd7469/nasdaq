@@ -15,7 +15,7 @@ export async function connectDB() {
             dbName: 'telegram_bots'
         });
         isConnected = true;
-        console.log("MongoDB connected");
+        console.log("Database connected");
     } catch (error) {
         console.error("MongoDB connection error:", error);
         throw error;
