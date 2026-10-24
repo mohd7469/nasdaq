@@ -9,6 +9,10 @@ const IRONBEAM_PASSWORD = process.env.IRONBEAM_PASSWORD;
 const IRONBEAM_API_KEY = process.env.IRONBEAM_API_KEY;
 const IRONBEAM_SYMBOL = process.env.IRONBEAM_SYMBOL;
 
+const wait = (seconds) => {
+    return new Promise((resolve) => setTimeout(resolve, seconds * 1000));
+};
+
 // 1. Authentication (Token Lena)
 async function getAuthToken() {
     try {
