@@ -28,6 +28,7 @@ const userSchema = new mongoose.Schema({
     userInfo: { type: Object, required: false, default: {} },
     userName: { type: String, required: false, default: '' },
     isActive: { type: Boolean, required: false, default: false },
+    createdAt: { type: Date, required: false, default: Date.now },
     updatedAt: { type: Date, required: false, default: Date.now }
 });
 userSchema.index({ chatId: 1, botId: 1 }, { unique: true });
@@ -54,6 +55,7 @@ async function updateUser(botId, chatId, updateFields = {}) {
         userInfo: updateFields.userInfo !== undefined ? updateFields.userInfo : existingUser.userInfo,
         userName: updateFields.userName !== undefined ? updateFields.userName : existingUser.userName,
         isActive: updateFields.isActive !== undefined ? updateFields.isActive : existingUser.isActive,
+        createdAt: existingUser.createdAt || new Date(), // Purana createdAt preserve rahy ga
         updatedAt: new Date()
     };
 
@@ -77,6 +79,7 @@ export async function createOrUpdateUser(botId, chatId, userInfo = {}, role = 'u
             userInfo: userInfo,
             userName: '',
             isActive: false,
+            createdAt: new Date(), // Naye user ke liye creation date set ho gi
             updatedAt: new Date()
         };
         return await User.create(userData);
