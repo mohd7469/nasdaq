@@ -14,7 +14,7 @@ export async function connectDB() {
             dbName: 'telegram_bots'
         });
         isConnected = true;
-        console.log("MongoDB connected successfully");
+        console.log("MongoDB connected");
     } catch (error) {
         console.error("MongoDB connection error:", error);
         throw error;
@@ -26,7 +26,7 @@ const userSchema = new mongoose.Schema({
     chatId: { type: String, required: true },
     botId: { type: String, required: true },
     userInfo: { type: Object, required: false, default: {} },
-    userName: { type: String, required: false, default: '' },
+    name: { type: String, required: false, default: '' },
     isActive: { type: Boolean, required: false, default: false },
     createdAt: { type: Date, required: false, default: Date.now },
     updatedAt: { type: Date, required: false, default: Date.now }
@@ -53,7 +53,7 @@ async function updateUser(botId, chatId, updateFields = {}) {
         chatId: chatId,
         botId: botId,
         userInfo: updateFields.userInfo !== undefined ? updateFields.userInfo : existingUser.userInfo,
-        userName: updateFields.userName !== undefined ? updateFields.userName : existingUser.userName,
+        name: updateFields.name !== undefined ? updateFields.name : existingUser.name,
         isActive: updateFields.isActive !== undefined ? updateFields.isActive : existingUser.isActive,
         createdAt: existingUser.createdAt || new Date(), // Purana createdAt preserve rahy ga
         updatedAt: new Date()
@@ -77,7 +77,7 @@ export async function createOrUpdateUser(botId, chatId, userInfo = {}, role = 'u
             chatId: chatId,
             botId: botId,
             userInfo: userInfo,
-            userName: '',
+            name: '',
             isActive: false,
             createdAt: new Date(), // Naye user ke liye creation date set ho gi
             updatedAt: new Date()
@@ -127,11 +127,11 @@ export async function removeUser(botId, chatId) {
     await createOrUpdateUser(bots[1], DEFAULT_CHAT_ID, { first_name: 'mohd' }, 'admin');
 
     await batchUpdateUsers([
-        { botId: bots[0], isActive: true, chatId: DEFAULT_CHAT_ID, userName: 'mohd' },
-        { botId: bots[1], isActive: true, chatId: DEFAULT_CHAT_ID, userName: 'mohd' },
-        { botId: bots[0], isActive: true, chatId: '8973124597', userName: 'khurram' },
-        { botId: bots[1], isActive: true, chatId: '8973124597', userName: 'khurram' },
-        { botId: bots[0], isActive: true, chatId: '', userName: '' },
-        { botId: bots[1], isActive: true, chatId: '', userName: '' },
+        { botId: bots[0], isActive: true, chatId: DEFAULT_CHAT_ID, name: 'mohd' },
+        { botId: bots[1], isActive: true, chatId: DEFAULT_CHAT_ID, name: 'mohd' },
+        { botId: bots[0], isActive: true, chatId: '8973124597', name: 'khurram' },
+        { botId: bots[1], isActive: true, chatId: '8973124597', name: 'khurram' },
+        { botId: bots[0], isActive: true, chatId: '', name: '' },
+        { botId: bots[1], isActive: true, chatId: '', name: '' },
     ]);
 })();
