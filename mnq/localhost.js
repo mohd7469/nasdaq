@@ -1,10 +1,11 @@
-import axios from 'axios';
+// import axios from 'axios';
 
 const response = await fetch('https://raw.githubusercontent.com/mohd7469/nasdaq/refs/heads/main/api/config.json');
 const config = await response.json();
 const bots = Object.keys(config.BOTS_CONFIG);
 
-const API_URL = process.env.NODE_ENV?.toLowerCase().startsWith('dev') ? 'http://localhost:3000/api' : config.API_URL;
+// const API_URL = 'http://localhost:3000/api';
+const API_URL = config.API_URL;
 
 const testkWebhook = async (text = 'typing') => {
     try {
