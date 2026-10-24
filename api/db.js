@@ -101,6 +101,16 @@ export async function setUserName(botId, chatId, name) {
     return await updateUser(botId, chatId, { userName: name });
 }
 
+// Batch Update Users Method (Multiple users ko aik sath update karne ke liye)
+export async function batchUpdateUsers(updates = []) {
+    await connectDB();
+    const promises = updates.map(async (item) => {
+        const { botId, chatId, ...fieldsToUpdate } = item;
+        return await updateUser(botId, chatId, fieldsToUpdate);
+    });
+    return await Promise.all(promises);
+}
+
 // Read: Count total users of specific bot
 export async function countBotUsers(botId) {
     await connectDB();
@@ -125,9 +135,12 @@ export async function removeUser(botId, chatId) {
     await setUserActiveStatus(bots[0], DEFAULT_CHAT_ID, true);
     await setUserActiveStatus(bots[1], DEFAULT_CHAT_ID, true);
 
-    await setUserName(bots[0], DEFAULT_CHAT_ID, 'mohd');
-    await setUserName(bots[1], DEFAULT_CHAT_ID, 'mohd');
-
-    await setUserName(bots[0], '8973124597', 'khurram')
-    await setUserName(bots[1], '8973124597', 'khurram')
+    await batchUpdateUsers([
+        { botId: bots[0], isActive: true, chatId: DEFAULT_CHAT_ID, userName: 'mohd' },
+        { botId: bots[1], isActive: true, chatId: DEFAULT_CHAT_ID, userName: 'mohd' },
+        { botId: bots[0], isActive: true, chatId: '8973124597', userName: 'khurram' },
+        { botId: bots[1], isActive: true, chatId: '8973124597', userName: 'khurram' },
+        { botId: bots[0], isActive: true, chatId: '', userName: '' },
+        { botId: bots[1], isActive: true, chatId: '', userName: '' },
+    ]);
 })();
