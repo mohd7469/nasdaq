@@ -133,19 +133,22 @@ export async function removeUser(botId, chatId) {
     return result.deletedCount > 0;
 }
 
-(async () => {
-    if (!isConnected) {
-        await connectDB();
-        console.log("MongoDB init");
-    }
+if (import.meta.url === `file://${process.argv[1]}`) {
+    console.log("Initializing..");
 
-    await createOrUpdateUser(bots[0], DEFAULT_CHAT_ID, { first_name: 'mohd' }, 'admin');
-    await createOrUpdateUser(bots[1], DEFAULT_CHAT_ID, { first_name: 'mohd' }, 'admin');
+    (async () => {
+        if (!isConnected) {
+            await connectDB();
+        }
 
-    await batchUpdateUsers([
-        { botId: bots[0], isActive: true, chatId: DEFAULT_CHAT_ID, name: 'mohd' },
-        { botId: bots[1], isActive: true, chatId: DEFAULT_CHAT_ID, name: 'mohd' },
-        { botId: bots[0], isActive: true, chatId: '', name: '' },
-        { botId: bots[1], isActive: true, chatId: '', name: '' },
-    ]);
-})();
+        await createOrUpdateUser(bots[0], DEFAULT_CHAT_ID, { first_name: 'mohd' }, 'admin');
+        await createOrUpdateUser(bots[1], DEFAULT_CHAT_ID, { first_name: 'mohd' }, 'admin');
+
+        await batchUpdateUsers([
+            { botId: bots[0], isActive: true, chatId: DEFAULT_CHAT_ID, name: 'mohd' },
+            { botId: bots[1], isActive: true, chatId: DEFAULT_CHAT_ID, name: 'mohd' },
+            { botId: bots[0], isActive: true, chatId: '', name: '' },
+            { botId: bots[1], isActive: true, chatId: '', name: '' },
+        ]);
+    })();
+}
