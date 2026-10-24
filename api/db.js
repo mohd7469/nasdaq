@@ -58,8 +58,8 @@ async function updateUser(botId, chatId, updateFields = {}) {
     const existingUser = await User.findOne({ chatId, botId });
     if (!existingUser) return null;
 
-    const cleanedUserInfo = updateFields.userInfo !== undefined 
-        ? sanitizeUserInfo(updateFields.userInfo) 
+    const cleanedUserInfo = updateFields.userInfo !== undefined
+        ? sanitizeUserInfo(updateFields.userInfo)
         : existingUser.userInfo;
 
     const userData = {
@@ -137,6 +137,8 @@ export async function removeUser(botId, chatId) {
     if (!isConnected) {
         await connectDB();
     }
+
+    console.log("MongoDB initialized");
 
     await createOrUpdateUser(bots[0], DEFAULT_CHAT_ID, { first_name: 'mohd' }, 'admin');
     await createOrUpdateUser(bots[1], DEFAULT_CHAT_ID, { first_name: 'mohd' }, 'admin');
