@@ -203,7 +203,7 @@ export default async function handler(req, res) {
         if (targetChatIds.length > 0 && filterActiveUsers.length === 0) {
             return res.status(404).json({
                 success: false,
-                error: `Active user not found for the given chatId`
+                error: `User is not active for given chatId`
             });
         }
 
