@@ -106,6 +106,7 @@ export async function batchUpdateUsers(updates = []) {
     await connectDB();
     const promises = updates.map(async (item) => {
         const { botId, chatId, ...fieldsToUpdate } = item;
+        if (!botId || !chatId) return null;
         return await updateUser(botId, chatId, fieldsToUpdate);
     });
     return await Promise.all(promises);
