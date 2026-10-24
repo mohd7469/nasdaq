@@ -1,7 +1,7 @@
 import axios from 'axios';
 import {
     User,
-    saveOrUpdateUser,
+    createOrUpdateUser,
     getUsersForBot,
     countBotUsers,
     removeUser,
@@ -74,7 +74,7 @@ export default async function handler(req, res) {
             // Command Tarteeb: /start -> /stop -> reload -> default
             switch (true) {
                 case cleanText.startsWith('/start'): {
-                    const userRecord = await saveOrUpdateUser(botId, chatId, userInfo);
+                    const userRecord = await createOrUpdateUser(botId, chatId, userInfo);
                     const isActive = userRecord ? userRecord.isActive : false;
 
                     const textToSend = isActive
@@ -101,7 +101,7 @@ export default async function handler(req, res) {
                 }
 
                 case reloadCommands.includes(cleanText): {
-                    await saveOrUpdateUser(botId, chatId, userInfo);
+                    await createOrUpdateUser(botId, chatId, userInfo);
 
                     const reloadPayload = {
                         bot: botId,
@@ -132,7 +132,7 @@ export default async function handler(req, res) {
                         : `[${chatId}] In progress.. send <b>/stop</b> to disconnect`;
 
                     await sendTelegramMessage(botConfig.token, chatId, textToSend);
-                    await saveOrUpdateUser(botId, chatId, userInfo);
+                    await createOrUpdateUser(botId, chatId, userInfo);
 
                     console.log(`[${botConfig.name}] Message received & User updated: ${chatId}`, userInfo);
 

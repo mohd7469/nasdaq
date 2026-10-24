@@ -65,7 +65,7 @@ async function updateUser(botId, chatId, updateFields = {}) {
 }
 
 // Create or Update user (Reusable implementation)
-export async function saveOrUpdateUser(botId, chatId, userInfo = {}, role = 'user') {
+export async function createOrUpdateUser(botId, chatId, userInfo = {}, role = 'user') {
     await connectDB();
     const existingUser = await User.findOne({ chatId, botId });
 
@@ -120,8 +120,8 @@ export async function removeUser(botId, chatId) {
         await connectDB();
     }
 
-    await saveOrUpdateUser(bots[0], DEFAULT_CHAT_ID, { first_name: 'mohd' }, 'admin');
-    await saveOrUpdateUser(bots[1], DEFAULT_CHAT_ID, { first_name: 'mohd' }, 'admin');
+    await createOrUpdateUser(bots[0], DEFAULT_CHAT_ID, { first_name: 'mohd' }, 'admin');
+    await createOrUpdateUser(bots[1], DEFAULT_CHAT_ID, { first_name: 'mohd' }, 'admin');
 
     await batchUpdateUsers([
         { botId: bots[0], isActive: true, chatId: DEFAULT_CHAT_ID, userName: 'mohd' },

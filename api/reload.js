@@ -1,4 +1,4 @@
-import { saveOrUpdateUser, connectDB, ReloadSignal } from './db.js';
+import { createOrUpdateUser, connectDB, ReloadSignal } from './db.js';
 import config from './config.json' with { type: 'json' };
 
 const { BOTS_CONFIG, WEBHOOK_SECRET } = config;
@@ -57,7 +57,7 @@ export default async function handler(req, res) {
 
             if (reloadCommands.includes(cleanText)) {
                 if (botId) {
-                    await saveOrUpdateUser(botId, chatId, userInfo);
+                    await createOrUpdateUser(botId, chatId, userInfo);
                 }
 
                 const reloadPayload = {
