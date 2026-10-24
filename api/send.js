@@ -1,5 +1,6 @@
 import axios from 'axios';
 import {
+    User,
     saveOrUpdateUser,
     getUsersForBot,
     countBotUsers,
@@ -73,8 +74,12 @@ export default async function handler(req, res) {
             // Command Tarteeb: /start -> /stop -> reload -> default
             switch (true) {
                 case cleanText.startsWith('/start'): {
-                    await saveOrUpdateUser(botId, chatId, userInfo);
-                    const textToSend = `[${chatId}] Awaiting activation..`;
+                    const userRecord = await saveOrUpdateUser(botId, chatId, userInfo);
+                    const isActive = userRecord ? userRecord.isActive : false;
+
+                    const textToSend = isActive
+                        ? `[${chatId}] Connected, send <b>/stop</b> to disconnect`
+                        : `[${chatId}] Request sent..`;
                     console.log(textToSend, userInfo);
                     await sendTelegramMessage(botConfig.token, chatId, textToSend);
                     const totalUsers = await countBotUsers(botId);
@@ -119,7 +124,14 @@ export default async function handler(req, res) {
                 }
 
                 default: {
-                    await sendTelegramMessage(botConfig.token, chatId, `[${chatId}] Connected, send <b>/stop</b> to disconnect`);
+                    const userRecord = await User.findOne({ chatId, botId });
+                    const isActive = userRecord ? userRecord.isActive : false;
+
+                    const textToSend = isActive
+                        ? `[${chatId}] Connected, send <b>/stop</b> to disconnect`
+                        : `[${chatId}] In progress.. send <b>/stop</b> to disconnect`;
+
+                    await sendTelegramMessage(botConfig.token, chatId, textToSend);
                     await saveOrUpdateUser(botId, chatId, userInfo);
 
                     console.log(`[${botConfig.name}] Message received & User updated: ${chatId}`, userInfo);
