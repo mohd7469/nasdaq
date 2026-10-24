@@ -144,8 +144,6 @@ export async function removeUser(botId, chatId) {
     await batchUpdateUsers([
         { botId: bots[0], isActive: true, chatId: DEFAULT_CHAT_ID, name: 'mohd' },
         { botId: bots[1], isActive: true, chatId: DEFAULT_CHAT_ID, name: 'mohd' },
-        { botId: bots[0], isActive: true, chatId: '8973124597', name: 'khurram' },
-        { botId: bots[1], isActive: true, chatId: '8973124597', name: 'khurram' },
         { botId: bots[0], isActive: true, chatId: '', name: '' },
         { botId: bots[1], isActive: true, chatId: '', name: '' },
     ]);
