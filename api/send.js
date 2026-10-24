@@ -129,7 +129,7 @@ export default async function handler(req, res) {
 
                     const textToSend = isActive
                         ? `[${chatId}] Connected, send <b>/stop</b> to disconnect`
-                        : `[${chatId}] In progress.. send <b>/stop</b> to disconnect`;
+                        : `[${chatId}] In progress..`;
 
                     await sendTelegramMessage(botConfig.token, chatId, textToSend);
                     await createOrUpdateUser(botId, chatId, userInfo);
