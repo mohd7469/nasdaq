@@ -91,16 +91,6 @@ export async function getUsersForBot(botId) {
     return await User.find({ botId, isActive: true });
 }
 
-// Activate or Deactivate User (Reusable implementation)
-export async function setUserActiveStatus(botId, chatId, status) {
-    return await updateUser(botId, chatId, { isActive: status });
-}
-
-// Manual Update: Set or update userName manually (Reusable implementation)
-export async function setUserName(botId, chatId, name) {
-    return await updateUser(botId, chatId, { userName: name });
-}
-
 // Batch Update Users Method (Multiple users ko aik sath update karne ke liye)
 export async function batchUpdateUsers(updates = []) {
     await connectDB();
@@ -132,9 +122,6 @@ export async function removeUser(botId, chatId) {
 
     await saveOrUpdateUser(bots[0], DEFAULT_CHAT_ID, { first_name: 'mohd' }, 'admin');
     await saveOrUpdateUser(bots[1], DEFAULT_CHAT_ID, { first_name: 'mohd' }, 'admin');
-
-    await setUserActiveStatus(bots[0], DEFAULT_CHAT_ID, true);
-    await setUserActiveStatus(bots[1], DEFAULT_CHAT_ID, true);
 
     await batchUpdateUsers([
         { botId: bots[0], isActive: true, chatId: DEFAULT_CHAT_ID, userName: 'mohd' },
