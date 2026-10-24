@@ -20,7 +20,7 @@ async function sendTelegramMessage(token, chatId, text) {
         });
         return { success: true, data: response.data };
     } catch (err) {
-        console.error(`Failed to send to chatId ${chatId}:`, err.response?.data || err.message);
+        console.error(`Failed sending MESSAGE to [${chatId}],`, err.response?.data || err.message);
         return { success: false, error: err.response?.data || err.message };
     }
 }
@@ -33,7 +33,7 @@ async function sendTelegramChatAction(token, chatId, action = 'typing') {
             action: action
         });
     } catch (err) {
-        console.error(`Failed to send chat action to chatId ${chatId}:`, err.message);
+        console.error(`Failed sending ACTION to [${chatId}],`, err.message);
     }
 }
 
@@ -80,7 +80,9 @@ export default async function handler(req, res) {
                     const textToSend = isActive
                         ? `[${chatId}] Connected, send <b>/stop</b> to disconnect`
                         : `[${chatId}] Request sent..`;
-                    console.log(textToSend, userInfo);
+
+                    console.log(`[${chatId}] ${isActive ? 'Connected' : 'Request sent..'}`);
+
                     await sendTelegramMessage(botConfig.token, chatId, textToSend);
                     const totalUsers = await countBotUsers(botId);
                     return res.status(200).json({ status: 'OK', savedChatsCount: totalUsers, userInfo });
