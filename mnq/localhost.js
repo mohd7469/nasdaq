@@ -53,7 +53,7 @@ const handleTrade = async (payload) => {
 
 import mongoose from 'mongoose';
 
-const MONGODB_URI = "mongodb+srv://awais3227443:BTKJwrtq5qyFAqkd@nasdaq-cluster.sc8gf1s.mongodb.net/?retryWrites=true&w=majority";
+const MONGODB_URI = process.env.MONGODB_URI;
 
 async function addInitialData() {
     try {
@@ -62,40 +62,40 @@ async function addInitialData() {
         });
         console.log("Database connected!");
 
-        // Config Collection
-        const Config = mongoose.models.Config || mongoose.model('Config', new mongoose.Schema({}, { strict: false, versionKey: false }), 'config');
-        await Config.deleteMany({});
-        await Config.create({
+        // Configs Collection
+        const Configs = mongoose.models.Configs || mongoose.model('Configs', new mongoose.Schema({}, { strict: false, versionKey: false }), 'config');
+        await Configs.deleteMany({});
+        await Configs.create({
             apiUrl: "https://app-nasdaq.vercel.app/api",
             defaultChatId: "7670215141",
-            webhookSecrete: "dxbbot",
-            defaultText: "Test Success",
-            createdAt: new Date(),
-            updatedAt: new Date()
+            webhookSecret: "dxbbot",
+            defaultText: "Test Success"
         });
 
 
         // Ironbeam Users Collection
-        const IronbeamUser = mongoose.models.IronbeamUser || mongoose.model('IronbeamUser', new mongoose.Schema({}, { strict: false, versionKey: false }), 'ironbeam_users');
-        await IronbeamUser.deleteMany({});
-        await IronbeamUser.create({
-            isDemo: true,
-            apiUrl: "https://demo.ironbeamapi.com/v2",
-            accountId: "51429427",
-            username: "51429427",
-            password: "Awais51429427",
-            apiKey: "24993c8742f046c2a53fa9edb6634819",
-            symbol: "XCME:MNQ.Z26",
-            isActive: false,
-            createdAt: new Date(),
-            updatedAt: new Date()
-        });
+        const IronbeamUsers = mongoose.models.IronbeamUsers || mongoose.model('IronbeamUsers', new mongoose.Schema({}, { strict: false, versionKey: false }), 'ironbeam_users');
+        await IronbeamUsers.deleteMany({});
+        await IronbeamUsers.insertMany([
+            {
+                isDemo: true,
+                apiUrl: "https://demo.ironbeamapi.com/v2",
+                accountId: "51429427",
+                username: "51429427",
+                password: "Awais51429427",
+                apiKey: "24993c8742f046c2a53fa9edb6634819",
+                symbol: "XCME:MNQ.Z26",
+                isActive: true,
+                createdAt: new Date(),
+                updatedAt: new Date()
+            }
+        ]);
 
 
         // Reload Signals Collection
-        const ReloadSignal = mongoose.models.ReloadSignal || mongoose.model('ReloadSignal', new mongoose.Schema({}, { strict: false, versionKey: false }), 'reload_signals');
-        await ReloadSignal.deleteMany({});
-        await ReloadSignal.create({
+        const ReloadSignals = mongoose.models.ReloadSignals || mongoose.model('ReloadSignals', new mongoose.Schema({}, { strict: false, versionKey: false }), 'reload_signals');
+        await ReloadSignals.deleteMany({});
+        await ReloadSignals.create({
             botId: "dxblog_bot",
             payload: {
                 bot: "dxblog_bot",
@@ -117,30 +117,26 @@ async function addInitialData() {
 
 
         // Telegram Bots Collection
-        const TelegramBot = mongoose.models.TelegramBot || mongoose.model('TelegramBot', new mongoose.Schema({}, { strict: false, versionKey: false }), 'telegram_bots');
-        await TelegramBot.deleteMany({});
-        await TelegramBot.insertMany([
+        const TelegramBots = mongoose.models.TelegramBots || mongoose.model('TelegramBots', new mongoose.Schema({}, { strict: false, versionKey: false }), 'telegram_bots');
+        await TelegramBots.deleteMany({});
+        await TelegramBots.insertMany([
             {
                 botId: "dxbmnq_bot",
                 name: "Nasdaq Alert",
-                token: "8883267489:AAFeXTRqVpMR4-gG1Adi76NTqmtrDCJUj2A",
-                createdAt: new Date(),
-                updatedAt: new Date()
+                token: "8883267489:AAFeXTRqVpMR4-gG1Adi76NTqmtrDCJUj2A"
             },
             {
                 botId: "dxblog_bot",
                 name: "Nasdaq Logs",
-                token: "8846747499:AAECpWSsjXSjzWDgAp5-8iMslCis8iFJYi8",
-                createdAt: new Date(),
-                updatedAt: new Date()
+                token: "8846747499:AAECpWSsjXSjzWDgAp5-8iMslCis8iFJYi8"
             }
         ]);
 
 
         // Telegram Users Collection
-        const TelegramUser = mongoose.models.TelegramUser || mongoose.model('TelegramUser', new mongoose.Schema({}, { strict: false, versionKey: false }), 'telegram_users');
-        await TelegramUser.deleteMany({});
-        await TelegramUser.insertMany([
+        const TelegramUsers = mongoose.models.TelegramUsers || mongoose.model('TelegramUsers', new mongoose.Schema({}, { strict: false, versionKey: false }), 'telegram_users');
+        await TelegramUsers.deleteMany({});
+        await TelegramUsers.insertMany([
             {
                 role: "admin",
                 chatId: "7670215141",
