@@ -42,44 +42,6 @@ export async function connectDB() {
 // SCHEMAS & MODELS (Strict collection mappings)
 // ==========================================
 
-// Schema key order maintain karne ke liye helper function
-export function sortDocBySchema(doc, schema) {
-    if (!doc || typeof doc !== 'object') return doc;
-    const raw = doc.toObject ? doc.toObject() : { ...doc };
-    const ordered = {};
-
-    // 1. Agar _id ho toh sab se pehle
-    if (raw._id !== undefined) {
-        ordered._id = raw._id;
-    }
-
-    // 2. Schema paths ke exact definition order me fields add karein
-    const schemaKeys = Object.keys(schema.paths).filter(k => k !== '__v' && k !== '_id');
-    for (const key of schemaKeys) {
-        if (raw[key] !== undefined) {
-            ordered[key] = raw[key];
-        }
-    }
-
-    // 3. Extra fields (agar koi hon)
-    for (const key of Object.keys(raw)) {
-        if (ordered[key] === undefined && key !== '__v') {
-            ordered[key] = raw[key];
-        }
-    }
-
-    return ordered;
-}
-
-function applySchemaOrderPlugin(schema) {
-    schema.pre('save', function (next) {
-        if (this._doc) {
-            this._doc = sortDocBySchema(this._doc, schema);
-        }
-        next();
-    });
-}
-
 // 1. Configs Model (Collection: "config")
 const configsSchema = new mongoose.Schema({
     apiUrl: { type: String, default: 'https://app-nasdaq.vercel.app/api' },
@@ -88,7 +50,6 @@ const configsSchema = new mongoose.Schema({
     defaultText: { type: String, default: 'Test Success' }
 }, { _id: false, strict: false, versionKey: false });
 
-applySchemaOrderPlugin(configsSchema);
 export const Configs = mongoose.models.Configs || mongoose.model('Configs', configsSchema, 'config');
 
 // 2. Ironbeam Users Model (Collection: "ironbeam_users")
@@ -105,7 +66,6 @@ const ironbeamUsersSchema = new mongoose.Schema({
     updatedAt: { type: Date, default: Date.now }
 }, { strict: false, versionKey: false });
 
-applySchemaOrderPlugin(ironbeamUsersSchema);
 export const IronbeamUsers = mongoose.models.IronbeamUsers || mongoose.model('IronbeamUsers', ironbeamUsersSchema, 'ironbeam_users');
 
 // 3. Reload Signals Model (Collection: "reload_signals")
@@ -116,7 +76,6 @@ const reloadSignalsSchema = new mongoose.Schema({
     updatedAt: { type: Date, default: Date.now }
 }, { strict: false, versionKey: false });
 
-applySchemaOrderPlugin(reloadSignalsSchema);
 export const ReloadSignals = mongoose.models.ReloadSignals || mongoose.model('ReloadSignals', reloadSignalsSchema, 'reload_signals');
 
 // 4. Telegram Bots Model (Collection: "telegram_bots")
@@ -126,7 +85,6 @@ const telegramBotsSchema = new mongoose.Schema({
     token: { type: String, required: true }
 }, { _id: false, strict: false, versionKey: false });
 
-applySchemaOrderPlugin(telegramBotsSchema);
 export const TelegramBots = mongoose.models.TelegramBots || mongoose.model('TelegramBots', telegramBotsSchema, 'telegram_bots');
 
 // 5. Telegram Users Model (Collection: "telegram_users")
@@ -142,7 +100,6 @@ const telegramUsersSchema = new mongoose.Schema({
 }, { strict: false, versionKey: false });
 
 telegramUsersSchema.index({ chatId: 1, botId: 1 }, { unique: true });
-applySchemaOrderPlugin(telegramUsersSchema);
 
 export const TelegramUsers = mongoose.models.TelegramUsers || mongoose.model('TelegramUsers', telegramUsersSchema, 'telegram_users');
 
@@ -212,11 +169,11 @@ export async function updateTelegramUser(botId, chatId, updateFields = {}) {
         updatedAt: new Date()
     };
 
-    const orderedData = sortDocBySchema(mergedData, telegramUsersSchema);
+    delete mergedData._id;
 
     return await TelegramUsers.findOneAndReplace(
         { chatId, botId },
-        orderedData,
+        mergedData,
         { returnDocument: 'after' }
     );
 }
@@ -238,8 +195,7 @@ export async function createOrUpdateUser(botId, chatId, userInfo = {}, role = 'u
             createdAt: new Date(),
             updatedAt: new Date()
         };
-        const orderedData = sortDocBySchema(rawData, telegramUsersSchema);
-        return await TelegramUsers.create(orderedData);
+        return await TelegramUsers.create(rawData);
     }
 
     return await updateTelegramUser(botId, chatId, { role: finalRole, userInfo: cleanUserInfo });
