@@ -1,9 +1,8 @@
 {
   "name": "nasdaq",
   "version": "1.0.0",
-  "url": "https://app-nasdaq.vercel.app/api",
-  "type": "module",
   "private": true,
+  "type": "module",
   "scripts": {
     "start": "vercel dev",
     "localhost": "node --env-file=.env mnq/localhost.js"

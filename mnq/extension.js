@@ -14,8 +14,7 @@
         document.body.prepend(overlay);
     })();
 
-    const response = await fetch('https://raw.githubusercontent.com/mohd7469/nasdaq/refs/heads/main/api/config.json');
-    const config = await response.json();
+    const API_URL = 'https://app-nasdaq.vercel.app/api';
 
     const PINE_LOGS_CONTAINER = '[data-test-id-widget-type="pine_logs"] [class*="logsList-"]';
     const OHLC_CONTAINER = '[data-qa-id="legend-series-item"]';
@@ -69,7 +68,7 @@
 
     const isReloadRequested = async () => {
         try {
-            const response = await fetch(`${config.API_URL}/reload`, { cache: 'no-store' });
+            const response = await fetch(`${API_URL}/reload`, { cache: 'no-store' });
             const shouldReload = await response.json();
             if (shouldReload === true) {
                 await sendLog(`Reloading..`).catch(err => { });
@@ -83,7 +82,7 @@
     const handleTrade = async (payload) => {
         try {
             const isWindows = /Win/i.test(navigator.userAgent || navigator.platform);
-            const endpointUrl = isWindows ? `http://localhost:3000/api` : config.API_URL;
+            const endpointUrl = isWindows ? `http://localhost:3000/api` : API_URL;
             await axios.post(`${endpointUrl}/trade`, payload);
         } catch (err) {
             console.error('Trade Error:', err?.message);
@@ -92,7 +91,7 @@
 
     const sendAlert = async (text = 'Test Alert') => {
         try {
-            await axios.post(`${config.API_URL}/send`, { bot: 'dxbmnq_bot', text });
+            await axios.post(`${API_URL}/send`, { bot: 'dxbmnq_bot', text });
         } catch (err) {
             console.error('Alert Error:', err?.message);
         }
@@ -100,7 +99,7 @@
 
     const sendLog = async (text = 'Test Log') => {
         try {
-            await axios.post(`${config.API_URL}/send`, { bot: 'dxblog_bot', text });
+            await axios.post(`${API_URL}/send`, { bot: 'dxblog_bot', text });
         } catch (err) {
             console.error('Log Error:', err?.message);
         }

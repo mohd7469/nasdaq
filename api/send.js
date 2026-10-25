@@ -1,14 +1,15 @@
 import axios from 'axios';
 import {
-    User,
+    connectDB,
+    getAppConfig,
+    getBotsConfig,
+    TelegramUsers,
     createOrUpdateUser,
-    getUsersForBot,
-    countBotUsers,
-    removeUser,
-    ReloadSignal
+    getTelegramUsersForBot,
+    countBotTelegramUsers,
+    removeTelegramUser,
+    ReloadSignals
 } from './db.js';
-import config from './config.json' with { type: 'json' };
-const { DEFAULT_TEXT, BOTS_CONFIG, WEBHOOK_SECRET, DEFAULT_CHAT_ID } = config;
 
 // Telegram API par message bhejne ke liye helper function
 async function sendTelegramMessage(token, chatId, text) {
@@ -48,19 +49,26 @@ export default async function handler(req, res) {
     }
 
     try {
+        await connectDB();
+        const appConfig = await getAppConfig();
+        const botsConfig = await getBotsConfig();
+
+        const defaultText = appConfig.defaultText;
+        const webhookSecret = appConfig.webhookSecret;
+
         // ==========================================
         // SCENARIO A: TELEGRAM SE WEBHOOK UPDATE AAYE (POST)
         // ==========================================
         const botId = req.query?.bot;
         if (req.method === 'POST' && req.body && req.body.message && botId) {
             const secretHeader = req.headers['x-telegram-bot-api-secret-token'];
-            if (secretHeader !== WEBHOOK_SECRET) {
+            if (secretHeader !== webhookSecret) {
                 return res.status(401).json({ error: 'Unauthorized secret token' });
             }
 
-            const botConfig = BOTS_CONFIG[botId];
+            const botConfig = botsConfig.find(b => b.botId === botId);
             if (!botConfig) {
-                return res.status(404).json({ error: 'Bot ID not found in config' });
+                return res.status(404).json({ error: 'Bot ID not found in database' });
             }
 
             const message = req.body.message;
@@ -84,12 +92,12 @@ export default async function handler(req, res) {
                     console.log(`[${chatId}] ${isActive ? 'Connected' : 'Request sent..'}`);
 
                     await sendTelegramMessage(botConfig.token, chatId, textToSend);
-                    const totalUsers = await countBotUsers(botId);
+                    const totalUsers = await countBotTelegramUsers(botId);
                     return res.status(200).json({ status: 'OK', savedChatsCount: totalUsers, userInfo });
                 }
 
                 case cleanText.startsWith('/stop'): {
-                    const isDeleted = await removeUser(botId, chatId);
+                    const isDeleted = await removeTelegramUser(botId, chatId);
                     if (isDeleted) {
                         console.log(`[${chatId}] Disconnected for [${botConfig.name}]`);
                     } else {
@@ -98,7 +106,7 @@ export default async function handler(req, res) {
 
                     const textToSend = `[${chatId}] Disconnected, send <b>/start</b> to connect again`;
                     await sendTelegramMessage(botConfig.token, chatId, textToSend);
-                    const totalUsers = await countBotUsers(botId);
+                    const totalUsers = await countBotTelegramUsers(botId);
                     return res.status(200).json({ status: 'OK', savedChatsCount: totalUsers });
                 }
 
@@ -114,7 +122,7 @@ export default async function handler(req, res) {
                         timestamp: Date.now()
                     };
 
-                    await ReloadSignal.findOneAndUpdate(
+                    await ReloadSignals.findOneAndUpdate(
                         { botId },
                         { botId, payload: reloadPayload, updatedAt: new Date() },
                         { upsert: true, new: true }
@@ -126,7 +134,7 @@ export default async function handler(req, res) {
                 }
 
                 default: {
-                    const userRecord = await User.findOne({ chatId, botId });
+                    const userRecord = await TelegramUsers.findOne({ chatId, botId });
                     const isActive = userRecord ? userRecord.isActive : false;
 
                     const textToSend = isActive
@@ -138,7 +146,7 @@ export default async function handler(req, res) {
 
                     console.log(`[${botConfig.name}] Message received & User updated: ${chatId}`, userInfo);
 
-                    const totalUsers = await countBotUsers(botId);
+                    const totalUsers = await countBotTelegramUsers(botId);
                     return res.status(200).json({ status: 'OK', savedChatsCount: totalUsers, userInfo });
                 }
             }
@@ -164,16 +172,16 @@ export default async function handler(req, res) {
             throw new Error("chatId is missing");
         }
 
-        const finalMessage = text || DEFAULT_TEXT;
+        const finalMessage = text || defaultText;
         const isTyping = text && (text.startsWith('...') || text.startsWith('typing'));
 
         // Target lists tayyar karna
-        const targetBots = bot ? (Array.isArray(bot) ? bot : [bot]) : Object.keys(BOTS_CONFIG);
+        const targetBots = bot ? (Array.isArray(bot) ? bot : [bot]) : botsConfig.map(b => b.botId);
         const targetChatIds = chatId ? (Array.isArray(chatId) ? chatId : [chatId]) : [];
 
         // Validate bots existence
         for (const bId of targetBots) {
-            if (!BOTS_CONFIG[bId]) {
+            if (!botsConfig.some(b => b.botId === bId)) {
                 return res.status(400).json({ error: `Invalid or missing bot identifier: ${bId}` });
             }
         }
@@ -182,18 +190,19 @@ export default async function handler(req, res) {
         const filterActiveUsers = [];
 
         for (const bId of targetBots) {
-            const token = BOTS_CONFIG[bId]?.token;
+            const botObj = botsConfig.find(b => b.botId === bId);
+            const token = botObj?.token;
             if (!token) continue;
 
             if (targetChatIds.length > 0) {
                 for (const id of targetChatIds) {
-                    const user = await User.findOne({ chatId: String(id), botId: bId, isActive: true });
+                    const user = await TelegramUsers.findOne({ chatId: String(id), botId: bId, isActive: true });
                     if (user) {
                         filterActiveUsers.push({ bId, token, chatId: user.chatId });
                     }
                 }
             } else {
-                const users = await getUsersForBot(bId);
+                const users = await getTelegramUsersForBot(bId);
                 for (const u of users) {
                     filterActiveUsers.push({ bId, token, chatId: u.chatId });
                 }

@@ -1,65 +1,57 @@
 import axios from 'axios';
-import config from './config.json' with { type: 'json' };
-const { WEBHOOK_SECRET, BOTS_CONFIG } = config;
-
-const IRONBEAM_API_URL = process.env.IRONBEAM_API_URL;
-const IRONBEAM_ACCOUNT_ID = process.env.IRONBEAM_ACCOUNT_ID;
-const IRONBEAM_USERNAME = process.env.IRONBEAM_USERNAME;
-const IRONBEAM_PASSWORD = process.env.IRONBEAM_PASSWORD;
-const IRONBEAM_API_KEY = process.env.IRONBEAM_API_KEY;
-const IRONBEAM_SYMBOL = process.env.IRONBEAM_SYMBOL;
+import { connectDB, getIronbeamConfig } from './db.js';
 
 const wait = (seconds) => {
     return new Promise((resolve) => setTimeout(resolve, seconds * 1000));
 };
 
 // 1. Authentication (Token Lena)
-async function getAuthToken() {
+async function getAuthToken(ibConfig) {
     try {
-        const response = await axios.post(`${IRONBEAM_API_URL}/auth`, {
-            username: IRONBEAM_USERNAME,
-            password: IRONBEAM_PASSWORD,
-            apiKey: IRONBEAM_API_KEY
+        const response = await axios.post(`${ibConfig.apiUrl}/auth`, {
+            username: ibConfig.username,
+            password: ibConfig.password,
+            apiKey: ibConfig.apiKey
         });
         return response.data.token;
     } catch (error) {
-        console.error("Auth Token Error:", error.response?.data || error.message);
-        throw new Error("Failed to authenticate with Ironbeam API");
+        console.error(`Auth Token Error for [${ibConfig.accountId}]:`, error.response?.data || error.message);
+        throw new Error(`Failed to authenticate account ${ibConfig.accountId}: ${error.response?.data?.message || error.message}`);
     }
 }
 
 // 2. Open Positions Check Karna
-async function hasOpenPosition(token) {
+async function hasOpenPosition(token, ibConfig) {
     try {
-        const response = await axios.get(`${IRONBEAM_API_URL}/account/${IRONBEAM_ACCOUNT_ID}/positions`, {
+        const response = await axios.get(`${ibConfig.apiUrl}/account/${ibConfig.accountId}/positions`, {
             headers: { "Authorization": `Bearer ${token}` }
         });
 
         const positions = response.data.positions || response.data || [];
         const activePosition = positions.find(
-            p => (p.symbol === IRONBEAM_SYMBOL || p.exchSym === IRONBEAM_SYMBOL) && p.quantity !== 0
+            p => (p.symbol === ibConfig.symbol || p.exchSym === ibConfig.symbol) && p.quantity !== 0
         );
 
         if (activePosition) {
-            console.warn(`Active position already exists for ${IRONBEAM_SYMBOL}`, activePosition);
+            console.warn(`Active position already exists for ${ibConfig.symbol} on account [${ibConfig.accountId}]`, activePosition);
             return true;
         }
 
         return false;
     } catch (error) {
-        console.error("Error checking positions:", error.response?.data || error.message);
+        console.error(`Error checking positions for [${ibConfig.accountId}]:`, error.response?.data || error.message);
         // Safety check: agar endpoint error de toh accidental double trade rokne ke liye true return karein
         return true;
     }
 }
 
 // 3. Close All Open Positions and Orders 
-async function flattenAll(token) {
+async function flattenAll(token, ibConfig) {
     try {
         const headers = { "Authorization": `Bearer ${token}` };
 
         // 1. Saare active orders fetch karke cancel karna
-        const ordersRes = await axios.get(`${IRONBEAM_API_URL}/order/${IRONBEAM_ACCOUNT_ID}/ANY`, { headers });
+        const ordersRes = await axios.get(`${ibConfig.apiUrl}/order/${ibConfig.accountId}/ANY`, { headers });
         const ordersData = ordersRes.data.orders || ordersRes.data || [];
 
         const activeOrders = ordersData.filter(o =>
@@ -68,29 +60,29 @@ async function flattenAll(token) {
         const activeOrderIds = activeOrders.map(o => o.orderId || o.oid);
 
         if (activeOrderIds.length > 0) {
-            await axios.delete(`${IRONBEAM_API_URL}/order/${IRONBEAM_ACCOUNT_ID}/cancelMultiple`, {
+            await axios.delete(`${ibConfig.apiUrl}/order/${ibConfig.accountId}/cancelMultiple`, {
                 headers,
                 data: {
-                    accountId: IRONBEAM_ACCOUNT_ID,
+                    accountId: ibConfig.accountId,
                     orderIds: activeOrderIds
                 }
             });
-            console.log("✅ All active orders cancelled.");
+            console.log(`✅ All active orders cancelled for [${ibConfig.accountId}].`);
         }
 
         // 2. Open positions fetch karke quantity ke sign se close karna
-        const posRes = await axios.get(`${IRONBEAM_API_URL}/account/${IRONBEAM_ACCOUNT_ID}/positions`, { headers });
+        const posRes = await axios.get(`${ibConfig.apiUrl}/account/${ibConfig.accountId}/positions`, { headers });
         const positions = posRes.data.positions || posRes.data || [];
 
         for (let pos of positions) {
             const sym = pos.symbol || pos.exchSym || pos.s;
             const qty = pos.quantity !== undefined ? pos.quantity : pos.q;
 
-            if (sym === IRONBEAM_SYMBOL && qty && qty !== 0) {
+            if (sym === ibConfig.symbol && qty && qty !== 0) {
                 const closingSide = qty > 0 ? "SELL" : "BUY";
                 const closePayload = {
-                    accountId: IRONBEAM_ACCOUNT_ID,
-                    exchSym: IRONBEAM_SYMBOL,
+                    accountId: ibConfig.accountId,
+                    exchSym: ibConfig.symbol,
                     side: closingSide,
                     quantity: Math.abs(qty),
                     orderType: "MARKET",
@@ -98,30 +90,30 @@ async function flattenAll(token) {
                     waitForOrderId: true
                 };
 
-                await axios.post(`${IRONBEAM_API_URL}/order/${IRONBEAM_ACCOUNT_ID}/place`, closePayload, {
+                await axios.post(`${ibConfig.apiUrl}/order/${ibConfig.accountId}/place`, closePayload, {
                     headers: {
                         "Content-Type": "application/json",
                         "Authorization": `Bearer ${token}`
                     }
                 });
-                console.log(`✅ Position closed successfully for ${IRONBEAM_SYMBOL}`);
+                console.log(`✅ Position closed successfully for ${ibConfig.symbol} on [${ibConfig.accountId}]`);
             }
         }
 
         return { success: true, message: "Positions flattened successfully." };
     } catch (error) {
-        console.error("Error in flattenAll:", error.response?.data || error.message);
+        console.error(`Error in flattenAll for [${ibConfig.accountId}]:`, error.response?.data || error.message);
         throw new Error(error.response?.data?.message || error.message);
     }
 }
 
 // 4. Generic Order Execution Function (with Wait/Retry for Exit completion)
-async function placeOrder(token, payload) {
+async function placeOrder(token, payload, ibConfig) {
     const maxRetries = 5;
     const delaySeconds = 1;
 
     for (let i = 0; i < maxRetries; i++) {
-        const isPositionOpen = await hasOpenPosition(token);
+        const isPositionOpen = await hasOpenPosition(token, ibConfig);
 
         if (!isPositionOpen) {
             // Position close ho chuki hai, ab loop se nikal kar order place karo
@@ -130,27 +122,90 @@ async function placeOrder(token, payload) {
 
         if (i === maxRetries - 1) {
             // Agar saari retries khatam ho jayen phir bhi position close nahi hui
-            const message = "Order Rejected: Position currently active after several retry attemps";
+            const message = `Order Rejected: Position currently active for [${ibConfig.accountId}] after several retry attempts`;
             console.log(message);
             return { success: false, message };
         }
 
-        console.log(`⏳ Waiting for previous position to close.. (Attempt ${i + 1}/${maxRetries})`);
+        console.log(`⏳ Waiting for previous position to close on [${ibConfig.accountId}].. (Attempt ${i + 1}/${maxRetries})`);
         await wait(delaySeconds);
     }
 
     try {
-        const response = await axios.post(`${IRONBEAM_API_URL}/order/${IRONBEAM_ACCOUNT_ID}/place`, payload, {
+        const response = await axios.post(`${ibConfig.apiUrl}/order/${ibConfig.accountId}/place`, payload, {
             headers: {
                 "Content-Type": "application/json",
                 "Authorization": `Bearer ${token}`
             }
         });
-        console.log("✅ Order Placed Successfully:", response.data);
+        console.log(`✅ Order Placed Successfully for [${ibConfig.accountId}]:`, response.data);
         return { success: true, data: response.data };
     } catch (error) {
-        console.error("❌ Order Execution Error:", error.response?.data || error.message);
+        console.error(`❌ Order Execution Error for [${ibConfig.accountId}]:`, error.response?.data || error.message);
         throw new Error(error.response?.data?.message || error.message);
+    }
+}
+
+// 5. Har Ironbeam account ke liye isolated trade execution
+async function executeTradeForUser(ibConfig, { side, action, tp, sl }) {
+    try {
+        const token = await getAuthToken(ibConfig);
+
+        switch (action.toUpperCase()) {
+            case 'ENTRY': {
+                const payload = {
+                    accountId: ibConfig.accountId,
+                    orderType: "MARKET",
+                    exchSym: ibConfig.symbol,
+                    quantity: 1,
+                    side: side === 'LONG' ? "BUY" : "SELL",
+                    duration: "DAY",
+                    takeProfit: Number(tp),
+                    stopLoss: Number(sl),
+                };
+
+                const orderResult = await placeOrder(token, payload, ibConfig);
+                if (!orderResult.success) {
+                    return {
+                        accountId: ibConfig.accountId,
+                        symbol: ibConfig.symbol,
+                        success: false,
+                        message: orderResult.message || 'Order rejected',
+                        details: orderResult
+                    };
+                }
+
+                return {
+                    accountId: ibConfig.accountId,
+                    symbol: ibConfig.symbol,
+                    success: true,
+                    message: `${ibConfig.symbol}: 1 ${side} futures contract opened on account [${ibConfig.accountId}] at ${new Date().toISOString()}`,
+                    details: orderResult.data
+                };
+            }
+
+            case 'EXIT': {
+                console.log(`Closing ${ibConfig.symbol} Position for account [${ibConfig.accountId}]..`);
+                await flattenAll(token, ibConfig);
+                return {
+                    accountId: ibConfig.accountId,
+                    symbol: ibConfig.symbol,
+                    success: true,
+                    message: `${ibConfig.symbol}: Position closed on account [${ibConfig.accountId}] at ${new Date().toISOString()}`
+                };
+            }
+
+            default:
+                throw new Error(`Unsupported action: ${action}`);
+        }
+    } catch (err) {
+        console.error(`Trade execution failed for [${ibConfig.accountId}]:`, err.message);
+        return {
+            accountId: ibConfig.accountId,
+            symbol: ibConfig.symbol,
+            success: false,
+            error: err.message
+        };
     }
 }
 
@@ -176,57 +231,47 @@ export default async function handler(req, res) {
     console.log('___________________________________________________');
 
     try {
+        await connectDB();
+
+        // Filter users: isActive: true aur isDemo: true
+        const ironbeamUsers = await getIronbeamConfig({ isActive: true, isDemo: true });
+
+        if (!ironbeamUsers || ironbeamUsers.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'No active Ironbeam accounts found matching criteria (isActive: true, isDemo: true)'
+            });
+        }
+
         const { timestamp, side, action, price, tp, sl } = req.body || {};
 
         if (!action) {
-            return res.status(400).json({ success: false, message: 'Missing "action" in request body' });
+            return res.status(400).json({ success: false, message: 'Missing "action". Must be ENTRY or EXIT' });
         }
 
-        const token = await getAuthToken();
-        let resultMessage = '';
-
-        switch (action.toUpperCase()) {
-            case 'ENTRY': {
-                if (side?.toUpperCase() !== 'LONG' && side?.toUpperCase() !== 'SHORT') {
-                    return res.status(400).json({ success: false, message: 'Invalid side. Must be LONG or SHORT.' });
-                }
-
-                const payload = {
-                    accountId: IRONBEAM_ACCOUNT_ID,
-                    orderType: "MARKET",
-                    exchSym: IRONBEAM_SYMBOL,
-                    quantity: 1,
-                    side: side === 'LONG' ? "BUY" : "SELL",
-                    takeProfit: Number(tp),
-                    stopLoss: Number(sl),
-                    duration: "DAY"
-                };
-
-                const orderResult = await placeOrder(token, payload);
-                if (!orderResult.success) {
-                    return res.status(400).json(orderResult);
-                }
-
-                resultMessage = `${IRONBEAM_SYMBOL}: 1 ${side} futures contract opened at ${new Date().toISOString()}`;
-                break;
-            }
-
-            case 'EXIT': {
-                console.log(`Closing ${IRONBEAM_SYMBOL} Position..`);
-                await flattenAll(token);
-                resultMessage = `${IRONBEAM_SYMBOL}: Position closed at ${new Date().toISOString()}`;
-                break;
-            }
-
-            default: {
-                return res.status(400).json({ success: false, message: `Unsupported action: ${action}` });
-            }
+        const normalizedAction = action.toUpperCase();
+        if (normalizedAction !== 'ENTRY' && normalizedAction !== 'EXIT') {
+            return res.status(400).json({ success: false, message: 'Invalid "action". Must be ENTRY or EXIT.' });
         }
+
+        if (normalizedAction === 'ENTRY' && side?.toUpperCase() !== 'LONG' && side?.toUpperCase() !== 'SHORT') {
+            return res.status(400).json({ success: false, message: 'Invalid "side". Must be LONG or SHORT.' });
+        }
+
+        // Har account ke liye isolated trade execution (without any conflict or mixup)
+        const executionPromises = ironbeamUsers.map(user =>
+            executeTradeForUser(user, { side, action, tp, sl })
+        );
+
+        const results = await Promise.all(executionPromises);
+        const successfulCount = results.filter(r => r.success).length;
 
         return res.status(200).json({
             status: 'OK',
-            success: true,
-            message: resultMessage
+            success: successfulCount > 0,
+            totalAccounts: ironbeamUsers.length,
+            successfulAccounts: successfulCount,
+            results: results
         });
 
     } catch (error) {

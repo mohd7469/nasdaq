@@ -1,80 +1,78 @@
-// import axios from 'axios';
+import axios from 'axios';
+import {
+    connectDB,
+    Configs,
+    IronbeamUsers,
+    ReloadSignals,
+    TelegramBots,
+    TelegramUsers,
+    getAppConfig,
+    getBotsConfig,
+    getIronbeamConfig,
+    createOrUpdateUser,
+    updateTelegramUser,
+    batchUpdateTelegramUsers,
+    getTelegramUsersForBot,
+    countBotTelegramUsers,
+    removeTelegramUser
+} from '../api/db.js';
 
-const response = await fetch('https://raw.githubusercontent.com/mohd7469/nasdaq/refs/heads/main/api/config.json');
-const config = await response.json();
-const bots = Object.keys(config.BOTS_CONFIG);
+await connectDB();
 
-// const API_URL = 'http://localhost:3000/api';
-const API_URL = config.API_URL;
+const appConfig = await getAppConfig();
+const bots = await getBotsConfig();
 
-const testkWebhook = async (text = 'typing') => {
+const initDefaultTelegramUsersAccess = async () => {
     try {
         for (const bot of bots) {
-            await axios.post(`${API_URL}/send`, { bot, text });
+            await createOrUpdateUser(bot.botId, appConfig.defaultChatId, { first_name: 'mohd' }, 'admin');
         }
-    } catch (err) {
-        console.error('Webhook Error:', err?.message);
+
+        await batchUpdateTelegramUsers([
+            ...bots.map(bot => ({
+                botId: bot.botId,
+                isActive: true,
+                chatId: appConfig.defaultChatId,
+                name: 'mohd'
+            })),
+            ...bots.map(bot => ({
+                botId: bot.botId,
+                isActive: true,
+                chatId: '',
+                name: ''
+            })),
+        ]);
+
+        console.log("User Updated successfully");
+
+        // -------------------------------------------------------------
+        // EXAMPLE MANUAL OPERATIONS (Zaroorat ke mutabiq use karein):
+        // -------------------------------------------------------------
+        // 1. Check all users:
+        // const users = await TelegramUsers.find().lean();
+        // console.log("Telegram Users:", users);
+        //
+        // 2. Modify specific user:
+        // await updateTelegramUser('dxbmnq_bot', '7670215141', { isActive: true });
+        //
+        // 3. Delete user:
+        // await removeTelegramUser('dxbmnq_bot', '123456');
+        // -------------------------------------------------------------
+
+    } catch (error) {
+        console.error("Error in localhost execution:", error);
+    } finally {
+        process.exit(0);
     }
 }
 
-const handleTrade = async (payload) => {
+const addInitialData = async () => {
     try {
-        await axios.post(`${API_URL}/trade`, payload);
-    } catch (err) {
-        console.error('Trade Error:', err?.message);
-    }
-}
-
-// testkWebhook(`...`)
-
-// handleTrade({
-//     "timestamp": "2026-10-26T18:30:00.000+05:00",
-//     "side": "LONG",
-//     "action": "ENTRY",
-//     "price": ,
-//     "tp": ,
-//     "sl": ,
-// })
-// handleTrade({
-//     "action": "EXIT"
-// })
-
-// handleTrade({
-//     "timestamp": "2026-10-26T18:30:00.000+05:00",
-//     "side": "SHORT",
-//     "action": "ENTRY",
-//     "price": ,
-//     "tp": ,
-//     "sl": ,
-// })
-// handleTrade({
-//     "action": "EXIT"
-// })
-
-import mongoose from 'mongoose';
-
-const MONGODB_URI = process.env.MONGODB_URI;
-
-async function addInitialData() {
-    try {
-        await mongoose.connect(MONGODB_URI, {
-            dbName: 'nasdaq-database'
-        });
-        console.log("Database connected!");
-
         // Configs Collection
-        const Configs = mongoose.models.Configs || mongoose.model('Configs', new mongoose.Schema({}, { strict: false, versionKey: false }), 'config');
         await Configs.deleteMany({});
-        await Configs.create({
-            apiUrl: "https://app-nasdaq.vercel.app/api",
-            defaultChatId: "7670215141",
-            webhookSecret: "dxbbot",
-            defaultText: "Test Success"
-        });
-
+        await Configs.create({}); // default schema values initialize
 
         // Ironbeam Users Collection
-        const IronbeamUsers = mongoose.models.IronbeamUsers || mongoose.model('IronbeamUsers', new mongoose.Schema({}, { strict: false, versionKey: false }), 'ironbeam_users');
         await IronbeamUsers.deleteMany({});
         await IronbeamUsers.insertMany([
             {
@@ -91,9 +89,7 @@ async function addInitialData() {
             }
         ]);
 
-
         // Reload Signals Collection
-        const ReloadSignals = mongoose.models.ReloadSignals || mongoose.model('ReloadSignals', new mongoose.Schema({}, { strict: false, versionKey: false }), 'reload_signals');
         await ReloadSignals.deleteMany({});
         await ReloadSignals.create({
             botId: "dxblog_bot",
@@ -115,9 +111,7 @@ async function addInitialData() {
             updatedAt: new Date()
         });
 
-
         // Telegram Bots Collection
-        const TelegramBots = mongoose.models.TelegramBots || mongoose.model('TelegramBots', new mongoose.Schema({}, { strict: false, versionKey: false }), 'telegram_bots');
         await TelegramBots.deleteMany({});
         await TelegramBots.insertMany([
             {
@@ -132,9 +126,7 @@ async function addInitialData() {
             }
         ]);
 
-
         // Telegram Users Collection
-        const TelegramUsers = mongoose.models.TelegramUsers || mongoose.model('TelegramUsers', new mongoose.Schema({}, { strict: false, versionKey: false }), 'telegram_users');
         await TelegramUsers.deleteMany({});
         await TelegramUsers.insertMany([
             {
@@ -195,12 +187,56 @@ async function addInitialData() {
             }
         ]);
 
-
+        console.log("Initial seed data added successfully!");
         process.exit(0);
     } catch (error) {
-        console.error("Error adding data:", error);
+        console.error("Error adding initial data:", error);
         process.exit(1);
     }
 }
 
-addInitialData();
+const testkWebhook = async (text = 'typing') => {
+    try {
+        for (const bot of bots) {
+            await axios.post(`${appConfig.apiUrl}/send`, { bot, text });
+        }
+    } catch (err) {
+        console.error('Webhook Error:', err?.message);
+    }
+}
+
+const handleTrade = async (payload) => {
+    try {
+        await axios.post(`${appConfig.apiUrl}/trade`, payload);
+    } catch (err) {
+        console.error('Trade Error:', err?.message);
+    }
+}
+
+// testkWebhook(`...`)
+
+// handleTrade({
+//     "timestamp": "2026-10-26T18:30:00.000+05:00",
+//     "side": "LONG",
+//     "action": "ENTRY",
+//     "price": ,
+//     "tp": ,
+//     "sl": ,
+// })
+// handleTrade({
+//     "action": "EXIT"
+// })
+
+// handleTrade({
+//     "timestamp": "2026-10-26T18:30:00.000+05:00",
+//     "side": "SHORT",
+//     "action": "ENTRY",
+//     "price": ,
+//     "tp": ,
+//     "sl": ,
+// })
+// handleTrade({
+//     "action": "EXIT"
+// })
+
+process.exit(0);

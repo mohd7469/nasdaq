@@ -1,7 +1,4 @@
-import { createOrUpdateUser, connectDB, ReloadSignal } from './db.js';
-import config from './config.json' with { type: 'json' };
-
-const { BOTS_CONFIG, WEBHOOK_SECRET } = config;
+import { connectDB, getAppConfig, getBotsConfig, createOrUpdateUser, ReloadSignals } from './db.js';
 
 export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -14,15 +11,18 @@ export default async function handler(req, res) {
 
     try {
         await connectDB();
+        const appConfig = await getAppConfig();
+        const botsConfig = await getBotsConfig();
 
         // =====================================================================
-        // 1. CLIENT CHECK (GET): https://app-nasdaq.vercel.app/api/reload
+        // 1. CLIENT CHECK (GET):
         // =====================================================================
         if (req.method === 'GET') {
-            const targetBot = req.query?.bot || 'dxblog_bot';
+            const targetBot = req.query?.bot;
+            const filter = targetBot ? { botId: targetBot } : {};
 
             // Database se reload signal dhoondain aur foran delete (consume) kardein
-            const reloadDoc = await ReloadSignal.findOneAndDelete({ botId: targetBot });
+            const reloadDoc = await ReloadSignals.findOneAndDelete(filter);
 
             if (reloadDoc) {
                 return res.status(200).json(true);
@@ -38,7 +38,7 @@ export default async function handler(req, res) {
             const botId = req.query?.bot;
             const secretHeader = req.headers['x-telegram-bot-api-secret-token'];
 
-            if (secretHeader && secretHeader !== WEBHOOK_SECRET) {
+            if (secretHeader && secretHeader !== appConfig.webhookSecret) {
                 return res.status(401).json({ error: 'Unauthorized secret token' });
             }
 
@@ -51,7 +51,7 @@ export default async function handler(req, res) {
             const cleanText = rawText.toLowerCase();
             const chatId = String(message.chat.id);
             const userInfo = message.from || {};
-            const botConfig = botId ? BOTS_CONFIG[botId] : null;
+            const botConfig = botId ? botsConfig.find(b => b.botId === botId) : null;
 
             const reloadCommands = ['reload', 'refresh', '/reload', '/refresh'];
 
@@ -70,7 +70,7 @@ export default async function handler(req, res) {
                 };
 
                 if (botId) {
-                    await ReloadSignal.findOneAndUpdate(
+                    await ReloadSignals.findOneAndUpdate(
                         { botId },
                         { botId, payload: reloadPayload, updatedAt: new Date() },
                         { upsert: true, new: true }
