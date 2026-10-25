@@ -5,10 +5,12 @@
     "DEFAULT_TEXT": "Test Success",
     "BOTS_CONFIG": {
         "dxbmnq_bot": {
+            "botId": "dxbmnq_bot",
             "name": "Nasdaq Alert",
             "token": "8883267489:AAFeXTRqVpMR4-gG1Adi76NTqmtrDCJUj2A"
         },
         "dxblog_bot": {
+            "botId": "dxblog_bot",
             "name": "Nasdaq Logs",
             "token": "8846747499:AAECpWSsjXSjzWDgAp5-8iMslCis8iFJYi8"
         }
