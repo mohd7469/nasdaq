@@ -281,7 +281,7 @@
 
     const timer = setupAutomationTimer({
         onInit: async (time) => {
-            const msg = `Starting.. @v${GM_info.script.version}`
+            const msg = `Starting.. @v${localStorage.getItem('_botRecentVersion')}`
             console.log(msg);
             sendLog(msg).catch(err => { });
         },
@@ -290,7 +290,13 @@
 
             waitScrollToBottom();
 
-            if (!isSameVersion() || isReloadingHours()) {
+            if (!isSameVersion()) {
+                await sendLog(`Updating..`).catch(err => { });
+                window.location.reload();
+                return;
+            }
+
+            if (isReloadingHours()) {
                 await sendLog(`Reloading..`).catch(err => { });
                 window.location.reload();
                 return;
