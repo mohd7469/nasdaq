@@ -253,6 +253,9 @@ async function executeTradeForUser(ibConfig, { action, side, price, tp, sl, orde
 
         switch (action.toUpperCase()) {
             case 'ENTRY': {
+                console.log(`[${ibConfig.accountId}] Canceling Previous Orders and Positions..`);
+                await flattenAll(token, ibConfig);
+
                 // Server automatically determine karega ke LIMIT hai ya STOP (agar req.body mein na ho)
                 const resolvedOrderType = await determineOrderType(token, ibConfig, { side, price }, orderType);
 
@@ -292,7 +295,7 @@ async function executeTradeForUser(ibConfig, { action, side, price, tp, sl, orde
             }
 
             case 'EXIT': {
-                console.log(`[${ibConfig.accountId}] Closing ${ibConfig.symbol} positions..`);
+                console.log(`[${ibConfig.accountId}] Terminating all Active Orders and Positions..`);
                 await flattenAll(token, ibConfig);
                 return {
                     accountId: ibConfig.accountId,
