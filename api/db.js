@@ -101,6 +101,8 @@ const telegramUsersSchema = new mongoose.Schema({
 
 telegramUsersSchema.index({ chatId: 1, botId: 1 }, { unique: true });
 
+export const TelegramUsers = mongoose.models.TelegramUsers || mongoose.model('TelegramUsers', telegramUsersSchema, 'telegram_users');
+
 // 6. Telegram Signals Model (Collection: "telegram_signals")
 const telegramSignalsSchema = new mongoose.Schema({
     id: { type: String, required: true, unique: true },
@@ -137,8 +139,6 @@ export async function checkAndSaveSignal(signalId, payload) {
         throw error;
     }
 }
-
-export const TelegramUsers = mongoose.models.TelegramUsers || mongoose.model('TelegramUsers', telegramUsersSchema, 'telegram_users');
 
 // ==========================================
 // CONFIG & DATA QUERY HELPERS
