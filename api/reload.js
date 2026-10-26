@@ -70,10 +70,23 @@ export default async function handler(req, res) {
                 };
 
                 if (botId) {
-                    await ReloadSignals.findOneAndUpdate(
+                    // Pehle check karein ke purana document hai ya nahi taake createdAt zaya na ho
+                    const existingSignal = await ReloadSignals.findOne({ botId }).lean();
+                    const now = new Date();
+
+                    // Exact desired key sequence
+                    const orderedReloadDoc = {
+                        botId: botId,
+                        payload: reloadPayload,
+                        createdAt: existingSignal ? existingSignal.createdAt : now,
+                        updatedAt: now
+                    };
+
+                    // findOneAndReplace use karne se keys ka sequence hamesha strict rahega
+                    await ReloadSignals.findOneAndReplace(
                         { botId },
-                        { botId, payload: reloadPayload, updatedAt: new Date() },
-                        { upsert: true, new: true }
+                        orderedReloadDoc,
+                        { upsert: true, returnDocument: 'after' }
                     );
                 }
 
