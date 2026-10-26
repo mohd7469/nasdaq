@@ -180,25 +180,25 @@
             // filter today's logs
             .filter(el => {
                 const data = parseLogData((el.textContent || el.innerText || '').trim());
-                return data?.timestamp && moment(data.timestamp).isSame(moment(), 'day');
+                return data?.timestamp && getTimezone(data.timestamp).isSame(getTimezone(), 'day');
             })
             // and sort by time
             .sort((a, b) => {
                 const dataA = parseLogData((a.textContent || a.innerText || '').trim());
                 const dataB = parseLogData((b.textContent || b.innerText || '').trim());
-                return moment(dataA?.timestamp).valueOf() - moment(dataB?.timestamp).valueOf();
+                return getTimezone(dataA?.timestamp).valueOf() - getTimezone(dataB?.timestamp).valueOf();
             });
         if (!filterElements.length) return;
 
-        const recentTimestamp = Number(localStorage.getItem('_botRecentPineLogsTimestamp')) || 0;
+        const recentTimestamp = localStorage.getItem('_botRecentPineLogsTimestamp') || '';
 
         for (let i = 0; i < filterElements.length; i++) {
             const currentRow = filterElements[i];
             const currentData = parseLogData((currentRow.textContent || currentRow.innerText || '').trim());
 
             if (currentData && currentData.timestamp) {
-                const currentTimestamp = moment(currentData.timestamp).valueOf();
-                if (currentTimestamp > recentTimestamp) {
+                const currentTimestamp = getTimezone(currentData.timestamp);
+                if (!recentTimestamp || currentTimestamp.isAfter(getTimezone(recentTimestamp))) {
                     // add new property
                     currentData['PKT'] = getTimezone(currentData.timestamp, PKT_TIMEZONE).format('ddd, MMM D, h:mm A');
                     currentData['DXB'] = getTimezone(currentData.timestamp, DXB_TIMEZONE).format('ddd, MMM D, h:mm A');
@@ -206,7 +206,7 @@
                     const { id, ...cleanData } = currentData;
                     console.log(JSON.stringify(currentData, null, 1));
 
-                    localStorage.setItem('_botRecentPineLogsTimestamp', currentTimestamp);
+                    localStorage.setItem('_botRecentPineLogsTimestamp', currentTimestamp.toISOString());
 
                     if (!isWeekend()) {
                         // showDesktopAlert('Setup is executed');
