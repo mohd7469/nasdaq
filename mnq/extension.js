@@ -79,6 +79,13 @@
         }
     };
 
+    const isTriggeredWithinSameMinutes = () => {
+        const recentNasdaqAlertTimestamp = localStorage.getItem('_botRecentNasdaqAlertTimestamp');
+        if (!recentNasdaqAlertTimestamp) return false;
+        const currentTime = getTimezone();
+        return moment(recentNasdaqAlertTimestamp).isSame(currentTime, 'minute');
+    };
+
     const handleTrade = async (payload) => {
         try {
             const isWindows = /Win/i.test(navigator.userAgent || navigator.platform);
@@ -250,11 +257,12 @@
                     ? `Checking new setup.. (+${Number(realtimeValues.V).toFixed(2)})`
                     : `Checking new setup.. (-${Number(realtimeValues.V).toFixed(2)})`;
                 // showDesktopAlert(signal);
-                if (signal && signal !== recentNasdaqAlert) {
+                if (signal && signal !== recentNasdaqAlert && !isTriggeredWithinSameMinutes()) {
                     console.log(signal);
                     for (let i = 0; i < 2; i++) sendAlert(signal);
                     recentNasdaqAlert = signal;
                     localStorage.setItem('_botRecentNasdaqAlert', signal);
+                    localStorage.setItem('_botRecentNasdaqAlertTimestamp', getTimezone().toISOString());
                 } else {
                     console.log("Skipping duplicate signal..");
                 }
