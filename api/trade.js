@@ -207,13 +207,13 @@ async function placeOrder(token, payload, ibConfig) {
 }
 
 // 5. Har Ironbeam account ke liye isolated trade execution
-async function executeTradeForUser(ibConfig, { action, side, price, tp, sl }) {
+async function executeTradeForUser(ibConfig, { action, side, price, tp, sl, orderType }) {
     try {
         const token = await getAuthToken(ibConfig);
 
         switch (action.toUpperCase()) {
             case 'ENTRY': {
-                const payload = generateOrderPayload(ibConfig, { side, price, tp, sl });
+                const payload = generateOrderPayload(ibConfig, { side, price, tp, sl }, orderType);
 
                 console.log(`\n`);
                 console.log(`Ironbeam:`, payload);
@@ -299,7 +299,7 @@ export default async function handler(req, res) {
             });
         }
 
-        const { id, timestamp, side, action, price, tp, sl } = req.body || {};
+        const { id, timestamp, action, side, price, tp, sl, orderType } = req.body || {};
 
         if (!action) {
             return res.status(400).json({ success: false, message: '"action" parameter is required' });
@@ -316,7 +316,7 @@ export default async function handler(req, res) {
 
         // Har account ke liye isolated trade execution (without any conflict or mixup)
         const executionPromises = ironbeamUsers.map(user =>
-            executeTradeForUser(user, { action, side, price, tp, sl })
+            executeTradeForUser(user, { action, side, price, tp, sl, orderType })
         );
 
         const results = await Promise.all(executionPromises);
