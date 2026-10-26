@@ -187,7 +187,7 @@ async function executeTradeForUser(ibConfig, { side, action, tp, sl }) {
             case 'EXIT': {
                 console.log(`[${ibConfig.accountId}] Closing ${ibConfig.symbol} position...`);
                 await flattenAll(token, ibConfig);
-                const message = `[${ibConfig.accountId}] Position ${ibConfig.symbol} closed at ${new Date().toISOString()}`;
+                const message = `[${ibConfig.accountId}] Position closed at ${new Date().toISOString()}`;
                 console.log(message);
                 return {
                     accountId: ibConfig.accountId,
