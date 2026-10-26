@@ -204,7 +204,7 @@
                     currentData['DXB'] = getTimezone(currentData.timestamp, DXB_TIMEZONE).format('ddd, MMM D, h:mm A');
 
                     const { id, ...cleanData } = currentData;
-                    console.log(JSON.stringify(cleanData, null, 1));
+                    console.log(JSON.stringify(currentData, null, 1));
 
                     localStorage.setItem('_botRecentPineLogsTimestamp', currentTimestamp);
 
