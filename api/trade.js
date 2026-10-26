@@ -158,7 +158,7 @@ async function flattenAll(token, ibConfig) {
         const ordersData = ordersRes.data.orders || ordersRes.data || [];
 
         const activeOrders = ordersData.filter(o =>
-            ["NEW", "SUBMITTED", "PENDING_NEW"].includes(o.status || o.st)
+            ["NEW", "SUBMITTED", "PENDING_NEW", "QUEUED_NEW", "ACCEPTED_FOR_BIDDING"].includes(o.status || o.st)
         );
         const activeOrderIds = activeOrders.map(o => o.orderId || o.oid);
 
@@ -200,9 +200,9 @@ async function flattenAll(token, ibConfig) {
             }
         }
 
-        console.log(`✅ [${ibConfig.accountId}] All cleared`);
+        console.log(`✅ [${ibConfig.accountId}] All pending/active orders and positions cleared`);
 
-        return { success: true, message: `[${ibConfig.accountId}] All cleared` };
+        return { success: true, message: `[${ibConfig.accountId}] All pending/active orders and positions cleared` };
     } catch (error) {
         console.error(`Error in flattenAll for [${ibConfig.accountId}]:`, error.response?.data || error.message);
         throw new Error(error.response?.data?.message || error.message);
