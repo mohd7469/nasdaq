@@ -58,7 +58,7 @@ async function determineOrderType(token, ibConfig, { side, price }, requestedOrd
 }
 
 // Centralized Payload Generator with switch case
-function generateOrderPayload(ibConfig, { side, price, tp, sl }, orderType = "LIMIT") {
+function generateOrderPayload(ibConfig, { side, resolvedEntryPrice, tp, sl }, orderType = "LIMIT") {
     const basePayload = {
         accountId: ibConfig.accountId,
         exchSym: ibConfig.symbol,
@@ -69,7 +69,7 @@ function generateOrderPayload(ibConfig, { side, price, tp, sl }, orderType = "LI
 
     switch (orderType.toUpperCase()) {
         case "MARKET": {
-            const entryPrice = Number(price);
+            const entryPrice = Number(resolvedEntryPrice);
             const takeProfitOffset = Math.abs(Number(tp) - entryPrice);
             const stopLossOffset = Math.abs(entryPrice - Number(sl));
 
@@ -84,7 +84,7 @@ function generateOrderPayload(ibConfig, { side, price, tp, sl }, orderType = "LI
             return {
                 ...basePayload,
                 orderType: "LIMIT",
-                limitPrice: Number(price),
+                limitPrice: Number(resolvedEntryPrice),
                 takeProfit: Number(tp),
                 stopLoss: Number(sl),
             };
@@ -93,7 +93,7 @@ function generateOrderPayload(ibConfig, { side, price, tp, sl }, orderType = "LI
             return {
                 ...basePayload,
                 orderType: "STOP",
-                stopPrice: Number(price),
+                stopPrice: Number(resolvedEntryPrice),
                 takeProfit: Number(tp),
                 stopLoss: Number(sl),
             };
@@ -102,7 +102,7 @@ function generateOrderPayload(ibConfig, { side, price, tp, sl }, orderType = "LI
             return {
                 ...basePayload,
                 orderType: "LIMIT",
-                limitPrice: Number(price),
+                limitPrice: Number(resolvedEntryPrice),
                 takeProfit: Number(tp),
                 stopLoss: Number(sl),
             };
@@ -255,7 +255,18 @@ async function executeTradeForUser(ibConfig, { action, side, price, tp, sl, orde
             case 'ENTRY': {
                 // Server automatically determine karega ke LIMIT hai ya STOP (agar req.body mein na ho)
                 const resolvedOrderType = await determineOrderType(token, ibConfig, { side, price }, orderType);
-                const payload = generateOrderPayload(ibConfig, { side, price, tp, sl }, resolvedOrderType);
+
+                // 2. Agar order type MARKET hai, toh live market price fetch karke entryPrice price banayein
+                let resolvedEntryPrice = price;
+                if (resolvedOrderType === 'MARKET') {
+                    const liveMarketPrice = await getCurrentMarketPrice(token, ibConfig);
+                    if (liveMarketPrice !== null) {
+                        resolvedEntryPrice = liveMarketPrice;
+                        console.log(`Using live price ${liveMarketPrice} for MARKET orderType instead of ${price}`);
+                    }
+                }
+
+                const payload = generateOrderPayload(ibConfig, { side, resolvedEntryPrice, tp, sl }, resolvedOrderType);
 
                 console.log(`Ironbeam:`, payload);
 
