@@ -99,8 +99,8 @@ async function flattenAll(token, ibConfig) {
                 console.log(`✅ Position closed successfully for ${ibConfig.symbol} on [${ibConfig.accountId}]`);
             }
         }
-        
-        const message = `[${ibConfig.accountId}] All positions flattened successfully`;
+
+        const message = `[${ibConfig.accountId}] Positions cleared at ${new Date().toISOString()}`;
         console.log(message)
 
         return { success: true, message };
@@ -188,15 +188,13 @@ async function executeTradeForUser(ibConfig, { side, action, tp, sl }) {
             }
 
             case 'EXIT': {
-                console.log(`[${ibConfig.accountId}] Closing ${ibConfig.symbol} position...`);
+                console.log(`[${ibConfig.accountId}] Closing ${ibConfig.symbol} positions..`);
                 await flattenAll(token, ibConfig);
-                const message = `[${ibConfig.accountId}] Position closed at ${new Date().toISOString()}`;
-                console.log(message);
                 return {
                     accountId: ibConfig.accountId,
                     symbol: ibConfig.symbol,
                     success: true,
-                    message
+                    message: `[${ibConfig.accountId}] Positions cleared at ${new Date().toISOString()}`
                 };
             }
 
