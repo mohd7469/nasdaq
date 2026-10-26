@@ -24,7 +24,7 @@ async function getCurrentMarketPrice(token, ibConfig) {
         }
         return null;
     } catch (error) {
-        console.error(`Error fetching market price for [${ibConfig.accountId}]:`, error.response?.data || error.message);
+        console.error(`❌ [${ibConfig.accountId}] Market Price Error:`, error.response?.data || error.message);
         return null;
     }
 }
@@ -120,7 +120,7 @@ async function getAuthToken(ibConfig) {
         });
         return response.data.token;
     } catch (error) {
-        console.error(`Auth Token Error for [${ibConfig.accountId}]:`, error.response?.data || error.message);
+        console.error(`❌ [${ibConfig.accountId}] Auth Token Error:`, error.response?.data || error.message);
         throw new Error(`Failed to authenticate account ${ibConfig.accountId}: ${error.response?.data?.message || error.message}`);
     }
 }
@@ -138,13 +138,13 @@ async function hasOpenPosition(token, ibConfig) {
         );
 
         if (activePosition) {
-            console.warn(`Active position already exists for ${ibConfig.symbol} on account [${ibConfig.accountId}]`, activePosition);
+            console.warn(`[${ibConfig.accountId}] Active position already exists for ${ibConfig.symbol}`, activePosition);
             return true;
         }
 
         return false;
     } catch (error) {
-        console.error(`Error checking positions for [${ibConfig.accountId}]:`, error.response?.data || error.message);
+        console.error(`❌ [${ibConfig.accountId}] Positions Checking Error:`, error.response?.data || error.message);
         return true;
     }
 }
@@ -204,7 +204,7 @@ async function flattenAll(token, ibConfig) {
 
         return { success: true, message: `[${ibConfig.accountId}] All pending/active orders and positions cleared` };
     } catch (error) {
-        console.error(`Error in flattenAll for [${ibConfig.accountId}]:`, error.response?.data || error.message);
+        console.error(`❌ [${ibConfig.accountId}] flattenAll Error:`, error.response?.data || error.message);
         throw new Error(error.response?.data?.message || error.message);
     }
 }
@@ -241,7 +241,7 @@ async function placeOrder(token, payload, ibConfig) {
         console.log(`✅ [${ibConfig.accountId}] Order:`, response.data);
         return { success: true, data: response.data };
     } catch (error) {
-        console.error(`❌ Order Execution Error for [${ibConfig.accountId}]:`, error.response?.data || error.message);
+        console.error(`❌ [${ibConfig.accountId}] Place Order Error:`, error.response?.data || error.message);
         throw new Error(error.response?.data?.message || error.message);
     }
 }
@@ -306,7 +306,7 @@ async function executeTradeForUser(ibConfig, { action, side, price, tp, sl, orde
                 throw new Error(`Unsupported action: ${action}`);
         }
     } catch (err) {
-        console.error(`Trade execution failed for [${ibConfig.accountId}]:`, err.message);
+        console.error(`❌ [${ibConfig.accountId}] Trade Execution Error:`, err.message);
         return {
             accountId: ibConfig.accountId,
             symbol: ibConfig.symbol,
@@ -379,7 +379,7 @@ export default async function handler(req, res) {
         });
 
     } catch (error) {
-        console.error("Handler Error:", error.message);
+        console.error("Trade Handler Error:", error.message);
         return res.status(500).json({ success: false, error: error.message });
     }
 }
