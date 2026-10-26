@@ -5,6 +5,63 @@ const wait = (seconds) => {
     return new Promise((resolve) => setTimeout(resolve, seconds * 1000));
 };
 
+// Centralized Payload Generator with switch case
+function generateOrderPayload(ibConfig, { side, price, tp, sl }, orderType = "MARKET") {
+    const basePayload = {
+        accountId: ibConfig.accountId,
+        exchSym: ibConfig.symbol,
+        quantity: 1,
+        side: side === 'LONG' ? "BUY" : "SELL",
+        duration: "DAY",
+    };
+
+    switch (orderType.toUpperCase()) {
+        case "MARKET": {
+            const entryPrice = Number(price);
+            const takeProfitOffset = Math.abs(Number(tp) - entryPrice);
+            const stopLossOffset = Math.abs(entryPrice - Number(sl));
+
+            return {
+                ...basePayload,
+                orderType: "MARKET",
+                stopLossOffset: Number(stopLossOffset.toFixed(2)),
+                takeProfitOffset: Number(takeProfitOffset.toFixed(2))
+            };
+        }
+        case "LIMIT": {
+            return {
+                ...basePayload,
+                orderType: "LIMIT",
+                limitPrice: Number(price),
+                takeProfit: Number(tp),
+                stopLoss: Number(sl),
+            };
+        }
+        case "STOP": {
+            return {
+                ...basePayload,
+                orderType: "STOP",
+                stopPrice: Number(price),
+                takeProfit: Number(tp),
+                stopLoss: Number(sl),
+            };
+        }
+        default: {
+            // Default fallback to MARKET with calculated offsets
+            const entryPrice = Number(price);
+            const takeProfitOffset = Math.abs(Number(tp) - entryPrice);
+            const stopLossOffset = Math.abs(entryPrice - Number(sl));
+
+            return {
+                ...basePayload,
+                orderType: "MARKET",
+                stopLossOffset: Number(stopLossOffset.toFixed(2)),
+                takeProfitOffset: Number(takeProfitOffset.toFixed(2))
+            };
+        }
+    }
+}
+
 // 1. Authentication (Token Lena)
 async function getAuthToken(ibConfig) {
     try {
@@ -150,24 +207,19 @@ async function placeOrder(token, payload, ibConfig) {
 }
 
 // 5. Har Ironbeam account ke liye isolated trade execution
-async function executeTradeForUser(ibConfig, { side, action, tp, sl }) {
+async function executeTradeForUser(ibConfig, { action, side, price, tp, sl }) {
     try {
         const token = await getAuthToken(ibConfig);
 
         switch (action.toUpperCase()) {
             case 'ENTRY': {
-                const payload = {
-                    accountId: ibConfig.accountId,
-                    orderType: "MARKET",
-                    exchSym: ibConfig.symbol,
-                    quantity: 1,
-                    side: side === 'LONG' ? "BUY" : "SELL",
-                    duration: "DAY",
-                    takeProfit: Number(tp),
-                    stopLoss: Number(sl),
-                };
+                const payload = generateOrderPayload(ibConfig, { side, price, tp, sl });
+
+                console.log(`Ironbeam:`, payload);
+                console.log(`\n`);
 
                 const orderResult = await placeOrder(token, payload, ibConfig);
+
                 if (!orderResult.success) {
                     return {
                         accountId: ibConfig.accountId,
@@ -229,7 +281,6 @@ export default async function handler(req, res) {
         return res.status(405).json({ success: false, message: 'Method Not Allowed' });
     }
 
-    console.log(`\n`);
     console.log(`Payload:`, req.body);
     console.log(`\n`);
 
@@ -263,7 +314,7 @@ export default async function handler(req, res) {
 
         // Har account ke liye isolated trade execution (without any conflict or mixup)
         const executionPromises = ironbeamUsers.map(user =>
-            executeTradeForUser(user, { side, action, tp, sl })
+            executeTradeForUser(user, { action, side, price, tp, sl })
         );
 
         const results = await Promise.all(executionPromises);
