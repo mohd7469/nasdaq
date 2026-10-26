@@ -198,7 +198,7 @@ async function placeOrder(token, payload, ibConfig) {
                 "Authorization": `Bearer ${token}`
             }
         });
-        console.log(`✅ Order Placed Successfully for [${ibConfig.accountId}]:`, response.data);
+        console.log(`✅ [${ibConfig.accountId}] Order:`, response.data);
         return { success: true, data: response.data };
     } catch (error) {
         console.error(`❌ Order Execution Error for [${ibConfig.accountId}]:`, error.response?.data || error.message);
@@ -215,6 +215,7 @@ async function executeTradeForUser(ibConfig, { action, side, price, tp, sl }) {
             case 'ENTRY': {
                 const payload = generateOrderPayload(ibConfig, { side, price, tp, sl });
 
+                console.log(`\n`);
                 console.log(`Ironbeam:`, payload);
                 console.log(`\n`);
 
@@ -262,6 +263,7 @@ async function executeTradeForUser(ibConfig, { action, side, price, tp, sl }) {
             error: err.message
         };
     }
+    console.log(`\n`);
 }
 
 export default async function handler(req, res) {
