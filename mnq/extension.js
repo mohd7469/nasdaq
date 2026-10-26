@@ -127,6 +127,36 @@
         }
     };
 
+    const syncRecentPineLogsTimestampFromBackend = async () => {
+        try {
+            const recentPineLogsTimestamp = localStorage.getItem('_botRecentPineLogsTimestamp');
+            if (!recentPineLogsTimestamp) {
+                const isWindows = /Win/i.test(navigator.userAgent || navigator.platform);
+                const endpointUrl = isWindows ? `http://localhost:3000/api` : API_URL;
+
+                const response = await axios.get(`${endpointUrl}/trade`);
+                if (response.data && response.data.signals && response.data.signals.length > 0) {
+                    const signals = response.data.signals;
+
+                    // Client side par moment ke zariye strict chronological sorting
+                    signals.sort((a, b) => {
+                        return getTimezone(a.timestamp).valueOf() - getTimezone(b.timestamp).valueOf();
+                    });
+
+                    // Sorting ke baad sab se aakhri (most recent) signal utha lo
+                    const latestSignal = signals[signals.length - 1];
+                    if (latestSignal && latestSignal.timestamp) {
+                        const latestIso = getTimezone(latestSignal.timestamp).toISOString();
+                        localStorage.setItem('_botRecentPineLogsTimestamp', latestIso);
+                        console.log('Synced latest pine log timestamp from backend:', latestIso);
+                    }
+                }
+            }
+        } catch (err) {
+            console.error('Sync Timestamp Error:', err?.message);
+        }
+    };
+
     function waitScrollToBottom() {
         const container = document.querySelector(PINE_LOGS_CONTAINER);
         if (!container) return Promise.resolve();
@@ -292,6 +322,7 @@
             const msg = `Starting.. @v${localStorage.getItem('_botRecentVersion')}`
             console.log(msg);
             sendLog(msg).catch(err => { });
+            syncRecentPineLogsTimestampFromBackend().catch(err => { });
         },
         onTick: async (count, time, logs) => {
             let minutes = 60;

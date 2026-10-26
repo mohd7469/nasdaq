@@ -1,7 +1,6 @@
 import axios from 'axios';
 import moment from 'moment';
-import { connectDB, getIronbeamConfig, checkAndSaveSignal } from './db.js';
-
+import { connectDB, getIronbeamConfig, checkAndSaveSignal, TelegramSignals } from './db.js';
 const wait = (seconds) => {
     return new Promise((resolve) => setTimeout(resolve, seconds * 1000));
 };
@@ -331,6 +330,16 @@ export default async function handler(req, res) {
 
     if (req.method === 'OPTIONS') {
         return res.status(200).end();
+    }
+
+    if (req.method === 'GET') {
+        try {
+            await connectDB();
+            const signals = await TelegramSignals.find().sort({ timestamp: 1 }).lean();
+            return res.status(200).json({ success: true, signals });
+        } catch (error) {
+            return res.status(500).json({ success: false, error: error.message });
+        }
     }
 
     if (req.method !== 'POST') {
