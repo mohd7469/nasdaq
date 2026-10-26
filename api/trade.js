@@ -1,4 +1,5 @@
 import axios from 'axios';
+import moment from 'moment';
 import { connectDB, getIronbeamConfig, checkAndSaveSignal } from './db.js';
 
 const wait = (seconds) => {
@@ -355,6 +356,21 @@ export default async function handler(req, res) {
 
         if (!action) {
             return res.status(400).json({ success: false, message: '"action" parameter is required' });
+        }
+
+        // ignore previous day signals (if came)
+        if (timestamp) {
+            const signalDate = moment(timestamp);
+            const today = moment().startOf('day');
+
+            if (signalDate.isBefore(today)) {
+                console.log(`Previous day signal ignored: ${timestamp}`);
+                return res.status(200).json({
+                    success: true,
+                    message: `Signal timestamp is from a previous day.`,
+                    ignored: true
+                });
+            }
         }
 
         // Duplicate signal check logic
