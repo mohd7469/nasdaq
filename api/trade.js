@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { connectDB, getIronbeamConfig } from './db.js';
+import { connectDB, getIronbeamConfig, checkAndSaveSignal } from './db.js';
 
 const wait = (seconds) => {
     return new Promise((resolve) => setTimeout(resolve, seconds * 1000));
@@ -355,6 +355,19 @@ export default async function handler(req, res) {
 
         if (!action) {
             return res.status(400).json({ success: false, message: '"action" parameter is required' });
+        }
+
+        // Duplicate signal check logic
+        if (id) {
+            const isNewSignal = await checkAndSaveSignal(id, req.body);
+            if (!isNewSignal) {
+                console.log(`Signal already processed`);
+                return res.status(200).json({
+                    success: true,
+                    signalId: id,
+                    message: `Signal already processed`,
+                });
+            }
         }
 
         const normalizedAction = action.toUpperCase();

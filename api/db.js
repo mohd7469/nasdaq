@@ -101,6 +101,33 @@ const telegramUsersSchema = new mongoose.Schema({
 
 telegramUsersSchema.index({ chatId: 1, botId: 1 }, { unique: true });
 
+// 6. Telegram Signals Model (Collection: "telegram_signals")
+const telegramSignalsSchema = new mongoose.Schema({
+    id: { type: String, required: true, unique: true },
+    payload: { type: Object, required: true },
+    createdAt: { type: Date, default: Date.now, expires: 86400 } // 24 ghante baad automatically delete ho jayega
+}, { strict: false, versionKey: false });
+
+export const TelegramSignals = mongoose.models.TelegramSignals || mongoose.model('TelegramSignals', telegramSignalsSchema, 'telegram_signals');
+
+// Helper to check duplicate and save signal
+export async function checkAndSaveSignal(signalId, payload) {
+    await connectDB();
+    try {
+        const existingSignal = await TelegramSignals.findOne({ id: signalId }).lean();
+        if (existingSignal) {
+            return false; // Signal pehle se process ho chuka hai
+        }
+        await TelegramSignals.create({ id: signalId, payload });
+        return true; // Naya signal hai, execute hoga
+    } catch (error) {
+        if (error.code === 11000) {
+            return false; // Duplicate key error handling
+        }
+        throw error;
+    }
+}
+
 export const TelegramUsers = mongoose.models.TelegramUsers || mongoose.model('TelegramUsers', telegramUsersSchema, 'telegram_users');
 
 // ==========================================
