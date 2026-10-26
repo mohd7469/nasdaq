@@ -249,7 +249,7 @@ export default async function handler(req, res) {
         const { id, timestamp, side, action, price, tp, sl } = req.body || {};
 
         if (!action) {
-            return res.status(400).json({ success: false, message: 'Missing "action". Must be ENTRY or EXIT' });
+            return res.status(400).json({ success: false, message: '"action" parameter is required' });
         }
 
         const normalizedAction = action.toUpperCase();
