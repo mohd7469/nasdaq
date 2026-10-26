@@ -104,8 +104,15 @@ telegramUsersSchema.index({ chatId: 1, botId: 1 }, { unique: true });
 // 6. Telegram Signals Model (Collection: "telegram_signals")
 const telegramSignalsSchema = new mongoose.Schema({
     id: { type: String, required: true, unique: true },
-    payload: { type: Object, required: true },
-    createdAt: { type: Date, default: Date.now, expires: 86400 } // 24 ghante baad automatically delete ho jayega
+    timestamp: { type: String },
+    side: { type: String },
+    action: { type: String },
+    price: { type: Number },
+    tp: { type: Number, default: null },
+    sl: { type: Number, default: null },
+    PKT: { type: String },
+    DXB: { type: String },
+    createdAt: { type: Date, default: Date.now, expires: 86400 } // 24 ghante baad auto delete
 }, { strict: false, versionKey: false });
 
 export const TelegramSignals = mongoose.models.TelegramSignals || mongoose.model('TelegramSignals', telegramSignalsSchema, 'telegram_signals');
@@ -118,7 +125,10 @@ export async function checkAndSaveSignal(signalId, payload) {
         if (existingSignal) {
             return false; // Signal pehle se process ho chuka hai
         }
-        await TelegramSignals.create({ id: signalId, payload });
+        await TelegramSignals.create({
+            ...payload,
+            createdAt: new Date()
+        });
         return true; // Naya signal hai, execute hoga
     } catch (error) {
         if (error.code === 11000) {
