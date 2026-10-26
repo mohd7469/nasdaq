@@ -210,7 +210,7 @@
 
                     if (!isWeekend()) {
                         // showDesktopAlert('Setup is executed');
-                        handleTrade(cleanData).catch(err => { });
+                        handleTrade(currentData).catch(err => { });
                         sendAlert(`<pre><code>${JSON.stringify(cleanData, null, 1)}</code></pre>`).catch(err => { });
                     } else {
                         console.log('Skipping Trade | Market Closed')
