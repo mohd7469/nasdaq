@@ -364,11 +364,11 @@ export default async function handler(req, res) {
             const today = moment().startOf('day');
 
             if (signalDate.isBefore(today)) {
-                console.log(`Previous day signal ignored: ${timestamp}`);
+                console.log(`Signal expired: ${timestamp}`);
                 return res.status(200).json({
-                    success: true,
-                    message: `Signal timestamp is from a previous day.`,
-                    ignored: true
+                    success: false,
+                    signalId: id,
+                    message: `Signal expired.`,
                 });
             }
         }
@@ -379,7 +379,7 @@ export default async function handler(req, res) {
             if (!isNewSignal) {
                 console.log(`Signal already processed`);
                 return res.status(200).json({
-                    success: true,
+                    success: false,
                     signalId: id,
                     message: `Signal already processed`,
                 });
