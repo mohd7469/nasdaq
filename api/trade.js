@@ -5,8 +5,60 @@ const wait = (seconds) => {
     return new Promise((resolve) => setTimeout(resolve, seconds * 1000));
 };
 
+// 1. Current Market Price Fetch karne ka outside helper function (OpenAPI /market/quotes ke mutabiq)
+async function getCurrentMarketPrice(token, ibConfig) {
+    try {
+        const response = await axios.get(`${ibConfig.apiUrl}/market/quotes`, {
+            headers: { "Authorization": `Bearer ${token}` },
+            params: { symbols: ibConfig.symbol }
+        });
+
+        const quotes = response.data.Quotes || response.data.quotes || response.data || [];
+        const quoteObj = quotes.find(q => (q.s === ibConfig.symbol || q.symbol === ibConfig.symbol));
+
+        // OpenAPI QuoteFull schema ke mutabiq 'l' ya 'lastPrice' se last traded price milti hai
+        const marketPrice = quoteObj?.l !== undefined ? quoteObj.l : quoteObj?.lastPrice;
+
+        if (marketPrice !== undefined && marketPrice !== null) {
+            return Number(marketPrice);
+        }
+        return null;
+    } catch (error) {
+        console.error(`Error fetching market price for [${ibConfig.accountId}]:`, error.response?.data || error.message);
+        return null;
+    }
+}
+
+// 2. Automatically Order Type Determine karne ka helper function
+async function determineOrderType(token, ibConfig, { side, price }, requestedOrderType) {
+    // Agar request body mein orderType pehle se diya gaya hai toh wahi use hoga
+    if (requestedOrderType && requestedOrderType.trim() !== "") {
+        return requestedOrderType.toUpperCase();
+    }
+
+    const marketPrice = await getCurrentMarketPrice(token, ibConfig);
+
+    // Agar market price fetch na ho paye toh safe fallback "LIMIT" ya "MARKET" rakhein
+    if (marketPrice === null) {
+        return "LIMIT";
+    }
+
+    const sigPrice = Number(price);
+    const upperSide = side.toUpperCase();
+
+    if (upperSide === 'LONG') {
+        // LONG ke liye: agar signal price market price se kam hai toh Limit, warna Stop (breakout)
+        return sigPrice <= marketPrice ? "LIMIT" : "STOP";
+    } else if (upperSide === 'SHORT') {
+        // SHORT ke liye: agar signal price market price se zyada hai toh Limit, warna Stop (breakdown)
+        return sigPrice >= marketPrice ? "LIMIT" : "STOP";
+    }
+
+    return "LIMIT";
+}
+
 // Centralized Payload Generator with switch case
-function generateOrderPayload(ibConfig, { side, price, tp, sl }, orderType = "MARKET") {
+function generateOrderPayload(ibConfig, { side, price, tp, sl }, orderType = "LIMIT") {
     const basePayload = {
         accountId: ibConfig.accountId,
         exchSym: ibConfig.symbol,
@@ -47,22 +99,18 @@ function generateOrderPayload(ibConfig, { side, price, tp, sl }, orderType = "MA
             };
         }
         default: {
-            // Default fallback to MARKET with calculated offsets
-            const entryPrice = Number(price);
-            const takeProfitOffset = Math.abs(Number(tp) - entryPrice);
-            const stopLossOffset = Math.abs(entryPrice - Number(sl));
-
             return {
                 ...basePayload,
-                orderType: "MARKET",
-                stopLossOffset: Number(stopLossOffset.toFixed(2)),
-                takeProfitOffset: Number(takeProfitOffset.toFixed(2))
+                orderType: "LIMIT",
+                limitPrice: Number(price),
+                takeProfit: Number(tp),
+                stopLoss: Number(sl),
             };
         }
     }
 }
 
-// 1. Authentication (Token Lena)
+// 3. Authentication (Token Lena)
 async function getAuthToken(ibConfig) {
     try {
         const response = await axios.post(`${ibConfig.apiUrl}/auth`, {
@@ -77,7 +125,7 @@ async function getAuthToken(ibConfig) {
     }
 }
 
-// 2. Open Positions Check Karna
+// 4. Open Positions Check Karna
 async function hasOpenPosition(token, ibConfig) {
     try {
         const response = await axios.get(`${ibConfig.apiUrl}/account/${ibConfig.accountId}/positions`, {
@@ -97,17 +145,15 @@ async function hasOpenPosition(token, ibConfig) {
         return false;
     } catch (error) {
         console.error(`Error checking positions for [${ibConfig.accountId}]:`, error.response?.data || error.message);
-        // Safety check: agar endpoint error de toh accidental double trade rokne ke liye true return karein
         return true;
     }
 }
 
-// 3. Close All Open Positions and Orders 
+// 5. Close All Open Positions and Orders 
 async function flattenAll(token, ibConfig) {
     try {
         const headers = { "Authorization": `Bearer ${token}` };
 
-        // 1. Saare active orders fetch karke cancel karna
         const ordersRes = await axios.get(`${ibConfig.apiUrl}/order/${ibConfig.accountId}/ANY`, { headers });
         const ordersData = ordersRes.data.orders || ordersRes.data || [];
 
@@ -124,10 +170,8 @@ async function flattenAll(token, ibConfig) {
                     orderIds: activeOrderIds
                 }
             });
-            console.log(`✅ All active orders cancelled for [${ibConfig.accountId}].`);
         }
 
-        // 2. Open positions fetch karke quantity ke sign se close karna
         const posRes = await axios.get(`${ibConfig.apiUrl}/account/${ibConfig.accountId}/positions`, { headers });
         const positions = posRes.data.positions || posRes.data || [];
 
@@ -153,21 +197,19 @@ async function flattenAll(token, ibConfig) {
                         "Authorization": `Bearer ${token}`
                     }
                 });
-                console.log(`✅ Position closed successfully for ${ibConfig.symbol} on [${ibConfig.accountId}]`);
             }
         }
 
-        const message = `[${ibConfig.accountId}] Positions cleared at ${new Date().toISOString()}`;
-        console.log(message)
+        console.log(`✅ [${ibConfig.accountId}] All cleared`);
 
-        return { success: true, message };
+        return { success: true, message: `[${ibConfig.accountId}] All cleared` };
     } catch (error) {
         console.error(`Error in flattenAll for [${ibConfig.accountId}]:`, error.response?.data || error.message);
         throw new Error(error.response?.data?.message || error.message);
     }
 }
 
-// 4. Generic Order Execution Function (with Wait/Retry for Exit completion)
+// 6. Generic Order Execution Function (with Wait/Retry for Exit completion)
 async function placeOrder(token, payload, ibConfig) {
     const maxRetries = 5;
     const delaySeconds = 1;
@@ -176,12 +218,10 @@ async function placeOrder(token, payload, ibConfig) {
         const isPositionOpen = await hasOpenPosition(token, ibConfig);
 
         if (!isPositionOpen) {
-            // Position close ho chuki hai, ab loop se nikal kar order place karo
             break;
         }
 
         if (i === maxRetries - 1) {
-            // Agar saari retries khatam ho jayen phir bhi position close nahi hui
             const message = `Order Rejected: Position currently active for [${ibConfig.accountId}] after several retry attempts`;
             console.log(message);
             return { success: false, message };
@@ -206,18 +246,18 @@ async function placeOrder(token, payload, ibConfig) {
     }
 }
 
-// 5. Har Ironbeam account ke liye isolated trade execution
+// 7. Har Ironbeam account ke liye isolated trade execution
 async function executeTradeForUser(ibConfig, { action, side, price, tp, sl, orderType }) {
     try {
         const token = await getAuthToken(ibConfig);
 
         switch (action.toUpperCase()) {
             case 'ENTRY': {
-                const payload = generateOrderPayload(ibConfig, { side, price, tp, sl }, orderType);
+                // Server automatically determine karega ke LIMIT hai ya STOP (agar req.body mein na ho)
+                const resolvedOrderType = await determineOrderType(token, ibConfig, { side, price }, orderType);
+                const payload = generateOrderPayload(ibConfig, { side, price, tp, sl }, resolvedOrderType);
 
-                console.log(`\n`);
                 console.log(`Ironbeam:`, payload);
-                console.log(`\n`);
 
                 const orderResult = await placeOrder(token, payload, ibConfig);
 
@@ -263,7 +303,6 @@ async function executeTradeForUser(ibConfig, { action, side, price, tp, sl, orde
             error: err.message
         };
     }
-    console.log(`\n`);
 }
 
 export default async function handler(req, res) {
@@ -283,13 +322,12 @@ export default async function handler(req, res) {
         return res.status(405).json({ success: false, message: 'Method Not Allowed' });
     }
 
+    console.log(`----------------------------`);
     console.log(`Payload:`, req.body);
-    console.log(`\n`);
 
     try {
         await connectDB();
 
-        // Filter users: isActive: true aur isDemo: true
         const ironbeamUsers = await getIronbeamConfig({ isActive: true, isDemo: true });
 
         if (!ironbeamUsers || ironbeamUsers.length === 0) {
@@ -314,7 +352,6 @@ export default async function handler(req, res) {
             return res.status(400).json({ success: false, message: '"side" must be LONG or SHORT.' });
         }
 
-        // Har account ke liye isolated trade execution (without any conflict or mixup)
         const executionPromises = ironbeamUsers.map(user =>
             executeTradeForUser(user, { action, side, price, tp, sl, orderType })
         );
