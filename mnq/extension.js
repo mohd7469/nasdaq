@@ -246,9 +246,9 @@
             const diff = closePrice - openPrice;
 
             if (Math.abs(diff) >= 50) {
-                const signal = diff > 0 ?
-                    `Checking new setup.. (+${realtimeValues.V})` :
-                    `Checking new setup.. (-${realtimeValues.V})`;
+                const signal = diff > 0
+                    ? `Checking new setup.. (+${Number(realtimeValues.V).toFixed(2)})`
+                    : `Checking new setup.. (-${Number(realtimeValues.V).toFixed(2)})`;
                 // showDesktopAlert(signal);
                 if (signal && signal !== recentNasdaqAlert) {
                     console.log(signal);
