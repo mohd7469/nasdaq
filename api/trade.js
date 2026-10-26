@@ -99,8 +99,11 @@ async function flattenAll(token, ibConfig) {
                 console.log(`✅ Position closed successfully for ${ibConfig.symbol} on [${ibConfig.accountId}]`);
             }
         }
+        
+        const message = `[${ibConfig.accountId}] All positions flattened successfully`;
+        console.log(message)
 
-        return { success: true, message: "Positions flattened successfully." };
+        return { success: true, message };
     } catch (error) {
         console.error(`Error in flattenAll for [${ibConfig.accountId}]:`, error.response?.data || error.message);
         throw new Error(error.response?.data?.message || error.message);
