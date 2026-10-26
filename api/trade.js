@@ -185,13 +185,15 @@ async function executeTradeForUser(ibConfig, { side, action, tp, sl }) {
             }
 
             case 'EXIT': {
-                console.log(`Closing ${ibConfig.symbol} Position for account [${ibConfig.accountId}]..`);
+                console.log(`[${ibConfig.accountId}] Closing ${ibConfig.symbol} position...`);
                 await flattenAll(token, ibConfig);
+                const message = `[${ibConfig.accountId}] Position ${ibConfig.symbol} closed at ${new Date().toISOString()}`;
+                console.log(message);
                 return {
                     accountId: ibConfig.accountId,
                     symbol: ibConfig.symbol,
                     success: true,
-                    message: `${ibConfig.symbol}: Position closed on account [${ibConfig.accountId}] at ${new Date().toISOString()}`
+                    message
                 };
             }
 
@@ -226,9 +228,9 @@ export default async function handler(req, res) {
         return res.status(405).json({ success: false, message: 'Method Not Allowed' });
     }
 
-    console.log('___________________________________________________');
-    console.log('body:', req.body);
-    console.log('___________________________________________________');
+    console.log(`\n`);
+    console.log(`Payload:`, req.body);
+    console.log(`\n`);
 
     try {
         await connectDB();
@@ -243,7 +245,7 @@ export default async function handler(req, res) {
             });
         }
 
-        const { timestamp, side, action, price, tp, sl } = req.body || {};
+        const { id, timestamp, side, action, price, tp, sl } = req.body || {};
 
         if (!action) {
             return res.status(400).json({ success: false, message: 'Missing "action". Must be ENTRY or EXIT' });
@@ -251,11 +253,11 @@ export default async function handler(req, res) {
 
         const normalizedAction = action.toUpperCase();
         if (normalizedAction !== 'ENTRY' && normalizedAction !== 'EXIT') {
-            return res.status(400).json({ success: false, message: 'Invalid "action". Must be ENTRY or EXIT.' });
+            return res.status(400).json({ success: false, message: '"action" must be ENTRY or EXIT.' });
         }
 
         if (normalizedAction === 'ENTRY' && side?.toUpperCase() !== 'LONG' && side?.toUpperCase() !== 'SHORT') {
-            return res.status(400).json({ success: false, message: 'Invalid "side". Must be LONG or SHORT.' });
+            return res.status(400).json({ success: false, message: '"side" must be LONG or SHORT.' });
         }
 
         // Har account ke liye isolated trade execution (without any conflict or mixup)
