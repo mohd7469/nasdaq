@@ -2,11 +2,7 @@ import cors from './cors.js';
 import axios from 'axios';
 import moment from 'moment';
 
-import {
-    connectDB,
-    getAppConfig,
-    TelegramBots
-} from '../db/operations.js';
+import * as db from '../db/operations.js';
 
 export default async function handler(req, res) {
     if (cors(req, res)) {
@@ -18,9 +14,9 @@ export default async function handler(req, res) {
     }
 
     try {
-        await connectDB();
-        const config = await getAppConfig();
-        const bots = await TelegramBots.find({}, 'botId name').lean();
+        await db.connect();
+        const config = await db.getAppConfig();
+        const bots = await db.TelegramBots.find({}, 'botId name').lean();
 
         return res.status(200).json({
             success: true,
