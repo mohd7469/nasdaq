@@ -1,112 +1,88 @@
-import { connectDB, getAppConfig, getBotsConfig, createOrUpdateUser, ReloadSignals } from './db.js';
+import cors from './cors.js';
+import axios from 'axios';
+import moment from 'moment';
+
+import * as db from '../db/operations.js';
+
+const RELOAD_COMMANDS = new Set(['reload', 'refresh', '/reload', '/refresh']);
 
 export default async function handler(req, res) {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Telegram-Bot-Api-Secret-Token');
-
-    if (req.method === 'OPTIONS') {
-        return res.status(200).end();
+    if (cors(req, res)) {
+        return;
     }
 
     try {
-        await connectDB();
-        const appConfig = await getAppConfig();
-        const botsConfig = await getBotsConfig();
-
-        // =====================================================================
-        // 1. CLIENT CHECK (GET):
-        // =====================================================================
         if (req.method === 'GET') {
-            const targetBot = req.query?.bot;
-            const filter = targetBot ? { botId: targetBot } : {};
-
-            // Database se reload signal dhoondain aur foran delete (consume) kardein
-            const reloadDoc = await ReloadSignals.findOneAndDelete(filter);
-
-            if (reloadDoc) {
-                return res.status(200).json(true);
-            }
-
-            return res.status(200).json(false);
+            return await handleGet(req, res);
         }
 
-        // =====================================================================
-        // 2. TELEGRAM WEBHOOK (POST): Telegram bot se user message aane par
-        // =====================================================================
         if (req.method === 'POST') {
-            const botId = req.query?.bot;
-            const secretHeader = req.headers['x-telegram-bot-api-secret-token'];
-
-            if (secretHeader && secretHeader !== appConfig.webhookSecret) {
-                return res.status(401).json({ error: 'Unauthorized secret token' });
-            }
-
-            const message = req.body?.message;
-            if (!message || !message.text) {
-                return res.status(200).json({ status: 'Ignored, not a text message' });
-            }
-
-            const rawText = message.text.trim();
-            const cleanText = rawText.toLowerCase();
-            const chatId = String(message.chat.id);
-            const userInfo = message.from || {};
-            const botConfig = botId ? botsConfig.find(b => b.botId === botId) : null;
-
-            const reloadCommands = ['reload', 'refresh', '/reload', '/refresh'];
-
-            if (reloadCommands.includes(cleanText)) {
-                if (botId) {
-                    await createOrUpdateUser(botId, chatId, userInfo);
-                }
-
-                const reloadPayload = {
-                    bot: botId || 'unknown',
-                    botName: botConfig ? botConfig.name : (botId || 'Unknown Bot'),
-                    command: rawText,
-                    chatId: chatId,
-                    from: userInfo,
-                    timestamp: Date.now()
-                };
-
-                if (botId) {
-                    // Pehle check karein ke purana document hai ya nahi taake createdAt zaya na ho
-                    const existingSignal = await ReloadSignals.findOne({ botId }).lean();
-                    const now = new Date();
-
-                    // Exact desired key sequence
-                    const orderedReloadDoc = {
-                        botId: botId,
-                        payload: reloadPayload,
-                        createdAt: existingSignal ? existingSignal.createdAt : now,
-                        updatedAt: now
-                    };
-
-                    // findOneAndReplace use karne se keys ka sequence hamesha strict rahega
-                    await ReloadSignals.findOneAndReplace(
-                        { botId },
-                        orderedReloadDoc,
-                        { upsert: true, returnDocument: 'after' }
-                    );
-                }
-
-                console.log(`[Reload] Triggered by ${botId} (${rawText}) from chat ${chatId}`);
-
-                return res.status(200).json({
-                    status: 'OK',
-                    message: 'Reload signal stored successfully'
-                });
-            }
-
-            return res.status(200).json({
-                status: 'Ignored',
-                message: `Text "${rawText}" is not a reload command`
-            });
+            return await handlePost(req, res);
         }
 
-        return res.status(405).json({ error: 'Method not allowed' });
+        return res.status(405).json({ success: false, error: 'Method not allowed' });
     } catch (err) {
-        console.error('Reload API Error:', err.message);
-        return res.status(500).json({ error: err.message });
+        return res.status(500).json({ success: false, error: err.message });
     }
+}
+
+async function handleGet(req, res) {
+    const targetBot = req.query?.bot;
+    const filter = targetBot ? { botId: targetBot } : {};
+    const reloadDoc = await db.consumeReloadSignal(filter);
+
+    return res.status(200).json(Boolean(reloadDoc));
+}
+
+async function handlePost(req, res) {
+    const appConfig = await db.getAppConfig();
+    const secretHeader = req.headers['x-telegram-bot-api-secret-token'];
+
+    if (secretHeader && secretHeader !== appConfig.webhookSecret) {
+        return res.status(401).json({ success: false, error: 'Unauthorized secret token' });
+    }
+
+    const message = req.body?.message;
+    if (!message?.text) {
+        return res.status(200).json({ success: true, message: 'Ignored, not a text message' });
+    }
+
+    const rawText = message.text.trim();
+    const cleanText = rawText.toLowerCase();
+
+    if (!RELOAD_COMMANDS.has(cleanText)) {
+        return res.status(409).json({
+            success: false,
+            message: `Text "${rawText}" is not a reload command`
+        });
+    }
+
+    const botId = req.query?.bot;
+    const chatId = String(message.chat.id);
+    const userInfo = message.from || {};
+    const botsConfig = await db.getBotsConfig();
+    const botConfig = botId ? botsConfig.find(b => b.botId === botId) : null;
+
+    if (botId) {
+        await db.createOrUpdateUser(botId, chatId, userInfo);
+    }
+
+    const reloadPayload = {
+        bot: botId || 'unknown',
+        botName: botConfig ? botConfig.name : (botId || 'Unknown Bot'),
+        command: rawText,
+        chatId,
+        from: userInfo,
+        timestamp: Date.now()
+    };
+
+    if (botId) {
+        await db.upsertReloadSignal(botId, reloadPayload);
+    }
+
+    return res.status(200).json({
+        success: true,
+
+        message: 'Reload signal stored successfully'
+    });
 }
