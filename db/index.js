@@ -118,5 +118,3 @@ export async function connectDB() {
 
     return cached.conn;
 }
-
-export * from './operations.js';
