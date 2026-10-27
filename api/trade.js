@@ -32,62 +32,57 @@ async function handleGet(req, res) {
 }
 
 async function handlePost(req, res) {
-    try {
-        const ironbeamUsers = await db.getIronbeamConfig({ isActive: true, isDemo: true });
-        if (!ironbeamUsers?.length) {
-            return res.status(404).json({
+    const ironbeamUsers = await db.getIronbeamConfig({ isActive: true, isDemo: true });
+    if (!ironbeamUsers?.length) {
+        return res.status(404).json({
+            success: false,
+            message: 'No active Ironbeam accounts found matching criteria (isActive: true, isDemo: true)'
+        });
+    }
+
+    const { id, timestamp, action, side, price, tp, sl, orderType } = req.body || {};
+
+    if (!action) {
+        return res.status(400).json({ success: false, message: '"action" parameter is required' });
+    }
+
+    const validationResult = validateSignal({ timestamp, id, action, side, body: req.body });
+    if (!validationResult.isValid) {
+        return res.status(validationResult.status).json(validationResult.payload);
+    }
+
+    const normalizedAction = action.toUpperCase();
+    if (normalizedAction !== 'ENTRY' && normalizedAction !== 'EXIT') {
+        return res.status(400).json({ success: false, message: '"action" must be ENTRY or EXIT.' });
+    }
+
+    if (normalizedAction === 'ENTRY' && side?.toUpperCase() !== 'LONG' && side?.toUpperCase() !== 'SHORT') {
+        return res.status(400).json({ success: false, message: '"side" must be LONG or SHORT.' });
+    }
+
+    if (id) {
+        const isNewSignal = await db.checkAndSaveSignal(id, req.body);
+        if (!isNewSignal) {
+            return res.status(200).json({
                 success: false,
-                message: 'No active Ironbeam accounts found matching criteria (isActive: true, isDemo: true)'
+                signalId: id,
+                message: 'Signal already processed'
             });
         }
-
-        const { id, timestamp, action, side, price, tp, sl, orderType } = req.body || {};
-
-        if (!action) {
-            return res.status(400).json({ success: false, message: '"action" parameter is required' });
-        }
-
-        const validationResult = validateSignal({ timestamp, id, action, side, body: req.body });
-        if (!validationResult.isValid) {
-            return res.status(validationResult.status).json(validationResult.payload);
-        }
-
-        const normalizedAction = action.toUpperCase();
-        if (normalizedAction !== 'ENTRY' && normalizedAction !== 'EXIT') {
-            return res.status(400).json({ success: false, message: '"action" must be ENTRY or EXIT.' });
-        }
-
-        if (normalizedAction === 'ENTRY' && side?.toUpperCase() !== 'LONG' && side?.toUpperCase() !== 'SHORT') {
-            return res.status(400).json({ success: false, message: '"side" must be LONG or SHORT.' });
-        }
-
-        if (id) {
-            const isNewSignal = await db.checkAndSaveSignal(id, req.body);
-            if (!isNewSignal) {
-                return res.status(200).json({
-                    success: false,
-                    signalId: id,
-                    message: 'Signal already processed'
-                });
-            }
-        }
-
-        const results = await Promise.all(
-            ironbeamUsers.map(user => executeTradeForUser(user, { action: normalizedAction, side, price, tp, sl, orderType }))
-        );
-
-        const successfulCount = results.filter(r => r.success).length;
-
-        return res.status(200).json({
-            success: successfulCount > 0,
-            message: `Position active on ${successfulCount}/${ironbeamUsers.length} accounts`,
-            results
-        });
-    } catch (error) {
-        return res.status(500).json({ success: false, error: error.message });
     }
-}
 
+    const results = await Promise.all(
+        ironbeamUsers.map(user => executeTradeForUser(user, { action: normalizedAction, side, price, tp, sl, orderType }))
+    );
+
+    const successfulCount = results.filter(r => r.success).length;
+
+    return res.status(200).json({
+        success: successfulCount > 0,
+        message: `Position active on ${successfulCount}/${ironbeamUsers.length} accounts`,
+        results
+    });
+}
 
 function validateSignal({ timestamp, id }) {
     if (timestamp && moment(timestamp).isBefore(moment().startOf('day'))) {
