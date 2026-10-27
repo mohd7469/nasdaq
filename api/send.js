@@ -12,21 +12,100 @@ export default async function handler(req, res) {
     }
 
     try {
-        const appConfig = await db.getAppConfig();
-        const botsConfig = await db.getBotsConfig();
-
-        const botId = req.query?.bot;
-        if (req.method === 'POST' && req.body?.message && botId) {
-            return await handleTelegramWebhook(req, res, { appConfig, botsConfig, botId });
+        if (req.method === 'GET') {
+            return await handleGet(req, res);
         }
 
-        return await handleClientDispatch(req, res, { appConfig, botsConfig });
+        return await handlePost(req, res);
     } catch (err) {
         return res.status(500).json({ success: false, error: err.message });
     }
 }
 
-async function handleTelegramWebhook(req, res, { appConfig, botsConfig, botId }) {
+async function handleGet(req, res) {
+    const appConfig = await db.getAppConfig();
+    const botsConfig = await db.getBotsConfig();
+
+    const { text, bot, chatId } = req.query || {};
+
+    if (text === '') throw new Error('text is missing');
+    if (bot === '') throw new Error('bot is missing');
+    if (chatId === '') throw new Error('chatId is missing');
+
+    const finalMessage = text || appConfig.defaultText;
+    const isTyping = Boolean(text && (text.startsWith('...') || text.startsWith('typing')));
+
+    const targetBots = bot ? (Array.isArray(bot) ? bot : [bot]) : botsConfig.map(b => b.botId);
+    const targetChatIds = chatId ? (Array.isArray(chatId) ? chatId : [chatId]) : [];
+
+    for (const bId of targetBots) {
+        if (!botsConfig.some(b => b.botId === bId)) {
+            return res.status(400).json({ success: false, error: `Invalid or missing bot identifier: ${bId}` });
+        }
+    }
+
+    const filterActiveUsers = await resolveActiveRecipients(targetBots, targetChatIds, botsConfig);
+
+    if (targetChatIds.length > 0 && filterActiveUsers.length === 0) {
+        return res.status(404).json({ success: false, error: 'User is not active for given chatId' });
+    }
+
+    const results = await dispatchTelegramMessages(filterActiveUsers, finalMessage, isTyping);
+
+    return res.status(200).json({
+        success: true,
+        action: isTyping ? 'typing' : 'message',
+        bot: bot || 'all_bots',
+        chatId: chatId || 'all_active_users',
+        results
+    });
+}
+
+async function handlePost(req, res) {
+    const appConfig = await db.getAppConfig();
+    const botsConfig = await db.getBotsConfig();
+
+    const botId = req.query?.bot;
+    if (req.body?.message && botId) {
+        return await handleTelegramWebhookRequest(req, res, { appConfig, botsConfig, botId });
+    }
+
+    const { text, bot, chatId } = req.body || {};
+
+    if (text === '') throw new Error('text is missing');
+    if (bot === '') throw new Error('bot is missing');
+    if (chatId === '') throw new Error('chatId is missing');
+
+    const finalMessage = text || appConfig.defaultText;
+    const isTyping = Boolean(text && (text.startsWith('...') || text.startsWith('typing')));
+
+    const targetBots = bot ? (Array.isArray(bot) ? bot : [bot]) : botsConfig.map(b => b.botId);
+    const targetChatIds = chatId ? (Array.isArray(chatId) ? chatId : [chatId]) : [];
+
+    for (const bId of targetBots) {
+        if (!botsConfig.some(b => b.botId === bId)) {
+            return res.status(400).json({ success: false, error: `Invalid or missing bot identifier: ${bId}` });
+        }
+    }
+
+    const filterActiveUsers = await resolveActiveRecipients(targetBots, targetChatIds, botsConfig);
+
+    if (targetChatIds.length > 0 && filterActiveUsers.length === 0) {
+        return res.status(404).json({ success: false, error: 'User is not active for given chatId' });
+    }
+
+    const results = await dispatchTelegramMessages(filterActiveUsers, finalMessage, isTyping);
+
+    return res.status(200).json({
+        success: true,
+        action: isTyping ? 'typing' : 'message',
+        bot: bot || 'all_bots',
+        chatId: chatId || 'all_active_users',
+        results
+    });
+}
+
+async function handleTelegramWebhookRequest(req, res, { appConfig, botsConfig, botId }) {
     const secretHeader = req.headers['x-telegram-bot-api-secret-token'];
     if (secretHeader !== appConfig.webhookSecret) {
         return res.status(401).json({ success: false, error: 'Unauthorized secret token' });
@@ -92,44 +171,6 @@ async function handleTelegramWebhook(req, res, { appConfig, botsConfig, botId })
     const savedChatsCount = await db.countBotTelegramUsers(botId);
 
     return res.status(200).json({ success: true, savedChatsCount, userInfo });
-}
-
-async function handleClientDispatch(req, res, { appConfig, botsConfig }) {
-    const text = req.body?.text !== undefined ? req.body.text : req.query?.text;
-    const bot = req.body?.bot !== undefined ? req.body.bot : req.query?.bot;
-    const chatId = req.body?.chatId !== undefined ? req.body.chatId : req.query?.chatId;
-
-    if (text === '') throw new Error('text is missing');
-    if (bot === '') throw new Error('bot is missing');
-    if (chatId === '') throw new Error('chatId is missing');
-
-    const finalMessage = text || appConfig.defaultText;
-    const isTyping = Boolean(text && (text.startsWith('...') || text.startsWith('typing')));
-
-    const targetBots = bot ? (Array.isArray(bot) ? bot : [bot]) : botsConfig.map(b => b.botId);
-    const targetChatIds = chatId ? (Array.isArray(chatId) ? chatId : [chatId]) : [];
-
-    for (const bId of targetBots) {
-        if (!botsConfig.some(b => b.botId === bId)) {
-            return res.status(400).json({ success: false, error: `Invalid or missing bot identifier: ${bId}` });
-        }
-    }
-
-    const filterActiveUsers = await resolveActiveRecipients(targetBots, targetChatIds, botsConfig);
-
-    if (targetChatIds.length > 0 && filterActiveUsers.length === 0) {
-        return res.status(404).json({ success: false, error: 'User is not active for given chatId' });
-    }
-
-    const results = await dispatchTelegramMessages(filterActiveUsers, finalMessage, isTyping);
-
-    return res.status(200).json({
-        success: true,
-        action: isTyping ? 'typing' : 'message',
-        bot: bot || 'all_bots',
-        chatId: chatId || 'all_active_users',
-        results
-    });
 }
 
 async function resolveActiveRecipients(targetBots, targetChatIds, botsConfig) {
