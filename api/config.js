@@ -12,7 +12,7 @@ export default async function handler(req, res) {
     try {
         await db.connect();
         const config = await db.getAppConfig();
-        const bots = await db.getTelegramBots();
+        const bots = await db.getBotsConfig();
 
         return res.status(200).json({
             success: true,
