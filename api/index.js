@@ -2,11 +2,7 @@ import cors from './cors.js';
 import axios from 'axios';
 import moment from 'moment';
 
-import {
-    connectDB,
-    getAppConfig,
-    getBotsConfig
-} from '../db/operations.js';
+import * as db from '../db/operations.js';
 
 export default async function handler(req, res) {
     if (cors(req, res)) {
@@ -14,15 +10,14 @@ export default async function handler(req, res) {
     }
 
     try {
-        await connectDB();
-        const appConfig = await getAppConfig();
-        const botsConfig = await getBotsConfig();
+        await db.connect();
+        const config = await db.getAppConfig();
+        const bots = await db.getBotsConfig();
 
-        await registerWebhooks(req, appConfig, botsConfig);
+        await registerWebhooks(req, config, bots);
 
         return res.status(200).json({
             success: true,
-            status: 'OK',
             message: 'Serverless webhooks running',
             uptime: `${moment.duration(process.uptime(), 'seconds').humanize()} ago`,
             timestamp: new Date().toISOString()
@@ -32,21 +27,21 @@ export default async function handler(req, res) {
     }
 }
 
-async function registerWebhooks(req, appConfig, botsConfig) {
+async function registerWebhooks(req, config, bots) {
     const host = req.headers['x-forwarded-host'] || req.headers.host;
     if (!host) return;
 
     const protocol = req.headers['x-forwarded-proto'] || 'https';
     const baseUrl = `${protocol}://${host}`;
 
-    const registrations = botsConfig
+    const registrations = bots
         .filter(bot => bot?.token)
         .map(async (bot) => {
             try {
                 const webhookUrl = `${baseUrl}/api/send?bot=${bot.botId}`;
                 await axios.post(`https://api.telegram.org/bot${bot.token}/setWebhook`, {
                     url: webhookUrl,
-                    secret_token: appConfig.webhookSecret
+                    secret_token: config.webhookSecret
                 });
             } catch (err) {
                 console.error(`Webhook registration failed for ${bot.botId}:`, err.message);
