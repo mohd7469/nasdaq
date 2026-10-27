@@ -19,5 +19,13 @@ export default function cors(req, res, options = {}) {
         return true;
     }
 
+    const allowedMethods = methods.split(',').map(m => m.trim().toUpperCase());
+    const currentMethod = (req?.method || '').toUpperCase();
+
+    if (!allowedMethods.includes(currentMethod)) {
+        res.status(405).json({ success: false, error: 'Method not allowed' });
+        return true;
+    }
+
     return false;
 }

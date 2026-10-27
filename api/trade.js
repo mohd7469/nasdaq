@@ -15,10 +15,6 @@ export default async function handler(req, res) {
         return await handleGetSignals(res);
     }
 
-    if (req.method !== 'POST') {
-        return res.status(405).json({ success: false, message: 'Method Not Allowed' });
-    }
-
     try {
         const ironbeamUsers = await db.getIronbeamConfig({ isActive: true, isDemo: true });
         if (!ironbeamUsers?.length) {
