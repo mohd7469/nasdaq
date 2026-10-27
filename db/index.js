@@ -95,7 +95,7 @@ export const TelegramSignals = mongoose.models.TelegramSignals || mongoose.model
 // DB Connection Initializer
 // ----------------------------------------------------
 
-export async function connectDB() {
+export async function connect() {
     if (cached.conn && mongoose.connection.readyState >= 1) {
         return cached.conn;
     }
