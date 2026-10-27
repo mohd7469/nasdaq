@@ -1,5 +1,5 @@
+import * as db from './2_query.js';
 import {
-    connect,
     Configs,
     IronbeamUsers,
     ReloadSignals,
@@ -13,7 +13,7 @@ import {
 // ----------------------------------------------------
 
 export async function checkAndSaveSignal(signalId, payload) {
-    await connect();
+    
     try {
         const existingSignal = await TelegramSignals.findOne({ id: signalId }).lean();
         if (existingSignal) {
@@ -34,7 +34,7 @@ export async function checkAndSaveSignal(signalId, payload) {
 }
 
 export async function getAllSignals(options = { sort: { timestamp: 1 } }) {
-    await connect();
+    
     return await TelegramSignals.find().sort(options.sort).lean();
 }
 
@@ -43,7 +43,7 @@ export async function getAllSignals(options = { sort: { timestamp: 1 } }) {
 // ----------------------------------------------------
 
 export async function getAppConfig() {
-    await connect();
+    
     const configDoc = await Configs.findOne().lean();
     if (!configDoc) return {};
     const { _id, ...config } = configDoc;
@@ -51,12 +51,12 @@ export async function getAppConfig() {
 }
 
 export async function getBotsConfig() {
-    await connect();
+    
     return await TelegramBots.find().lean();
 }
 
 export async function getIronbeamConfig(filter = { isActive: true, isDemo: true }) {
-    await connect();
+    
     return await IronbeamUsers.find(filter).lean();
 }
 
@@ -65,22 +65,22 @@ export async function getIronbeamConfig(filter = { isActive: true, isDemo: true 
 // ----------------------------------------------------
 
 export async function getTelegramUser(botId, chatId, filter = {}) {
-    await connect();
+    
     return await TelegramUsers.findOne({ chatId: String(chatId), botId, ...filter }).lean();
 }
 
 export async function getTelegramUsersForBot(botId) {
-    await connect();
+    
     return await TelegramUsers.find({ botId, isActive: true });
 }
 
 export async function countBotTelegramUsers(botId) {
-    await connect();
+    
     return await TelegramUsers.countDocuments({ botId });
 }
 
 export async function updateTelegramUser(botId, chatId, updateFields = {}) {
-    await connect();
+    
     const existingUser = await TelegramUsers.findOne({ chatId, botId }).lean();
     if (!existingUser) return null;
 
@@ -114,7 +114,7 @@ export async function updateTelegramUser(botId, chatId, updateFields = {}) {
 }
 
 export async function createOrUpdateUser(botId, chatId, userInfo = {}, role = 'user') {
-    await connect();
+    
     const existingUser = await TelegramUsers.findOne({ chatId, botId });
     const cleanUserInfo = sanitizeUserInfo(userInfo);
     const finalRole = await getAssignedRole(chatId, role);
@@ -136,7 +136,7 @@ export async function createOrUpdateUser(botId, chatId, userInfo = {}, role = 'u
 }
 
 export async function batchUpdateTelegramUsers(updates = []) {
-    await connect();
+    
     const promises = updates.map(async ({ botId, chatId, ...fieldsToUpdate }) => {
         if (!botId || !chatId) return null;
         return await updateTelegramUser(botId, chatId, fieldsToUpdate);
@@ -145,7 +145,7 @@ export async function batchUpdateTelegramUsers(updates = []) {
 }
 
 export async function removeTelegramUser(botId, chatId) {
-    await connect();
+    
     const result = await TelegramUsers.deleteOne({ chatId, botId });
     return result.deletedCount > 0;
 }
@@ -155,12 +155,12 @@ export async function removeTelegramUser(botId, chatId) {
 // ----------------------------------------------------
 
 export async function consumeReloadSignal(filter = {}) {
-    await connect();
+    
     return await ReloadSignals.findOneAndDelete(filter);
 }
 
 export async function upsertReloadSignal(botId, payload) {
-    await connect();
+    
     const existingSignal = await ReloadSignals.findOne({ botId }).lean();
     const now = new Date();
 
