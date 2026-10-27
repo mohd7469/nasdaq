@@ -4,8 +4,6 @@ import moment from 'moment';
 
 import * as db from '../db/operations.js';
 
-await db.connect();
-
 const appConfig = await db.getAppConfig();
 const bots = await db.getBotsConfig();
 
