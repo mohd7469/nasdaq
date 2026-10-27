@@ -1,13 +1,15 @@
+import cors from './cors.js';
+import axios from 'axios';
+import moment from 'moment';
+
 import {
     connectDB,
     getAppConfig,
     TelegramBots
 } from '../db/index.js';
 
-import { cors } from './cors.js';
-
 export default async function handler(req, res) {
-    if (cors(req, res, { methods: 'OPTIONS, GET' })) {
+    if (cors(req, res)) {
         return;
     }
 
