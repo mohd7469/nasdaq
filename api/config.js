@@ -1,12 +1,13 @@
 import { connectDB, getAppConfig, TelegramBots } from './db.js';
+import { cors } from './cors.js';
 
 export default async function handler(req, res) {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    if (cors(req, res, { methods: 'OPTIONS, GET' })) {
+        return;
+    }
 
-    if (req.method === 'OPTIONS') {
-        return res.status(200).end();
+    if (req.method !== 'GET') {
+        return res.status(405).json({ success: false, error: 'Method not allowed' });
     }
 
     try {
@@ -15,13 +16,13 @@ export default async function handler(req, res) {
         const bots = await TelegramBots.find({}, 'botId name').lean();
 
         return res.status(200).json({
+            success: true,
             apiUrl: config.apiUrl,
             defaultChatId: config.defaultChatId,
             defaultText: config.defaultText,
-            bots: bots.map(b => ({ botId: b.botId, name: b.name }))
+            bots: bots.map(({ botId, name }) => ({ botId, name }))
         });
     } catch (err) {
-        console.error('Config API Error:', err.message);
-        return res.status(500).json({ error: err.message });
+        return res.status(500).json({ success: false, error: err.message });
     }
 }
