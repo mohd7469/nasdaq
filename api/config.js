@@ -1,4 +1,9 @@
-import { connectDB, getAppConfig, TelegramBots } from './db.js';
+import {
+    connectDB,
+    getAppConfig,
+    TelegramBots
+} from '../db/index.js';
+
 import { cors } from './cors.js';
 
 export default async function handler(req, res) {
