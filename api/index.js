@@ -18,7 +18,7 @@ export default async function handler(req, res) {
         const appConfig = await getAppConfig();
         const botsConfig = await getBotsConfig();
 
-        await registerWebhooks(req, botsConfig, appConfig.webhookSecret);
+        await registerWebhooks(req, appConfig, botsConfig);
 
         return res.status(200).json({
             success: true,
@@ -32,7 +32,7 @@ export default async function handler(req, res) {
     }
 }
 
-async function registerWebhooks(req, botsConfig, webhookSecret) {
+async function registerWebhooks(req, appConfig, botsConfig) {
     const host = req.headers['x-forwarded-host'] || req.headers.host;
     if (!host) return;
 
@@ -46,7 +46,7 @@ async function registerWebhooks(req, botsConfig, webhookSecret) {
                 const webhookUrl = `${baseUrl}/api/send?bot=${bot.botId}`;
                 await axios.post(`https://api.telegram.org/bot${bot.token}/setWebhook`, {
                     url: webhookUrl,
-                    secret_token: webhookSecret
+                    secret_token: appConfig.webhookSecret
                 });
             } catch (err) {
                 console.error(`Webhook registration failed for ${bot.botId}:`, err.message);
