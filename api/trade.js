@@ -11,10 +11,27 @@ export default async function handler(req, res) {
         return;
     }
 
-    if (req.method === 'GET') {
-        return await handleGet(res);
-    }
+    try {
+        if (req.method === 'GET') {
+            return await handleGet(req, res);
+        }
 
+        return await handlePost(req, res);
+    } catch (err) {
+        return res.status(500).json({ success: false, error: err.message });
+    }
+}
+
+async function handleGet(req, res) {
+    try {
+        const signals = await db.getAllSignals({ sort: { timestamp: 1 } });
+        return res.status(200).json({ success: true, signals });
+    } catch (error) {
+        return res.status(500).json({ success: false, error: error.message });
+    }
+}
+
+async function handlePost(req, res) {
     try {
         const ironbeamUsers = await db.getIronbeamConfig({ isActive: true, isDemo: true });
         if (!ironbeamUsers?.length) {
@@ -71,14 +88,6 @@ export default async function handler(req, res) {
     }
 }
 
-async function handleGet(res) {
-    try {
-        const signals = await db.getAllSignals({ sort: { timestamp: 1 } });
-        return res.status(200).json({ success: true, signals });
-    } catch (error) {
-        return res.status(500).json({ success: false, error: error.message });
-    }
-}
 
 function validateSignal({ timestamp, id }) {
     if (timestamp && moment(timestamp).isBefore(moment().startOf('day'))) {
