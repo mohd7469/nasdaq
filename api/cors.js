@@ -1,4 +1,4 @@
-export function cors(req, res, options = {}) {
+export default function cors(req, res, options = {}) {
     const {
         origin = '*',
         methods = 'OPTIONS, GET, POST',
