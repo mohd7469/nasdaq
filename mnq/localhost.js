@@ -15,7 +15,7 @@ import {
     getTelegramUsersForBot,
     countBotTelegramUsers,
     removeTelegramUser
-} from '../db/index.js';
+} from '../db/operations.js';
 
 await connectDB();
 
