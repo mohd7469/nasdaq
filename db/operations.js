@@ -8,26 +8,26 @@ import {
     TelegramSignals
 } from './index.js';
 
-// ==========================================
-// SIGNAL OPERATIONS
-// ==========================================
+// ----------------------------------------------------
+// Signal Operations
+// ----------------------------------------------------
 
 export async function checkAndSaveSignal(signalId, payload) {
     await connectDB();
     try {
         const existingSignal = await TelegramSignals.findOne({ id: signalId }).lean();
         if (existingSignal) {
-            return false; // Signal pehle se process ho chuka hai
+            return false;
         }
 
         await TelegramSignals.create({
             ...payload,
             createdAt: new Date()
         });
-        return true; // Naya signal hai, execute hoga
+        return true;
     } catch (error) {
         if (error.code === 11000) {
-            return false; // Duplicate key error handling
+            return false;
         }
         throw error;
     }
@@ -38,9 +38,9 @@ export async function getAllSignals(options = { sort: { timestamp: 1 } }) {
     return await TelegramSignals.find().sort(options.sort).lean();
 }
 
-// ==========================================
-// CONFIG & DATA QUERY HELPERS
-// ==========================================
+// ----------------------------------------------------
+// Config Operations
+// ----------------------------------------------------
 
 export async function getAppConfig() {
     await connectDB();
@@ -55,19 +55,14 @@ export async function getBotsConfig() {
     return await TelegramBots.find().lean();
 }
 
-export async function getBotsSummary() {
-    await connectDB();
-    return await TelegramBots.find({}, 'botId name').lean();
-}
-
 export async function getIronbeamConfig(filter = { isActive: true, isDemo: true }) {
     await connectDB();
     return await IronbeamUsers.find(filter).lean();
 }
 
-// ==========================================
-// USER LOGIC & OPERATIONS
-// ==========================================
+// ----------------------------------------------------
+// Telegram User Operations
+// ----------------------------------------------------
 
 export async function getTelegramUser(botId, chatId, filter = {}) {
     await connectDB();
@@ -100,8 +95,8 @@ export async function updateTelegramUser(botId, chatId, updateFields = {}) {
         ...existingUser,
         ...updateFields,
         role: finalRole,
-        chatId: chatId,
-        botId: botId,
+        chatId,
+        botId,
         userInfo: cleanedUserInfo,
         name: updateFields.name !== undefined ? updateFields.name : existingUser.name,
         isActive: updateFields.isActive !== undefined ? updateFields.isActive : existingUser.isActive,
@@ -125,17 +120,16 @@ export async function createOrUpdateUser(botId, chatId, userInfo = {}, role = 'u
     const finalRole = await getAssignedRole(chatId, role);
 
     if (!existingUser) {
-        const rawData = {
+        return await TelegramUsers.create({
             role: finalRole,
-            chatId: chatId,
-            botId: botId,
+            chatId,
+            botId,
             userInfo: cleanUserInfo,
             name: '',
             isActive: finalRole === 'admin',
             createdAt: new Date(),
             updatedAt: new Date()
-        };
-        return await TelegramUsers.create(rawData);
+        });
     }
 
     return await updateTelegramUser(botId, chatId, { role: finalRole, userInfo: cleanUserInfo });
@@ -143,8 +137,7 @@ export async function createOrUpdateUser(botId, chatId, userInfo = {}, role = 'u
 
 export async function batchUpdateTelegramUsers(updates = []) {
     await connectDB();
-    const promises = updates.map(async (item) => {
-        const { botId, chatId, ...fieldsToUpdate } = item;
+    const promises = updates.map(async ({ botId, chatId, ...fieldsToUpdate }) => {
         if (!botId || !chatId) return null;
         return await updateTelegramUser(botId, chatId, fieldsToUpdate);
     });
@@ -157,9 +150,9 @@ export async function removeTelegramUser(botId, chatId) {
     return result.deletedCount > 0;
 }
 
-// ==========================================
-// RELOAD SIGNAL OPERATIONS
-// ==========================================
+// ----------------------------------------------------
+// Reload Signal Operations
+// ----------------------------------------------------
 
 export async function consumeReloadSignal(filter = {}) {
     await connectDB();
@@ -185,9 +178,9 @@ export async function upsertReloadSignal(botId, payload) {
     );
 }
 
-// ==========================================
-// INTERNAL HELPERS
-// ==========================================
+// ----------------------------------------------------
+// Internal Helpers
+// ----------------------------------------------------
 
 function sanitizeUserInfo(userInfo = {}) {
     if (!userInfo) return {};
@@ -200,8 +193,5 @@ function sanitizeUserInfo(userInfo = {}) {
 
 async function getAssignedRole(chatId, role = 'user') {
     const config = await getAppConfig();
-    if (chatId === config.defaultChatId) {
-        return 'admin';
-    }
-    return role || 'user';
+    return chatId === config.defaultChatId ? 'admin' : (role || 'user');
 }
