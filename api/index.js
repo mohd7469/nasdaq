@@ -10,7 +10,6 @@ export default async function handler(req, res) {
     }
 
     try {
-        await db.connect();
         const config = await db.getAppConfig();
         const bots = await db.getBotsConfig();
 
