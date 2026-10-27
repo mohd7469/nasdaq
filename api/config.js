@@ -9,14 +9,10 @@ export default async function handler(req, res) {
         return;
     }
 
-    if (req.method !== 'GET') {
-        return res.status(405).json({ success: false, error: 'Method not allowed' });
-    }
-
     try {
         await db.connect();
         const config = await db.getAppConfig();
-        const bots = await db.TelegramBots.find({}, 'botId name').lean();
+        const bots = await db.getTelegramBots();
 
         return res.status(200).json({
             success: true,
