@@ -1,4 +1,4 @@
-import * as db from './index.js';
+import * as mongo from './index.js';
 
 async function sanitizeUserInfo(userInfo = {}) {
     if (!userInfo) return {};
@@ -20,12 +20,12 @@ async function getAssignedRole(chatId, role = 'user') {
 
 export async function checkAndSaveSignal(signalId, payload) {
     try {
-        const existingSignal = await db._read(db.TelegramSignals, { id: signalId });
+        const existingSignal = await mongo._read(mongo.TelegramSignals, { id: signalId });
         if (existingSignal) {
             return false;
         }
 
-        await db._create(db.TelegramSignals, {
+        await mongo._create(mongo.TelegramSignals, {
             ...payload,
             createdAt: new Date()
         });
@@ -39,7 +39,7 @@ export async function checkAndSaveSignal(signalId, payload) {
 }
 
 export async function getAllSignals(options = { sort: { timestamp: 1 } }) {
-    return await db._readMany(db.TelegramSignals, {}, { sort: options.sort });
+    return await mongo._readMany(mongo.TelegramSignals, {}, { sort: options.sort });
 }
 
 // ----------------------------------------------------
@@ -47,18 +47,18 @@ export async function getAllSignals(options = { sort: { timestamp: 1 } }) {
 // ----------------------------------------------------
 
 export async function getAppConfig() {
-    const configDoc = await db._read(db.Configs, {});
+    const configDoc = await mongo._read(mongo.Configs, {});
     if (!configDoc) return {};
     const { _id, ...config } = configDoc;
     return config;
 }
 
 export async function getBotsConfig() {
-    return await db._readMany(db.TelegramBots, {});
+    return await mongo._readMany(mongo.TelegramBots, {});
 }
 
 export async function getIronbeamConfig(filter = { isActive: true, isDemo: true }) {
-    return await db._readMany(db.IronbeamUsers, filter);
+    return await mongo._readMany(mongo.IronbeamUsers, filter);
 }
 
 // ----------------------------------------------------
@@ -66,19 +66,19 @@ export async function getIronbeamConfig(filter = { isActive: true, isDemo: true 
 // ----------------------------------------------------
 
 export async function getTelegramUser(botId, chatId, filter = {}) {
-    return await db._read(db.TelegramUsers, { chatId: String(chatId), botId, ...filter });
+    return await mongo._read(mongo.TelegramUsers, { chatId: String(chatId), botId, ...filter });
 }
 
 export async function getTelegramUsersForBot(botId) {
-    return await db._readMany(db.TelegramUsers, { botId, isActive: true });
+    return await mongo._readMany(mongo.TelegramUsers, { botId, isActive: true });
 }
 
 export async function countBotTelegramUsers(botId) {
-    return await db._count(db.TelegramUsers, { botId });
+    return await mongo._count(mongo.TelegramUsers, { botId });
 }
 
 export async function updateTelegramUser(botId, chatId, updateFields = {}) {
-    const existingUser = await db._read(db.TelegramUsers, { chatId, botId });
+    const existingUser = await mongo._read(mongo.TelegramUsers, { chatId, botId });
     if (!existingUser) return null;
 
     const cleanedUserInfo = updateFields.userInfo !== undefined
@@ -103,8 +103,8 @@ export async function updateTelegramUser(botId, chatId, updateFields = {}) {
 
     delete mergedData._id;
 
-    return await db._replace(
-        db.TelegramUsers,
+    return await mongo._replace(
+        mongo.TelegramUsers,
         { chatId, botId },
         mergedData,
         { returnDocument: 'after' }
@@ -112,12 +112,12 @@ export async function updateTelegramUser(botId, chatId, updateFields = {}) {
 }
 
 export async function createOrUpdateUser(botId, chatId, userInfo = {}, role = 'user') {
-    const existingUser = await db._read(db.TelegramUsers, { chatId, botId });
+    const existingUser = await mongo._read(mongo.TelegramUsers, { chatId, botId });
     const cleanUserInfo = sanitizeUserInfo(userInfo);
     const finalRole = await getAssignedRole(chatId, role);
 
     if (!existingUser) {
-        return await db._create(db.TelegramUsers, {
+        return await mongo._create(mongo.TelegramUsers, {
             role: finalRole,
             chatId,
             botId,
@@ -141,7 +141,7 @@ export async function batchUpdateTelegramUsers(updates = []) {
 }
 
 export async function removeTelegramUser(botId, chatId) {
-    return await db._delete(db.TelegramUsers, { chatId, botId });
+    return await mongo._delete(mongo.TelegramUsers, { chatId, botId });
 }
 
 // ----------------------------------------------------
@@ -149,11 +149,11 @@ export async function removeTelegramUser(botId, chatId) {
 // ----------------------------------------------------
 
 export async function consumeReloadSignal(filter = {}) {
-    return await db._findOneAndDelete(db.ReloadSignals, filter);
+    return await mongo._findOneAndDelete(mongo.ReloadSignals, filter);
 }
 
 export async function upsertReloadSignal(botId, payload) {
-    const existingSignal = await db._read(db.ReloadSignals, { botId });
+    const existingSignal = await mongo._read(mongo.ReloadSignals, { botId });
     const now = new Date();
 
     const reloadDoc = {
@@ -163,8 +163,8 @@ export async function upsertReloadSignal(botId, payload) {
         updatedAt: now
     };
 
-    return await db._replace(
-        db.ReloadSignals,
+    return await mongo._replace(
+        mongo.ReloadSignals,
         { botId },
         reloadDoc,
         { upsert: true, returnDocument: 'after' }
