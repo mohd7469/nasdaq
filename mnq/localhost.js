@@ -1,34 +1,21 @@
+import cors from './cors.js';
 import axios from 'axios';
-import {
-    connectDB,
-    Configs,
-    IronbeamUsers,
-    ReloadSignals,
-    TelegramBots,
-    TelegramUsers,
-    getAppConfig,
-    getBotsConfig,
-    getIronbeamConfig,
-    createOrUpdateUser,
-    updateTelegramUser,
-    batchUpdateTelegramUsers,
-    getTelegramUsersForBot,
-    countBotTelegramUsers,
-    removeTelegramUser
-} from '../db/operations.js';
+import moment from 'moment';
 
-await connectDB();
+import * as db from '../db/operations.js';
 
-const appConfig = await getAppConfig();
-const bots = await getBotsConfig();
+await db.connect();
+
+const appConfig = await db.getAppConfig();
+const bots = await db.getBotsConfig();
 
 const initDefaultTelegramUsersAccess = async () => {
     try {
         for (const bot of bots) {
-            await createOrUpdateUser(bot.botId, appConfig.defaultChatId, { first_name: 'mohd' }, 'admin');
+            await db.createOrUpdateUser(bot.botId, appConfig.defaultChatId, { first_name: 'mohd' }, 'admin');
         }
 
-        await batchUpdateTelegramUsers([
+        await db.batchUpdateTelegramUsers([
             ...bots.map(bot => ({
                 botId: bot.botId,
                 isActive: true,
@@ -49,14 +36,14 @@ const initDefaultTelegramUsersAccess = async () => {
         // EXAMPLE MANUAL OPERATIONS (Zaroorat ke mutabiq use karein):
         // -------------------------------------------------------------
         // 1. Check all users:
-        // const users = await TelegramUsers.find().lean();
+        // const users = await db.TelegramUsers.find().lean();
         // console.log("Telegram Users:", users);
         //
         // 2. Modify specific user:
-        // await updateTelegramUser('dxbmnq_bot', '7670215141', { isActive: true });
+        // await db.updateTelegramUser('dxbmnq_bot', '7670215141', { isActive: true });
         //
         // 3. Delete user:
-        // await removeTelegramUser('dxbmnq_bot', '123456');
+        // await db.removeTelegramUser('dxbmnq_bot', '123456');
         // -------------------------------------------------------------
 
     } catch (error) {
@@ -68,13 +55,13 @@ const initDefaultTelegramUsersAccess = async () => {
 
 const addInitialData = async () => {
     try {
-        // Configs Collection
-        await Configs.deleteMany({});
-        await Configs.create({}); // default schema values initialize
+        // db.Configs Collection
+        await db.Configs.deleteMany({});
+        await db.Configs.create({}); // default schema values initialize
 
         // Ironbeam Users Collection
-        await IronbeamUsers.deleteMany({});
-        await IronbeamUsers.insertMany([
+        await db.IronbeamUsers.deleteMany({});
+        await db.IronbeamUsers.insertMany([
             {
                 isDemo: true,
                 apiUrl: "https://demo.ironbeamapi.com/v2",
@@ -90,8 +77,8 @@ const addInitialData = async () => {
         ]);
 
         // Reload Signals Collection
-        await ReloadSignals.deleteMany({});
-        await ReloadSignals.create({
+        await db.ReloadSignals.deleteMany({});
+        await db.ReloadSignals.create({
             botId: "dxblog_bot",
             payload: {
                 bot: "dxblog_bot",
@@ -112,8 +99,8 @@ const addInitialData = async () => {
         });
 
         // Telegram Bots Collection
-        await TelegramBots.deleteMany({});
-        await TelegramBots.insertMany([
+        await db.TelegramBots.deleteMany({});
+        await db.TelegramBots.insertMany([
             {
                 botId: "dxbmnq_bot",
                 name: "Nasdaq Alert",
@@ -127,8 +114,8 @@ const addInitialData = async () => {
         ]);
 
         // Telegram Users Collection
-        await TelegramUsers.deleteMany({});
-        await TelegramUsers.insertMany([
+        await db.TelegramUsers.deleteMany({});
+        await db.TelegramUsers.insertMany([
             {
                 role: "admin",
                 chatId: "7670215141",
