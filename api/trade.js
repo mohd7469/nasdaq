@@ -12,7 +12,7 @@ export default async function handler(req, res) {
     }
 
     if (req.method === 'GET') {
-        return await handleGetSignals(res);
+        return await handleGet(res);
     }
 
     try {
@@ -71,7 +71,7 @@ export default async function handler(req, res) {
     }
 }
 
-async function handleGetSignals(res) {
+async function handleGet(res) {
     try {
         const signals = await db.getAllSignals({ sort: { timestamp: 1 } });
         return res.status(200).json({ success: true, signals });
