@@ -60,13 +60,13 @@ const addInitialData = async () => {
         // Ironbeam Users Collection
         await db.resetIronbeamUsers([
             {
-                isDemo: true,
                 apiUrl: "https://demo.ironbeamapi.com/v2",
                 accountId: "51429427",
                 username: "51429427",
                 password: "Awais51429427",
                 apiKey: "24993c8742f046c2a53fa9edb6634819",
                 symbol: "XCME:MNQ.Z26",
+                isDemo: true,
                 isActive: true
             }
         ]);

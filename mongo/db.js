@@ -1,5 +1,10 @@
 import * as mongo from './index.js';
 
+function toArray(data) {
+    if (!data) return [];
+    return Array.isArray(data) ? data : [data];
+}
+
 async function sanitizeUserInfo(userInfo = {}) {
     if (!userInfo) return {};
     const cleaned = { ...userInfo };
@@ -62,18 +67,18 @@ export async function getBotsConfig() {
     return await mongo._readMany(mongo.TelegramBots, {});
 }
 
-export async function resetTelegramBots(bots = []) {
+export async function resetTelegramBots(data = []) {
     await mongo._deleteMany(mongo.TelegramBots, {});
-    return await mongo._createMany(mongo.TelegramBots, bots);
+    return await mongo._createMany(mongo.TelegramBots, toArray(data));
 }
 
 export async function getIronbeamConfig(filter = { isActive: true, isDemo: true }) {
     return await mongo._readMany(mongo.IronbeamUsers, filter);
 }
 
-export async function resetIronbeamUsers(users = []) {
+export async function resetIronbeamUsers(data = []) {
     await mongo._deleteMany(mongo.IronbeamUsers, {});
-    return await mongo._createMany(mongo.IronbeamUsers, users);
+    return await mongo._createMany(mongo.IronbeamUsers, toArray(data));
 }
 
 // ----------------------------------------------------
@@ -159,18 +164,18 @@ export async function removeTelegramUser(botId, chatId) {
     return await mongo._delete(mongo.TelegramUsers, { chatId, botId });
 }
 
-export async function resetTelegramUsers(users = []) {
+export async function resetTelegramUsers(data = []) {
     await mongo._deleteMany(mongo.TelegramUsers, {});
-    return await mongo._createMany(mongo.TelegramUsers, users);
+    return await mongo._createMany(mongo.TelegramUsers, toArray(data));
 }
 
 // ----------------------------------------------------
 // Telegram Reload Operations
 // ----------------------------------------------------
 
-export async function resetTelegramReload(signals = []) {
+export async function resetTelegramReload(data = []) {
     await mongo._deleteMany(mongo.TelegramReload, {});
-    return await mongo._createMany(mongo.TelegramReload, signals);
+    return await mongo._createMany(mongo.TelegramReload, toArray(data));
 }
 
 export async function consumeTelegramReload(filter = {}) {
