@@ -6,9 +6,9 @@ export default function cors(req, res, options = {}) {
         credentials = true
     } = options;
 
-    console.log(`[CORS] Method: ${req?.method} | URL: ${req?.url}`);
+    console.log(`${req?.method}: ${req?.url}`);
     if (req?.method === 'POST' || req?.method === 'PUT' || req?.method === 'PATCH') {
-        console.log('[CORS] Payload:', req?.body);
+        console.log('Payload:', req?.body);
     }
 
     res.setHeader('Access-Control-Allow-Origin', origin);
