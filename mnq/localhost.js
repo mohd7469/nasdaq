@@ -71,6 +71,19 @@ const resetMongoDB = async () => {
             }
         ]);
 
+        await db.resetTelegramBots([
+            {
+                botId: "dxbmnq_bot",
+                name: "Nasdaq Alert",
+                token: process.env.NASDAQ_ALERT
+            },
+            {
+                botId: "dxblog_bot",
+                name: "Nasdaq Logs",
+                token: process.env.NASDAQ_LOGS
+            }
+        ]);
+
         await db.resetTelegramReload([
             {
                 botId: "dxblog_bot",
@@ -88,19 +101,6 @@ const resetMongoDB = async () => {
                     },
                     timestamp: 1792936165295
                 }
-            }
-        ]);
-
-        await db.resetTelegramBots([
-            {
-                botId: "dxbmnq_bot",
-                name: "Nasdaq Alert",
-                token: process.env.NASDAQ_ALERT
-            },
-            {
-                botId: "dxblog_bot",
-                name: "Nasdaq Logs",
-                token: process.env.NASDAQ_LOGS
             }
         ]);
 
