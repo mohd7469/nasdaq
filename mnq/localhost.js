@@ -9,51 +9,13 @@ const [config, bots] = await Promise.all([
     db.getBotsConfig()
 ]);
 
-const initDefaultTelegramUsersAccess = async () => {
-    try {
-        for (const bot of bots) {
-            await db.createOrUpdateUser(bot.botId, config.defaultChatId, { first_name: 'mohd' }, 'admin');
-        }
-
-        await db.batchUpdateTelegramUsers(
-            bots.map(bot => ({
-                botId: bot.botId,
-                isActive: true,
-                chatId: config.defaultChatId,
-                name: 'mohd'
-            }))
-        );
-
-        console.log("User Updated successfully");
-
-        // -------------------------------------------------------------
-        // EXAMPLE MANUAL OPERATIONS (Zaroorat ke mutabiq use karein):
-        // -------------------------------------------------------------
-        // 1. Check all users:
-        // const users = await db.getTelegramUsersForBot('dxbmnq_bot');
-        // console.log("Telegram Users:", users);
-        //
-        // 2. Modify specific user:
-        // await db.updateTelegramUser('dxbmnq_bot', '7670215141', { isActive: true });
-        //
-        // 3. Delete user:
-        // await db.removeTelegramUser('dxbmnq_bot', '123456');
-        // -------------------------------------------------------------
-
-    } catch (error) {
-        console.error("Error in localhost execution:", error);
-    } finally {
-        process.exit(0);
-    }
-}
-
-const resetMongoDB = async () => {
+const initMongoSeed = async () => {
     try {
         await db.resetAppConfig([
             {
                 apiUrl: "https://app-nasdaq.vercel.app/api",
                 defaultChatId: "7670215141",
-                webhookSecret: "dxbbot",
+                webhookSecret: process.env.WEBHOOK_SECRET,
                 defaultText: "Test Success"
             }
         ]);
@@ -68,7 +30,17 @@ const resetMongoDB = async () => {
                 symbol: "XCME:MNQ.Z26",
                 isDemo: true,
                 isActive: true
-            }
+            },
+            // {
+            //     apiUrl: "https://demo.ironbeamapi.com/v2",
+            //     accountId: "",
+            //     username: "",
+            //     password: "",
+            //     apiKey: "",
+            //     symbol: "XCME:MNQ.Z26",
+            //     isDemo: true,
+            //     isActive: false
+            // }
         ]);
 
         await db.resetTelegramBots([
@@ -84,31 +56,31 @@ const resetMongoDB = async () => {
             }
         ]);
 
-        await db.resetTelegramReload([
-            {
-                botId: "dxblog_bot",
-                payload: {
-                    bot: "dxblog_bot",
-                    botName: "Nasdaq Logs",
-                    command: "reload",
-                    chatId: "7670215141",
-                    from: {
-                        id: "7670215141",
-                        is_bot: false,
-                        first_name: "Mohammad",
-                        username: "dxb786327",
-                        language_code: "en"
-                    },
-                    timestamp: 1792936165295
-                }
-            }
-        ]);
+        // await db.resetTelegramReload([
+        //     {
+        //         botId: "dxblog_bot",
+        //         payload: {
+        //             bot: "dxblog_bot",
+        //             botName: "Nasdaq Logs",
+        //             command: "reload",
+        //             chatId: "7670215141",
+        //             from: {
+        //                 id: "7670215141",
+        //                 is_bot: false,
+        //                 first_name: "Mohammad",
+        //                 username: "dxb786327",
+        //                 language_code: "en"
+        //             },
+        //             timestamp: 1792936165295
+        //         }
+        //     }
+        // ]);
 
         await db.resetTelegramUsers([
             {
                 role: "admin",
                 chatId: "7670215141",
-                botId: "dxbmnq_bot",
+                botId: "dxblog_bot",
                 userInfo: { first_name: "mohd dxb" },
                 name: "mohd dxb",
                 isActive: true
@@ -116,7 +88,7 @@ const resetMongoDB = async () => {
             {
                 role: "admin",
                 chatId: "7670215141",
-                botId: "dxblog_bot",
+                botId: "dxbmnq_bot",
                 userInfo: { first_name: "mohd dxb" },
                 name: "mohd dxb",
                 isActive: true
@@ -148,27 +120,41 @@ const resetMongoDB = async () => {
                 },
                 name: "awais jazz",
                 isActive: false
-            }
-        ]);
-
-        await db.resetTradingSignals([
+            },
             {
-                id: "SHORT_ENTRY_29787.5_2026-10-28T18:45:00.000+05:00",
-                timestamp: "2026-10-28T18:45:00.000+05:00",
-                side: "SHORT",
-                action: "ENTRY",
-                price: 29787.5,
-                tp: 29732.25,
-                sl: 29879.75,
-                PKT: "Wed, Oct 28, 6:45 PM",
-                DXB: "Wed, Oct 28, 5:45 PM"
+                role: "user",
+                chatId: "8973124597",
+                botId: "dxbmnq_bot",
+                userInfo: {
+                    id: "8973124597",
+                    is_bot: false,
+                    first_name: "Spikes & Net",
+                    last_name: "Birds Control",
+                    language_code: "en"
+                },
+                name: "khurram",
+                isActive: false
             }
         ]);
 
-        console.log("Initial seed data added successfully!");
+        // await db.resetTradingSignals([
+        //     {
+        //         id: "SHORT_ENTRY_29787.5_2026-10-28T18:45:00.000+05:00",
+        //         timestamp: "2026-10-28T18:45:00.000+05:00",
+        //         side: "SHORT",
+        //         action: "ENTRY",
+        //         price: 29787.5,
+        //         tp: 29732.25,
+        //         sl: 29879.75,
+        //         PKT: "Wed, Oct 28, 6:45 PM",
+        //         DXB: "Wed, Oct 28, 5:45 PM"
+        //     }
+        // ]);
+
+        console.log("Init mongo seed success!");
         process.exit(0);
     } catch (error) {
-        console.error("Error adding initial data:", error);
+        console.error("Error init mongo seed:", error);
         process.exit(1);
     }
 }
@@ -190,6 +176,8 @@ const handleTrade = async (payload) => {
         console.error('Trade Error:', err?.message);
     }
 }
+
+// resetMongoDB()
 
 // testkWebhook(`...`)
 
