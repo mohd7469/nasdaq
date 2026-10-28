@@ -3,6 +3,7 @@ import moment from 'moment-timezone';
 
 const DB_NAME = 'nasdaq-database';
 const PKT_TIMEZONE = 'Asia/Karachi';
+const DXB_TIMEZONE = 'Asia/Dubai';
 
 export const getTimezone = (time = moment(), timezone = PKT_TIMEZONE) => {
     const m = moment(time).tz(timezone);
