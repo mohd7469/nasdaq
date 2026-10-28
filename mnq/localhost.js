@@ -1,4 +1,3 @@
-import cors from './cors.js';
 import axios from 'axios';
 import moment from 'moment';
 
@@ -177,7 +176,7 @@ const handleTrade = async (payload) => {
     }
 }
 
-// initMongoSeed()
+// (async () => await initMongoSeed())()
 
 // testkWebhook(`...`)
 
