@@ -10,20 +10,29 @@ export default async function handler(req, res) {
     }
 
     try {
-        const config = await db.getAppConfig();
-        const bots = await db.getBotsConfig();
+        if (req.method !== 'GET') {
+            return res.status(405).json({ success: false, error: 'Method Not Allowed' });
+        }
 
-        await registerWebhooks(req, config, bots);
-
-        return res.status(200).json({
-            success: true,
-            message: 'Serverless webhooks running',
-            uptime: `${moment.duration(process.uptime(), 'seconds').humanize()} ago`,
-            timestamp: new Date().toISOString()
-        });
+        return await handleGet(req, res);
     } catch (err) {
         return res.status(500).json({ success: false, error: err.message });
     }
+}
+
+async function handleGet(req, res) {
+    const config = await db.getAppConfig();
+    const bots = await db.getBotsConfig();
+
+    await registerWebhooks(req, config, bots);
+
+    return res.status(200).json({
+        success: true,
+        message: 'Serverless webhook running..',
+        uptime: `${moment.duration(process.uptime(), 'seconds').humanize()} ago`,
+        timestamp: new Date().toISOString()
+    });
+
 }
 
 async function registerWebhooks(req, config, bots) {
