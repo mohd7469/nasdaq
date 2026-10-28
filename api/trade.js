@@ -101,13 +101,12 @@ async function executeTradeForUser(ibConfig, { action, side, price, tp, sl, orde
         if (action === 'ENTRY') {
             await flattenAll(token, ibConfig);
 
-            const resolvedOrderType = await determineOrderType(token, ibConfig, { side, price }, orderType);
+            const { orderType: resolvedOrderType, marketPrice } = await determineOrderType(token, ibConfig, { side, price }, orderType);
             let resolvedEntryPrice = price;
 
             if (resolvedOrderType === 'MARKET') {
-                const liveMarketPrice = await getCurrentMarketPrice(token, ibConfig);
-                if (liveMarketPrice !== null) {
-                    resolvedEntryPrice = liveMarketPrice;
+                if (marketPrice !== null) {
+                    resolvedEntryPrice = marketPrice;
                 }
             }
 
@@ -186,26 +185,28 @@ async function getCurrentMarketPrice(token, ibConfig) {
 
 async function determineOrderType(token, ibConfig, { side, price }, requestedOrderType) {
     if (requestedOrderType?.trim()) {
-        return requestedOrderType.toUpperCase();
+        const customType = requestedOrderType.toUpperCase();
+        const marketPrice = customType === 'MARKET' ? await getCurrentMarketPrice(token, ibConfig) : null;
+        return { orderType: customType, marketPrice };
     }
 
     const marketPrice = await getCurrentMarketPrice(token, ibConfig);
     if (marketPrice === null) {
-        return 'LIMIT';
+        return { orderType: 'LIMIT', marketPrice: null };
     }
 
     const sigPrice = Number(price);
     const upperSide = side.toUpperCase();
 
     if (upperSide === 'LONG') {
-        return sigPrice <= marketPrice ? 'LIMIT' : 'STOP';
+        return { orderType: sigPrice <= marketPrice ? 'LIMIT' : 'STOP', marketPrice };
     }
 
     if (upperSide === 'SHORT') {
-        return sigPrice >= marketPrice ? 'LIMIT' : 'STOP';
+        return { orderType: sigPrice >= marketPrice ? 'LIMIT' : 'STOP', marketPrice };
     }
 
-    return 'LIMIT';
+    return { orderType: 'LIMIT', marketPrice };
 }
 
 function generateOrderPayload(ibConfig, { side, resolvedEntryPrice, tp, sl }, orderType = 'LIMIT') {

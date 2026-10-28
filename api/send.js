@@ -21,8 +21,10 @@ export default async function handler(req, res) {
 }
 
 async function handleGet(req, res) {
-    const appConfig = await db.getAppConfig();
-    const botsConfig = await db.getBotsConfig();
+    const [config, bots] = await Promise.all([
+        db.getAppConfig(),
+        db.getBotsConfig()
+    ]);
 
     const { text, bot, chatId } = req.query || {};
 
@@ -30,19 +32,19 @@ async function handleGet(req, res) {
     if (bot !== undefined && bot === '') throw new Error('bot is missing');
     if (chatId !== undefined && chatId === '') throw new Error('chatId is missing');
 
-    const finalMessage = text || appConfig.defaultText;
+    const finalMessage = text || config.defaultText;
     const isTyping = Boolean(text && (text.startsWith('...') || text.startsWith('typing')));
 
-    const targetBots = bot ? (Array.isArray(bot) ? bot : [bot]) : botsConfig.map(b => b.botId);
+    const targetBots = bot ? (Array.isArray(bot) ? bot : [bot]) : bots.map(b => b.botId);
     const targetChatIds = chatId ? (Array.isArray(chatId) ? chatId : [chatId]) : [];
 
     for (const bId of targetBots) {
-        if (!botsConfig.some(b => b.botId === bId)) {
+        if (!bots.some(b => b.botId === bId)) {
             return res.status(400).json({ success: false, error: `Invalid or missing bot identifier: ${bId}` });
         }
     }
 
-    const filterActiveUsers = await resolveActiveRecipients(targetBots, targetChatIds, botsConfig);
+    const filterActiveUsers = await resolveActiveRecipients(targetBots, targetChatIds, bots);
 
     if (targetChatIds.length > 0 && filterActiveUsers.length === 0) {
         return res.status(404).json({ success: false, error: 'User is not active for given chatId' });
@@ -60,12 +62,14 @@ async function handleGet(req, res) {
 }
 
 async function handlePost(req, res) {
-    const appConfig = await db.getAppConfig();
-    const botsConfig = await db.getBotsConfig();
+    const [config, bots] = await Promise.all([
+        db.getAppConfig(),
+        db.getBotsConfig()
+    ]);
 
     const botId = req.query?.bot;
     if (req.body?.message && botId) {
-        return await handleTelegramWebhookRequest(req, res, { appConfig, botsConfig, botId });
+        return await handleTelegramWebhookRequest(req, res, { config, bots, botId });
     }
 
     const { text, bot, chatId } = req.body || {};
@@ -74,19 +78,19 @@ async function handlePost(req, res) {
     if (bot === '') throw new Error('bot is missing');
     if (chatId === '') throw new Error('chatId is missing');
 
-    const finalMessage = text || appConfig.defaultText;
+    const finalMessage = text || config.defaultText;
     const isTyping = Boolean(text && (text.startsWith('...') || text.startsWith('typing')));
 
-    const targetBots = bot ? (Array.isArray(bot) ? bot : [bot]) : botsConfig.map(b => b.botId);
+    const targetBots = bot ? (Array.isArray(bot) ? bot : [bot]) : bots.map(b => b.botId);
     const targetChatIds = chatId ? (Array.isArray(chatId) ? chatId : [chatId]) : [];
 
     for (const bId of targetBots) {
-        if (!botsConfig.some(b => b.botId === bId)) {
+        if (!bots.some(b => b.botId === bId)) {
             return res.status(400).json({ success: false, error: `Invalid or missing bot identifier: ${bId}` });
         }
     }
 
-    const filterActiveUsers = await resolveActiveRecipients(targetBots, targetChatIds, botsConfig);
+    const filterActiveUsers = await resolveActiveRecipients(targetBots, targetChatIds, bots);
 
     if (targetChatIds.length > 0 && filterActiveUsers.length === 0) {
         return res.status(404).json({ success: false, error: 'User is not active for given chatId' });
@@ -103,13 +107,13 @@ async function handlePost(req, res) {
     });
 }
 
-async function handleTelegramWebhookRequest(req, res, { appConfig, botsConfig, botId }) {
+async function handleTelegramWebhookRequest(req, res, { config, bots, botId }) {
     const secretHeader = req.headers['x-telegram-bot-api-secret-token'];
-    if (secretHeader !== appConfig.webhookSecret) {
+    if (secretHeader !== config.webhookSecret) {
         return res.status(401).json({ success: false, error: 'Unauthorized secret token' });
     }
 
-    const botConfig = botsConfig.find(b => b.botId === botId);
+    const botConfig = bots.find(b => b.botId === botId);
     if (!botConfig) {
         return res.status(404).json({ success: false, error: 'Bot ID not found in database' });
     }
@@ -169,30 +173,27 @@ async function handleTelegramWebhookRequest(req, res, { appConfig, botsConfig, b
     return res.status(200).json({ success: true, savedChatsCount, userInfo });
 }
 
-async function resolveActiveRecipients(targetBots, targetChatIds, botsConfig) {
-    const recipients = [];
-
-    for (const bId of targetBots) {
-        const botObj = botsConfig.find(b => b.botId === bId);
+async function resolveActiveRecipients(targetBots, targetChatIds, bots) {
+    const fetchPromises = targetBots.map(async (bId) => {
+        const botObj = bots.find(b => b.botId === bId);
         const token = botObj?.token;
-        if (!token) continue;
+        if (!token) return [];
 
         if (targetChatIds.length > 0) {
-            for (const id of targetChatIds) {
-                const user = await db.getTelegramUser(bId, id, { isActive: true });
-                if (user) {
-                    recipients.push({ bId, token, chatId: user.chatId });
-                }
-            }
-        } else {
-            const users = await db.getTelegramUsersForBot(bId);
-            for (const u of users) {
-                recipients.push({ bId, token, chatId: u.chatId });
-            }
+            const userResults = await Promise.all(
+                targetChatIds.map(id => db.getTelegramUser(bId, id, { isActive: true }))
+            );
+            return userResults
+                .filter(Boolean)
+                .map(user => ({ bId, token, chatId: user.chatId }));
         }
-    }
 
-    return recipients;
+        const users = await db.getTelegramUsersForBot(bId);
+        return (users || []).map(u => ({ bId, token, chatId: u.chatId }));
+    });
+
+    const nestedRecipients = await Promise.all(fetchPromises);
+    return nestedRecipients.flat();
 }
 
 async function dispatchTelegramMessages(recipients, message, isTyping) {
