@@ -31,7 +31,7 @@ async function handleGet(req, res) {
     return res.status(200).json({
         success: true,
         message: 'Serverless webhook running..',
-        uptime: `${moment.duration(process.uptime(), 'seconds').humanize()} ago`,
+        uptime: `${getTimezone().duration(process.uptime(), 'seconds').humanize()} ago`,
         timestamp: new Date().toISOString()
     });
 

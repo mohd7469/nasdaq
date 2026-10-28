@@ -1,6 +1,6 @@
 import cors from './cors.js';
 import axios from 'axios';
-import { getTimezone } from '../utils.js';
+import { getTimezone, isSignalExpired } from '../utils.js';
 
 import * as db from '../mongo/db.js';
 
@@ -87,7 +87,7 @@ async function handlePost(req, res) {
 }
 
 function validateSignal({ timestamp, id }) {
-    if (timestamp && moment(timestamp).isBefore(moment().startOf('day'))) {
+    if (timestamp && isSignalExpired(timestamp)) {
         return {
             isValid: false,
             status: 409,
