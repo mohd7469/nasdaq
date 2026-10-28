@@ -49,12 +49,14 @@ const initDefaultTelegramUsersAccess = async () => {
 
 const resetMongoDB = async () => {
     try {
-        await db.resetAppConfig({
-            apiUrl: "https://app-nasdaq.vercel.app/api",
-            defaultChatId: "7670215141",
-            webhookSecret: "dxbbot",
-            defaultText: "Test Success"
-        });
+        await db.resetAppConfig([
+            {
+                apiUrl: "https://app-nasdaq.vercel.app/api",
+                defaultChatId: "7670215141",
+                webhookSecret: "dxbbot",
+                defaultText: "Test Success"
+            }
+        ]);
 
         await db.resetIronbeamUsers([
             {
