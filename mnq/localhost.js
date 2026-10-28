@@ -55,6 +55,7 @@ const initMongoSeed = async () => {
             }
         ]);
 
+        await db.resetTelegramReload()
         // await db.resetTelegramReload([
         //     {
         //         botId: "dxblog_bot",
@@ -136,6 +137,7 @@ const initMongoSeed = async () => {
             }
         ]);
 
+        await db.resetTradingSignals()
         // await db.resetTradingSignals([
         //     {
         //         id: "SHORT_ENTRY_29787.5_2026-10-28T18:45:00.000+05:00",
