@@ -20,35 +20,7 @@ async function getAssignedRole(chatId, role = 'user') {
 }
 
 // ----------------------------------------------------
-// Signal Operations
-// ----------------------------------------------------
-
-export async function processTradingSignal(signalId, payload) {
-    try {
-        const existingSignal = await mongo._read(mongo.TradingSignals, { id: signalId });
-        if (existingSignal) {
-            return false;
-        }
-
-        await mongo._create(mongo.TradingSignals, {
-            ...payload,
-            createdAt: new Date()
-        });
-        return true;
-    } catch (error) {
-        if (error.code === 11000) {
-            return false;
-        }
-        throw error;
-    }
-}
-
-export async function getTradingSignals(options = { sort: { timestamp: 1 } }) {
-    return await mongo._readMany(mongo.TradingSignals, {}, { sort: options.sort });
-}
-
-// ----------------------------------------------------
-// Config Operations
+// Config
 // ----------------------------------------------------
 
 export async function resetAppConfig(data = []) {
@@ -82,8 +54,45 @@ export async function resetIronbeamUsers(data = []) {
 }
 
 // ----------------------------------------------------
-// Telegram User Operations
+// Telegram Reload
 // ----------------------------------------------------
+
+export async function resetTelegramReload(data = []) {
+    await mongo._deleteMany(mongo.TelegramReload, {});
+    return await mongo._createMany(mongo.TelegramReload, toArray(data));
+}
+
+export async function consumeTelegramReload(filter = {}) {
+    return await mongo._findOneAndDelete(mongo.TelegramReload, filter);
+}
+
+export async function upsertTelegramReload(botId, payload) {
+    const existingSignal = await mongo._read(mongo.TelegramReload, { botId });
+    const now = new Date();
+
+    const reloadDoc = {
+        botId,
+        payload,
+        createdAt: existingSignal ? existingSignal.createdAt : now,
+        updatedAt: now
+    };
+
+    return await mongo._replace(
+        mongo.TelegramReload,
+        { botId },
+        reloadDoc,
+        { upsert: true, returnDocument: 'after' }
+    );
+}
+
+// ----------------------------------------------------
+// Telegram Users
+// ----------------------------------------------------
+
+export async function resetTelegramUsers(data = []) {
+    await mongo._deleteMany(mongo.TelegramUsers, {});
+    return await mongo._createMany(mongo.TelegramUsers, toArray(data));
+}
 
 export async function getTelegramUser(botId, chatId, filter = {}) {
     return await mongo._read(mongo.TelegramUsers, { chatId: String(chatId), botId, ...filter });
@@ -164,40 +173,30 @@ export async function removeTelegramUser(botId, chatId) {
     return await mongo._delete(mongo.TelegramUsers, { chatId, botId });
 }
 
-export async function resetTelegramUsers(data = []) {
-    await mongo._deleteMany(mongo.TelegramUsers, {});
-    return await mongo._createMany(mongo.TelegramUsers, toArray(data));
-}
-
 // ----------------------------------------------------
-// Telegram Reload Operations
+// Trading Signals
 // ----------------------------------------------------
 
-export async function resetTelegramReload(data = []) {
-    await mongo._deleteMany(mongo.TelegramReload, {});
-    return await mongo._createMany(mongo.TelegramReload, toArray(data));
+export async function processTradingSignal(signalId, payload) {
+    try {
+        const existingSignal = await mongo._read(mongo.TradingSignals, { id: signalId });
+        if (existingSignal) {
+            return false;
+        }
+
+        await mongo._create(mongo.TradingSignals, {
+            ...payload,
+            createdAt: new Date()
+        });
+        return true;
+    } catch (error) {
+        if (error.code === 11000) {
+            return false;
+        }
+        throw error;
+    }
 }
 
-export async function consumeTelegramReload(filter = {}) {
-    return await mongo._findOneAndDelete(mongo.TelegramReload, filter);
+export async function getTradingSignals(options = { sort: { timestamp: 1 } }) {
+    return await mongo._readMany(mongo.TradingSignals, {}, { sort: options.sort });
 }
-
-export async function upsertTelegramReload(botId, payload) {
-    const existingSignal = await mongo._read(mongo.TelegramReload, { botId });
-    const now = new Date();
-
-    const reloadDoc = {
-        botId,
-        payload,
-        createdAt: existingSignal ? existingSignal.createdAt : now,
-        updatedAt: now
-    };
-
-    return await mongo._replace(
-        mongo.TelegramReload,
-        { botId },
-        reloadDoc,
-        { upsert: true, returnDocument: 'after' }
-    );
-}
-
