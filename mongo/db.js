@@ -105,7 +105,7 @@ export async function updateTelegramUser(botId, chatId, updateFields = {}) {
     if (!existingUser) return null;
 
     const cleanedUserInfo = updateFields.userInfo !== undefined
-        ? sanitizeUserInfo(updateFields.userInfo)
+        ? await sanitizeUserInfo(updateFields.userInfo)
         : existingUser.userInfo;
 
     const currentRole = updateFields.role !== undefined ? updateFields.role : existingUser.role;
