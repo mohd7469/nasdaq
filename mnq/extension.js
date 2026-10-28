@@ -14,7 +14,9 @@
         document.body.prepend(overlay);
     })();
 
+    const isWindows = /Win/i.test(navigator.userAgent || navigator.platform);
     const API_URL = 'https://app-nasdaq.vercel.app/api';
+    const LOCALHOST = `http://localhost:3000/api`;
 
     const PINE_LOGS_CONTAINER = '[data-test-id-widget-type="pine_logs"] [class*="logsList-"]';
     const OHLC_CONTAINER = '[data-qa-id="legend-series-item"]';
@@ -88,9 +90,8 @@
 
     const handleTrade = async (payload) => {
         try {
-            const isWindows = /Win/i.test(navigator.userAgent || navigator.platform);
-            const endpointUrl = isWindows ? `http://localhost:3000/api` : API_URL;
-            await axios.post(`${endpointUrl}/trade`, payload);
+            const endpoint = isWindows ? LOCALHOST : API_URL;
+            await axios.post(`${endpoint}/trade`, payload);
         } catch (err) {
             console.error('Trade Error:', err?.message);
         }
@@ -131,10 +132,8 @@
         try {
             const recentPineLogsTimestamp = localStorage.getItem('_botRecentPineLogsTimestamp');
             if (!recentPineLogsTimestamp) {
-                const isWindows = /Win/i.test(navigator.userAgent || navigator.platform);
-                const endpointUrl = isWindows ? `http://localhost:3000/api` : API_URL;
-
-                const response = await axios.get(`${endpointUrl}/trade`);
+                const endpoint = isWindows ? LOCALHOST : API_URL;
+                const response = await axios.get(`${endpoint}/trade`);
                 if (response.data && response.data.signals && response.data.signals.length > 0) {
                     const signals = response.data.signals;
 
