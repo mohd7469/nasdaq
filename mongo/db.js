@@ -186,6 +186,11 @@ export async function removeTelegramUser(botId, chatId) {
 // Trading Signals
 // ----------------------------------------------------
 
+export async function resetTradingSignals(data = []) {
+    await mongo._deleteMany(mongo.TradingSignals, {});
+    return await mongo._createMany(mongo.TradingSignals, toArray(data));
+}
+
 export async function processTradingSignal(signalId, payload) {
     try {
         const existingSignal = await mongo._read(mongo.TradingSignals, { id: signalId });
