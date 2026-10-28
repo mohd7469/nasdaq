@@ -177,7 +177,7 @@ const handleTrade = async (payload) => {
     }
 }
 
-// resetMongoDB()
+// initMongoSeed()
 
 // testkWebhook(`...`)
 
