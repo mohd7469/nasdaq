@@ -76,22 +76,7 @@ export async function consumeTelegramReload(filter = {}) {
 }
 
 export async function upsertTelegramReload(botId, payload) {
-    const existingSignal = await mongo._read(mongo.TelegramReload, { botId });
-    const now = new Date();
-
-    const reloadDoc = {
-        botId,
-        payload,
-        createdAt: existingSignal ? existingSignal.createdAt : now,
-        updatedAt: now
-    };
-
-    return await mongo._replace(
-        mongo.TelegramReload,
-        { botId },
-        reloadDoc,
-        { upsert: true, returnDocument: 'after' }
-    );
+    return await mongo._upsert(mongo.TelegramReload, { botId }, { botId, payload });
 }
 
 // ----------------------------------------------------
