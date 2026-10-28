@@ -14,7 +14,7 @@ if (!cached) {
 const configsSchema = new mongoose.Schema({
     apiUrl: { type: String, default: 'https://app-nasdaq.vercel.app/api' },
     defaultChatId: { type: String, default: '7670215141' },
-    webhookSecret: { type: String, default: 'dxbbot' },
+    webhookSecret: { type: String, default: process.env.WEBHOOK_SECRET },
     defaultText: { type: String, default: 'Test Success' }
 }, { _id: false, strict: false, versionKey: false });
 
