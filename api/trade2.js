@@ -47,14 +47,14 @@ async function handlePost(req, res) {
             return res.status(400).json({ success: false, message: '"action" parameter is required' });
         }
 
-        const normalizedAction = validateAndNormalizeAction(action);
+        const normalizedAction = validateAction(action);
         if (normalizedAction.error) {
             return res.status(400).json({ success: false, message: normalizedAction.error });
         }
 
-        const sideError = validateSide(normalizedAction.value, side);
-        if (sideError) {
-            return res.status(400).json({ success: false, message: sideError });
+        const normalizedSide = validateSide(normalizedAction.value, side);
+        if (normalizedSide.error) {
+            return res.status(400).json({ success: false, message: normalizedSide.error });
         }
 
         // 3. Sandbox / Expiry & Processed Checks
@@ -79,7 +79,7 @@ async function handlePost(req, res) {
         const results = await Promise.all(
             ironbeamUsers.map(user => executeTradeForUser(user, {
                 action: normalizedAction.value,
-                side,
+                side: normalizedSide.value,
                 price,
                 tp,
                 sl,
@@ -101,7 +101,7 @@ async function handlePost(req, res) {
 }
 
 // ==========================================
-// HELPER FUNCTIONS (Readable Flow)
+// HELPER FUNCTIONS (Consistent Naming)
 // ==========================================
 
 async function fetchIronbeamActiveUsers() {
@@ -112,19 +112,23 @@ async function fetchIronbeamActiveUsers() {
     }
 }
 
-function validateAndNormalizeAction(action) {
-    const normalized = action.toUpperCase();
-    if (normalized !== 'ENTRY' && normalized !== 'EXIT') {
+function validateAction(action) {
+    const normalizedAction = action.toUpperCase();
+    if (normalizedAction !== 'ENTRY' && normalizedAction !== 'EXIT') {
         return { error: '"action" must be ENTRY or EXIT.' };
     }
-    return { value: normalized };
+    return { value: normalizedAction };
 }
 
 function validateSide(action, side) {
-    if (action === 'ENTRY' && side?.toUpperCase() !== 'LONG' && side?.toUpperCase() !== 'SHORT') {
-        return '"side" must be LONG or SHORT.';
+    if (action === 'ENTRY') {
+        const normalizedSide = side?.toUpperCase();
+        if (normalizedSide !== 'LONG' && normalizedSide !== 'SHORT') {
+            return { error: '"side" must be LONG or SHORT.' };
+        }
+        return { value: normalizedSide };
     }
-    return null;
+    return { value: side };
 }
 
 function isSignalExpired({ timestamp }) {
@@ -136,7 +140,6 @@ function isSignalExpired({ timestamp }) {
 
 async function isSignalProcessed(id, body) {
     const isNewSignal = await db.processTradingSignal(id, body);
-    // Agar processTradingSignal false return karein iska matlab signal pehle process ho chuka hai
     return !isNewSignal;
 }
 
