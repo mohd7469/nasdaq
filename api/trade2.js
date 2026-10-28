@@ -1,6 +1,6 @@
 import cors from './cors.js';
 import axios from 'axios';
-import moment from 'moment';
+import { getTimezone, isWeekend, isMaintenanceWindow, isSignalExpired } from './utils.js';
 
 import * as db from '../mongo/db.js';
 
@@ -31,6 +31,13 @@ async function handleGet(req, res) {
 
 async function handlePost(req, res) {
     try {
+        if (isWeekend()) {
+            return res.status(200).json({
+                success: false,
+                message: 'Market is closed on weekends (Saturday/Sunday).'
+            });
+        }
+
         // 1. Fetch active Ironbeam accounts
         const ironbeamUsers = await fetchIronbeamActiveUsers();
         if (!ironbeamUsers?.length) {
@@ -59,7 +66,7 @@ async function handlePost(req, res) {
 
         // 3. Sandbox / Expiry & Processed Checks
         if (!sandbox) {
-            if (isSignalExpired({ timestamp })) {
+            if (isSignalExpired(timestamp)) {
                 return res.status(409).json({ success: false, signalId: id, message: 'Signal expired.' });
             }
 
@@ -75,7 +82,15 @@ async function handlePost(req, res) {
             }
         }
 
-        // 4. Execute trades for all active users
+        // 4. Check Maintenance Window (2:00 AM - 3:00 AM): Save to DB but DO NOT execute trades
+        if (isMaintenanceWindow()) {
+            return res.status(200).json({
+                success: true,
+                message: 'Signal received and saved to DB, but trade execution skipped due to maintenance window (2:00 AM - 3:00 AM).'
+            });
+        }
+
+        // 5. Execute trades for all active users
         const results = await Promise.all(
             ironbeamUsers.map(user => executeTradeForUser(user, {
                 action: normalizedAction.value,
@@ -97,6 +112,36 @@ async function handlePost(req, res) {
 
     } catch (error) {
         return res.status(500).json({ success: false, error: error.message });
+    }
+}
+
+// ==========================================
+// BACKGROUND CRON / POLLING HELPER
+// ==========================================
+
+async function checkAndAutoFlattenAt130() {
+    try {
+        const currentTime = getTimezone();
+        const hours = currentTime.hours();
+        const minutes = currentTime.minutes();
+
+        // 1:30 AM ya uske baad ka time check karne ke liye
+        if (hours === 1 && minutes >= 30) {
+            const ironbeamUsers = await fetchIronbeamActiveUsers();
+            if (!ironbeamUsers?.length) return;
+
+            for (const user of ironbeamUsers) {
+                try {
+                    const token = await getAuthToken(user);
+                    await flattenAll(token, user);
+                    console.log(`[Auto-Flatten 1:30] Positions cleared for account [${user.accountId}]`);
+                } catch (err) {
+                    console.error(`[Auto-Flatten Error] Account [${user.accountId}]: ${err.message}`);
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Error in checkAndAutoFlattenAt130:', error.message);
     }
 }
 
@@ -129,13 +174,6 @@ function validateSide(action, side) {
         return { value: normalizedSide };
     }
     return { value: side };
-}
-
-function isSignalExpired({ timestamp }) {
-    if (timestamp && moment(timestamp).isBefore(moment().startOf('day'))) {
-        return true;
-    }
-    return false;
 }
 
 async function isSignalProcessed(id, body) {
@@ -174,7 +212,7 @@ async function executeTradeForUser(ibConfig, { action, side, price, tp, sl, orde
                 accountId: ibConfig.accountId,
                 symbol: ibConfig.symbol,
                 success: true,
-                message: `${ibConfig.symbol}: 1 ${side} futures contract opened on account [${ibConfig.accountId}] at ${new Date().toISOString()}`,
+                message: `${ibConfig.symbol}: 1 ${side} futures contract opened on account [${ibConfig.accountId}] at ${getTimezone().toISOString()}`,
                 details: orderResult.data
             };
         }
@@ -185,7 +223,7 @@ async function executeTradeForUser(ibConfig, { action, side, price, tp, sl, orde
                 success: true,
                 accountId: ibConfig.accountId,
                 symbol: ibConfig.symbol,
-                message: `[${ibConfig.accountId}] Positions cleared at ${new Date().toISOString()}`
+                message: `[${ibConfig.accountId}] Positions cleared at ${getTimezone().toISOString()}`
             };
         }
 
