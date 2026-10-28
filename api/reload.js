@@ -32,6 +32,8 @@ async function handleGet(req, res) {
 
 async function handlePost(req, res) {
     const appConfig = await db.getAppConfig();
+    const botsConfig = await db.getBotsConfig();
+
     const secretHeader = req.headers['x-telegram-bot-api-secret-token'];
 
     if (secretHeader && secretHeader !== appConfig.webhookSecret) {
@@ -56,7 +58,6 @@ async function handlePost(req, res) {
     const botId = req.query?.bot;
     const chatId = String(message.chat.id);
     const userInfo = message.from || {};
-    const botsConfig = await db.getBotsConfig();
     const botConfig = botId ? botsConfig.find(b => b.botId === botId) : null;
 
     if (botId) {
