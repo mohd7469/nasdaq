@@ -184,7 +184,7 @@ const handleTrade = async (payload) => {
 
     // await initMongoSeed()
 
-    // await testkWebhook(`...`)
+    await testkWebhook(`...`)
 
     // handleTrade({
     //     "timestamp": "2026-10-26T18:30:00.000+05:00",
