@@ -19,3 +19,14 @@ export const isMaintenanceWindow = (startHour = 2, endHour = 3, timezone = PKT_T
     const hours = currentTime.hours();
     return hours >= startHour && hours < endHour;
 };
+
+export const isSignalExpired = (timestamp) => {
+    if (timestamp) {
+        const signalTime = getTimezone(timestamp);
+        const startOfDay = getTimezone().startOf('day');
+        if (signalTime.isBefore(startOfDay)) {
+            return true;
+        }
+    }
+    return false;
+}
