@@ -74,9 +74,9 @@ async function handlePost(req, res) {
 
     const { text, bot, chatId } = req.body || {};
 
-    if (text === '') throw new Error('text is missing');
-    if (bot === '') throw new Error('bot is missing');
-    if (chatId === '') throw new Error('chatId is missing');
+    if (text !== undefined && text === '') throw new Error('text is missing');
+    if (bot !== undefined && bot === '') throw new Error('bot is missing');
+    if (chatId !== undefined && chatId === '') throw new Error('chatId is missing');
 
     const finalMessage = text || config.defaultText;
     const isTyping = Boolean(text && (text.startsWith('...') || text.startsWith('typing')));
@@ -179,17 +179,18 @@ async function resolveActiveRecipients(targetBots, targetChatIds, bots) {
         const token = botObj?.token;
         if (!token) return [];
 
+        let users = [];
+
         if (targetChatIds.length > 0) {
-            const userResults = await Promise.all(
+            const results = await Promise.all(
                 targetChatIds.map(id => db.getTelegramUser(bId, id, { isActive: true }))
             );
-            return userResults
-                .filter(Boolean)
-                .map(user => ({ bId, token, chatId: user.chatId }));
+            users = results.filter(Boolean);
+        } else {
+            users = (await db.getTelegramUsersForBot(bId)) || [];
         }
 
-        const users = await db.getTelegramUsersForBot(bId);
-        return (users || []).map(u => ({ bId, token, chatId: u.chatId }));
+        return users.map(user => ({ bId, token, chatId: user.chatId }));
     });
 
     const nestedRecipients = await Promise.all(fetchPromises);
