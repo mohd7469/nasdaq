@@ -51,9 +51,9 @@ export async function getAllSignals(options = { sort: { timestamp: 1 } }) {
 // Config Operations
 // ----------------------------------------------------
 
-export async function resetAppConfig(config = {}) {
+export async function resetAppConfig(data = []) {
     await mongo._deleteMany(mongo.Configs, {});
-    return await mongo._create(mongo.Configs, config);
+    return await mongo._createMany(mongo.Configs, toArray(data));
 }
 
 export async function getAppConfig() {
