@@ -36,7 +36,7 @@ const ironbeamUsersSchema = new mongoose.Schema({
 ironbeamUsersSchema.index({ accountId: 1 }, { unique: true });
 
 const telegramBotsSchema = new mongoose.Schema({
-    botId: { type: String, required: true, unique: true },
+    botId: { type: String, required: true },
     name: { type: String, required: true },
     token: { type: String, required: true }
 }, { _id: false, strict: false, versionKey: false });
@@ -44,7 +44,7 @@ const telegramBotsSchema = new mongoose.Schema({
 telegramBotsSchema.index({ botId: 1 }, { unique: true });
 
 const telegramReloadSchema = new mongoose.Schema({
-    botId: { type: String, required: true, unique: true },
+    botId: { type: String, required: true },
     payload: { type: Object, required: true },
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now }
@@ -66,7 +66,7 @@ const telegramUsersSchema = new mongoose.Schema({
 telegramUsersSchema.index({ chatId: 1, botId: 1 }, { unique: true });
 
 const tradingSignalsSchema = new mongoose.Schema({
-    id: { type: String, required: true, unique: true },
+    id: { type: String, required: true },
     timestamp: { type: String },
     side: { type: String },
     action: { type: String },
@@ -89,7 +89,7 @@ export const IronbeamUsers = mongoose.models.IronbeamUsers || mongoose.model('Ir
 export const TelegramBots = mongoose.models.TelegramBots || mongoose.model('TelegramBots', telegramBotsSchema, 'telegram_bots');
 export const TelegramReload = mongoose.models.TelegramReload || mongoose.model('TelegramReload', telegramReloadSchema, 'telegram_reload');
 export const TelegramUsers = mongoose.models.TelegramUsers || mongoose.model('TelegramUsers', telegramUsersSchema, 'telegram_users');
-export const TradingSignals = mongoose.models.TradingSignals || mongoose.model('TradingSignals', tradingSignalsSchema, 'trade_signals');
+export const TradingSignals = mongoose.models.TradingSignals || mongoose.model('TradingSignals', tradingSignalsSchema, 'trading_signals');
 
 // ----------------------------------------------------
 // DB Connection Initializer
