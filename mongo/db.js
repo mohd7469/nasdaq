@@ -173,7 +173,12 @@ export async function removeTelegramUser(botId, chatId) {
 
 export async function resetTradingSignals(data = []) {
     await mongo._deleteMany(mongo.TradingSignals, {});
-    return await mongo._createMany(mongo.TradingSignals, toArray(data));
+    const items = toArray(data).slice().sort((a, b) => {
+        const timeA = a.timestamp ? new Date(a.timestamp).getTime() : 0;
+        const timeB = b.timestamp ? new Date(b.timestamp).getTime() : 0;
+        return timeA - timeB;
+    });
+    return await mongo._createMany(mongo.TradingSignals, items);
 }
 
 export async function processTradingSignal(signalId, payload) {
@@ -196,6 +201,7 @@ export async function processTradingSignal(signalId, payload) {
     }
 }
 
-export async function getTradingSignals(options = { sort: { timestamp: 1 } }) {
-    return await mongo._readMany(mongo.TradingSignals, {}, { sort: options.sort });
+export async function getTradingSignals(options = {}) {
+    const sort = options.sort || { timestamp: 1 };
+    return await mongo._readMany(mongo.TradingSignals, options.filter || {}, { ...options, sort });
 }

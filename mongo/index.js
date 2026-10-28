@@ -91,6 +91,7 @@ const tradingSignalsSchema = new mongoose.Schema({
 }, { strict: false, versionKey: false });
 
 tradingSignalsSchema.index({ id: 1 }, { unique: true });
+tradingSignalsSchema.index({ timestamp: 1 });
 
 // ----------------------------------------------------
 // Models Initialization
