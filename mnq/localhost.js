@@ -164,7 +164,7 @@ const initMongoSeed = async () => {
 const testkWebhook = async (text = 'typing') => {
     try {
         for (const bot of bots) {
-            await axios.post(`${LOCALHOST}/send`, { bot, text });
+            await axios.post(`${config.apiUrl}/send`, { bot, text });
         }
     } catch (err) {
         console.error('Webhook Error:', err?.message);
