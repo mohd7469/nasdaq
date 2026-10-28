@@ -23,7 +23,7 @@ async function getAssignedRole(chatId, role = 'user') {
 // Signal Operations
 // ----------------------------------------------------
 
-export async function checkAndSaveSignal(signalId, payload) {
+export async function processTradeSignal(signalId, payload) {
     try {
         const existingSignal = await mongo._read(mongo.TradeSignals, { id: signalId });
         if (existingSignal) {
