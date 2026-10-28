@@ -59,7 +59,7 @@ async function handlePost(req, res) {
     }
 
     if (id) {
-        const isNewSignal = await db.processTradeSignal(id, req.body);
+        const isNewSignal = await db.processTradingSignal(id, req.body);
         if (!isNewSignal) {
             return res.status(200).json({
                 success: false,
