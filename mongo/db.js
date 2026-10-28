@@ -168,6 +168,11 @@ export async function resetTelegramUsers(users = []) {
 // Reload Signal Operations
 // ----------------------------------------------------
 
+export async function resetReloadSignals(signals = []) {
+    await mongo._deleteMany(mongo.ReloadSignals, {});
+    return await mongo._createMany(mongo.ReloadSignals, signals);
+}
+
 export async function consumeReloadSignal(filter = {}) {
     return await mongo._findOneAndDelete(mongo.ReloadSignals, filter);
 }

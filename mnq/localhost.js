@@ -69,20 +69,27 @@ const addInitialData = async () => {
         ]);
 
         // Reload Signals Collection
-        await db.upsertReloadSignal("dxblog_bot", {
-            bot: "dxblog_bot",
-            botName: "Nasdaq Logs",
-            command: "reload",
-            chatId: "7670215141",
-            from: {
-                id: 7670215141,
-                is_bot: false,
-                first_name: "Mohammad",
-                username: "dxb786327",
-                language_code: "en"
-            },
-            timestamp: 1792936165295
-        });
+        await db.resetReloadSignals([
+            {
+                botId: "dxblog_bot",
+                payload: {
+                    bot: "dxblog_bot",
+                    botName: "Nasdaq Logs",
+                    command: "reload",
+                    chatId: "7670215141",
+                    from: {
+                        id: 7670215141,
+                        is_bot: false,
+                        first_name: "Mohammad",
+                        username: "dxb786327",
+                        language_code: "en"
+                    },
+                    timestamp: 1792936165295
+                },
+                createdAt: new Date(),
+                updatedAt: new Date()
+            }
+        ]);
 
         // Telegram Bots Collection
         await db.resetTelegramBots([
