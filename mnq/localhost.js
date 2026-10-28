@@ -164,10 +164,10 @@ const initMongoSeed = async () => {
 const testkWebhook = async (text = 'typing') => {
     try {
         for (const bot of bots) {
-            await axios.post(`${config.apiUrl}/send`, { bot, text });
+            await axios.post(`${config.apiUrl}/send`, { bot: bot.botId, text });
         }
     } catch (err) {
-        console.error('Webhook Error:', err?.message);
+        console.error('Webhook Error:', err.response?.data || err?.message);
     }
 }
 
@@ -184,7 +184,7 @@ const handleTrade = async (payload) => {
 
     // await initMongoSeed()
 
-    testkWebhook(`...`)
+    await testkWebhook(`...`)
 
     // handleTrade({
     //     "timestamp": "2026-10-26T18:30:00.000+05:00",
