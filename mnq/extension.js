@@ -20,17 +20,10 @@
 
     const PINE_LOGS_CONTAINER = '[data-test-id-widget-type="pine_logs"] [class*="logsList-"]';
     const OHLC_CONTAINER = '[data-qa-id="legend-series-item"]';
-    const PKT_TIMEZONE = 'Asia/Karachi';
-    const DXB_TIMEZONE = 'Asia/Dubai';
 
     if (typeof Notification !== 'undefined' && Notification.permission !== 'granted') {
         Notification.requestPermission();
     }
-
-    const getTimezone = (time = moment(), timezone = PKT_TIMEZONE) => {
-        const m = moment(time).tz(timezone);
-        return m.isValid() ? m : moment().tz(timezone);
-    };
 
     const isWeekend = () => {
         const day = getTimezone().day();

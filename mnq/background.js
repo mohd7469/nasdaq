@@ -1,5 +1,17 @@
 // file://D:\projects\nasdaq\new\background.js
 
+const PKT_TIMEZONE = 'Asia/Karachi';
+const DXB_TIMEZONE = 'Asia/Dubai';
+
+const getTimezone = (time = moment(), timezone = PKT_TIMEZONE) => {
+    const m = moment(time).tz(timezone);
+    return m.isValid() ? m : moment().tz(timezone);
+};
+
+function getTime() {
+    return getTimezone().format('hh:mm:ss A');
+}
+
 function createAutomationWorker(onTick, onComplete) {
     // Worker code inline blob format mein wrapper
     const workerCode = `
@@ -44,10 +56,6 @@ function createAutomationWorker(onTick, onComplete) {
         stop: () => worker.postMessage({ action: 'STOP' }),
         terminate: () => worker.terminate()
     };
-}
-
-function getTime() {
-    return moment().tz("Asia/Karachi").format('hh:mm:ss A');
 }
 
 // Custom wrapper setup export for extension runtime
