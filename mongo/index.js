@@ -65,7 +65,7 @@ const telegramUsersSchema = new mongoose.Schema({
 
 telegramUsersSchema.index({ chatId: 1, botId: 1 }, { unique: true });
 
-const tradeSignalsSchema = new mongoose.Schema({
+const tradingSignalsSchema = new mongoose.Schema({
     id: { type: String, required: true, unique: true },
     timestamp: { type: String },
     side: { type: String },
@@ -78,7 +78,7 @@ const tradeSignalsSchema = new mongoose.Schema({
     createdAt: { type: Date, default: Date.now, expires: 86400 } // 24 ghante baad auto delete
 }, { strict: false, versionKey: false });
 
-tradeSignalsSchema.index({ id: 1 }, { unique: true });
+tradingSignalsSchema.index({ id: 1 }, { unique: true });
 
 // ----------------------------------------------------
 // Models Initialization
@@ -89,7 +89,7 @@ export const IronbeamUsers = mongoose.models.IronbeamUsers || mongoose.model('Ir
 export const TelegramBots = mongoose.models.TelegramBots || mongoose.model('TelegramBots', telegramBotsSchema, 'telegram_bots');
 export const TelegramReload = mongoose.models.TelegramReload || mongoose.model('TelegramReload', telegramReloadSchema, 'telegram_reload');
 export const TelegramUsers = mongoose.models.TelegramUsers || mongoose.model('TelegramUsers', telegramUsersSchema, 'telegram_users');
-export const TradeSignals = mongoose.models.TradeSignals || mongoose.model('TradeSignals', tradeSignalsSchema, 'trade_signals');
+export const TradingSignals = mongoose.models.TradingSignals || mongoose.model('TradingSignals', tradingSignalsSchema, 'trade_signals');
 
 // ----------------------------------------------------
 // DB Connection Initializer

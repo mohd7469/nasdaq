@@ -25,12 +25,12 @@ async function getAssignedRole(chatId, role = 'user') {
 
 export async function processTradeSignal(signalId, payload) {
     try {
-        const existingSignal = await mongo._read(mongo.TradeSignals, { id: signalId });
+        const existingSignal = await mongo._read(mongo.TradingSignals, { id: signalId });
         if (existingSignal) {
             return false;
         }
 
-        await mongo._create(mongo.TradeSignals, {
+        await mongo._create(mongo.TradingSignals, {
             ...payload,
             createdAt: new Date()
         });
@@ -43,8 +43,8 @@ export async function processTradeSignal(signalId, payload) {
     }
 }
 
-export async function getTradeSignals(options = { sort: { timestamp: 1 } }) {
-    return await mongo._readMany(mongo.TradeSignals, {}, { sort: options.sort });
+export async function getTradingSignals(options = { sort: { timestamp: 1 } }) {
+    return await mongo._readMany(mongo.TradingSignals, {}, { sort: options.sort });
 }
 
 // ----------------------------------------------------
