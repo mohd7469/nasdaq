@@ -35,6 +35,14 @@ const ironbeamUsersSchema = new mongoose.Schema({
 
 ironbeamUsersSchema.index({ accountId: 1 }, { unique: true });
 
+const telegramBotsSchema = new mongoose.Schema({
+    botId: { type: String, required: true, unique: true },
+    name: { type: String, required: true },
+    token: { type: String, required: true }
+}, { _id: false, strict: false, versionKey: false });
+
+telegramBotsSchema.index({ botId: 1 }, { unique: true });
+
 const telegramReloadSchema = new mongoose.Schema({
     botId: { type: String, required: true, unique: true },
     payload: { type: Object, required: true },
@@ -43,14 +51,6 @@ const telegramReloadSchema = new mongoose.Schema({
 }, { strict: false, versionKey: false });
 
 telegramReloadSchema.index({ botId: 1 }, { unique: true });
-
-const telegramBotsSchema = new mongoose.Schema({
-    botId: { type: String, required: true, unique: true },
-    name: { type: String, required: true },
-    token: { type: String, required: true }
-}, { _id: false, strict: false, versionKey: false });
-
-telegramBotsSchema.index({ botId: 1 }, { unique: true });
 
 const telegramUsersSchema = new mongoose.Schema({
     role: { type: String, required: true, default: 'user' },
@@ -86,8 +86,8 @@ tradeSignalsSchema.index({ id: 1 }, { unique: true });
 
 export const Configs = mongoose.models.Configs || mongoose.model('Configs', configsSchema, 'config');
 export const IronbeamUsers = mongoose.models.IronbeamUsers || mongoose.model('IronbeamUsers', ironbeamUsersSchema, 'ironbeam_users');
-export const TelegramReload = mongoose.models.TelegramReload || mongoose.model('TelegramReload', telegramReloadSchema, 'telegram_reload');
 export const TelegramBots = mongoose.models.TelegramBots || mongoose.model('TelegramBots', telegramBotsSchema, 'telegram_bots');
+export const TelegramReload = mongoose.models.TelegramReload || mongoose.model('TelegramReload', telegramReloadSchema, 'telegram_reload');
 export const TelegramUsers = mongoose.models.TelegramUsers || mongoose.model('TelegramUsers', telegramUsersSchema, 'telegram_users');
 export const TradeSignals = mongoose.models.TradeSignals || mongoose.model('TradeSignals', tradeSignalsSchema, 'trade_signals');
 
