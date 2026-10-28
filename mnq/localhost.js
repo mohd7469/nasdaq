@@ -8,6 +8,8 @@ const [config, bots] = await Promise.all([
     db.getBotsConfig()
 ]);
 
+const LOCALHOST = `http://localhost:3000/api`; // config.apiUrl
+
 const initMongoSeed = async () => {
     try {
         await db.resetAppConfig([
@@ -162,7 +164,7 @@ const initMongoSeed = async () => {
 const testkWebhook = async (text = 'typing') => {
     try {
         for (const bot of bots) {
-            await axios.post(`${config.apiUrl}/send`, { bot, text });
+            await axios.post(`${LOCALHOST}/send`, { bot, text });
         }
     } catch (err) {
         console.error('Webhook Error:', err?.message);
@@ -171,7 +173,7 @@ const testkWebhook = async (text = 'typing') => {
 
 const handleTrade = async (payload) => {
     try {
-        await axios.post(`${config.apiUrl}/trade`, payload);
+        await axios.post(`${LOCALHOST}/trade`, payload);
     } catch (err) {
         console.error('Trade Error:', err?.message);
     }
