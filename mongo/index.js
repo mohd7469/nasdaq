@@ -1,6 +1,17 @@
 import mongoose from 'mongoose';
+import moment from 'moment-timezone';
 
 const DB_NAME = 'nasdaq-database';
+const PKT_TIMEZONE = 'Asia/Karachi';
+
+export const getTimezone = (time = moment(), timezone = PKT_TIMEZONE) => {
+    const m = moment(time).tz(timezone);
+    return m.isValid() ? m : moment().tz(timezone);
+};
+
+export const getCurrentDate = (timezone = PKT_TIMEZONE) => {
+    return getTimezone(undefined, timezone).toDate();
+};
 
 let cached = global.mongoose;
 if (!cached) {
@@ -29,7 +40,7 @@ const ironbeamUsersSchema = new mongoose.Schema({
     apiKey: { type: String, required: true },
     symbol: { type: String, default: 'XCME:MNQ.Z26' },
     isActive: { type: Boolean, default: false },
-    createdAt: { type: Date, default: Date.now },
+    createdAt: { type: Date, default: () => getCurrentDate() },
     updatedAt: { type: Date, default: null }
 }, { strict: false, versionKey: false });
 
@@ -46,7 +57,7 @@ telegramBotsSchema.index({ botId: 1 }, { unique: true });
 const telegramReloadSchema = new mongoose.Schema({
     botId: { type: String, required: true },
     payload: { type: Object, required: true },
-    createdAt: { type: Date, default: Date.now },
+    createdAt: { type: Date, default: () => getCurrentDate() },
     updatedAt: { type: Date, default: null }
 }, { strict: false, versionKey: false });
 
@@ -59,7 +70,7 @@ const telegramUsersSchema = new mongoose.Schema({
     userInfo: { type: Object, default: {} },
     name: { type: String, default: '' },
     isActive: { type: Boolean, default: false },
-    createdAt: { type: Date, default: Date.now },
+    createdAt: { type: Date, default: () => getCurrentDate() },
     updatedAt: { type: Date, default: null }
 }, { strict: false, versionKey: false });
 
@@ -75,7 +86,7 @@ const tradingSignalsSchema = new mongoose.Schema({
     sl: { type: Number, default: null },
     PKT: { type: String },
     DXB: { type: String },
-    createdAt: { type: Date, default: Date.now, expires: 86400 } // 24 ghante baad auto delete
+    createdAt: { type: Date, default: () => getCurrentDate(), expires: 86400 } // 24 ghante baad auto delete
 }, { strict: false, versionKey: false });
 
 tradingSignalsSchema.index({ id: 1 }, { unique: true });
@@ -128,7 +139,7 @@ export async function _create(Model, payload) {
     await connect();
     return await Model.create({
         ...payload,
-        createdAt: payload.createdAt || new Date(),
+        createdAt: payload.createdAt || getCurrentDate(),
         updatedAt: payload.updatedAt !== undefined ? payload.updatedAt : null
     });
 }
@@ -137,7 +148,7 @@ export async function _createMany(Model, payloads = []) {
     await connect();
     const dataWithTimestamps = payloads.map(item => ({
         ...item,
-        createdAt: item.createdAt || new Date(),
+        createdAt: item.createdAt || getCurrentDate(),
         updatedAt: item.updatedAt !== undefined ? item.updatedAt : null
     }));
     return await Model.insertMany(dataWithTimestamps);
@@ -164,7 +175,7 @@ export async function _update(Model, filter = {}, updateData = {}, options = { n
     await connect();
     return await Model.findOneAndUpdate(
         filter,
-        { ...updateData, updatedAt: new Date() },
+        { ...updateData, updatedAt: getCurrentDate() },
         options
     ).lean();
 }
@@ -173,7 +184,7 @@ export async function _updateMany(Model, filter = {}, updateData = {}) {
     await connect();
     return await Model.updateMany(
         filter,
-        { ...updateData, updatedAt: new Date() }
+        { ...updateData, updatedAt: getCurrentDate() }
     );
 }
 
@@ -194,8 +205,8 @@ export async function _upsert(Model, filter = {}, updateData = {}) {
     return await Model.findOneAndUpdate(
         filter,
         {
-            $set: { ...updateData, updatedAt: new Date() },
-            $setOnInsert: { createdAt: new Date() }
+            $set: { ...updateData, updatedAt: getCurrentDate() },
+            $setOnInsert: { createdAt: getCurrentDate() }
         },
         { new: true, upsert: true }
     ).lean();
