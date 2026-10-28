@@ -47,9 +47,8 @@ const initDefaultTelegramUsersAccess = async () => {
     }
 }
 
-const addInitialData = async () => {
+const resetMongoDB = async () => {
     try {
-        // Configs Collection
         await db.resetAppConfig({
             apiUrl: "https://app-nasdaq.vercel.app/api",
             defaultChatId: "7670215141",
@@ -57,7 +56,6 @@ const addInitialData = async () => {
             defaultText: "Test Success"
         });
 
-        // Ironbeam Users Collection
         await db.resetIronbeamUsers([
             {
                 apiUrl: "https://demo.ironbeamapi.com/v2",
@@ -71,7 +69,6 @@ const addInitialData = async () => {
             }
         ]);
 
-        // Telegram Reload Collection
         await db.resetTelegramReload([
             {
                 botId: "dxblog_bot",
@@ -92,7 +89,6 @@ const addInitialData = async () => {
             }
         ]);
 
-        // Telegram Bots Collection
         await db.resetTelegramBots([
             {
                 botId: "dxbmnq_bot",
@@ -106,7 +102,6 @@ const addInitialData = async () => {
             }
         ]);
 
-        // Telegram Users Collection
         await db.resetTelegramUsers([
             {
                 role: "admin",
