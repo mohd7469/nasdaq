@@ -1,6 +1,6 @@
 import cors from './cors.js';
 import axios from 'axios';
-import moment from 'moment';
+import { getTimezone } from '../utils.js';
 
 import * as db from '../mongo/db.js';
 

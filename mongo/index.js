@@ -87,7 +87,7 @@ const tradingSignalsSchema = new mongoose.Schema({
     sl: { type: Number, default: null },
     PKT: { type: String },
     DXB: { type: String },
-    createdAt: { type: Date, default: () => getCurrentDate(), expires: 86400 } // 24 ghante baad auto delete
+    createdAt: { type: Date, default: () => getCurrentDate(), expires: 3 * 24 * 60 * 60 } // 3 din baad auto delete
 }, { strict: false, versionKey: false });
 
 tradingSignalsSchema.index({ id: 1 }, { unique: true });
