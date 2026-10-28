@@ -136,7 +136,7 @@ export async function updateTelegramUser(botId, chatId, updateFields = {}) {
 
 export async function createOrUpdateUser(botId, chatId, userInfo = {}, role = 'user') {
     const existingUser = await mongo._read(mongo.TelegramUsers, { chatId, botId });
-    const cleanUserInfo = sanitizeUserInfo(userInfo);
+    const cleanUserInfo = await sanitizeUserInfo(userInfo);
     const finalRole = await getAssignedRole(chatId, role);
 
     if (!existingUser) {
@@ -151,9 +151,6 @@ export async function createOrUpdateUser(botId, chatId, userInfo = {}, role = 'u
             updatedAt: null
         });
     }
-
-    console.log('userInfo', userInfo)
-    console.log('cleanUserInfo', cleanUserInfo)
 
     return await updateTelegramUser(botId, chatId, { role: finalRole, userInfo: cleanUserInfo });
 }
