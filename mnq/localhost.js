@@ -15,20 +15,14 @@ const initDefaultTelegramUsersAccess = async () => {
             await db.createOrUpdateUser(bot.botId, config.defaultChatId, { first_name: 'mohd' }, 'admin');
         }
 
-        await db.batchUpdateTelegramUsers([
-            ...bots.map(bot => ({
+        await db.batchUpdateTelegramUsers(
+            bots.map(bot => ({
                 botId: bot.botId,
                 isActive: true,
                 chatId: config.defaultChatId,
                 name: 'mohd'
-            })),
-            ...bots.map(bot => ({
-                botId: bot.botId,
-                isActive: true,
-                chatId: '',
-                name: ''
-            })),
-        ]);
+            }))
+        );
 
         console.log("User Updated successfully");
 
@@ -36,7 +30,7 @@ const initDefaultTelegramUsersAccess = async () => {
         // EXAMPLE MANUAL OPERATIONS (Zaroorat ke mutabiq use karein):
         // -------------------------------------------------------------
         // 1. Check all users:
-        // const users = await db.TelegramUsers.find().lean();
+        // const users = await db.getTelegramUsersForBot('dxbmnq_bot');
         // console.log("Telegram Users:", users);
         //
         // 2. Modify specific user:
@@ -55,13 +49,11 @@ const initDefaultTelegramUsersAccess = async () => {
 
 const addInitialData = async () => {
     try {
-        // db.Configs Collection
-        await db.Configs.deleteMany({});
-        await db.Configs.create({}); // default schema values initialize
+        // Configs Collection
+        await db.resetAppConfig();
 
         // Ironbeam Users Collection
-        await db.IronbeamUsers.deleteMany({});
-        await db.IronbeamUsers.insertMany([
+        await db.resetIronbeamUsers([
             {
                 isDemo: true,
                 apiUrl: "https://demo.ironbeamapi.com/v2",
@@ -77,30 +69,23 @@ const addInitialData = async () => {
         ]);
 
         // Reload Signals Collection
-        await db.ReloadSignals.deleteMany({});
-        await db.ReloadSignals.create({
-            botId: "dxblog_bot",
-            payload: {
-                bot: "dxblog_bot",
-                botName: "Nasdaq Logs",
-                command: "reload",
-                chatId: "7670215141",
-                from: {
-                    id: 7670215141,
-                    is_bot: false,
-                    first_name: "Mohammad",
-                    username: "dxb786327",
-                    language_code: "en"
-                },
-                timestamp: 1792936165295
+        await db.upsertReloadSignal("dxblog_bot", {
+            bot: "dxblog_bot",
+            botName: "Nasdaq Logs",
+            command: "reload",
+            chatId: "7670215141",
+            from: {
+                id: 7670215141,
+                is_bot: false,
+                first_name: "Mohammad",
+                username: "dxb786327",
+                language_code: "en"
             },
-            createdAt: new Date(),
-            updatedAt: new Date()
+            timestamp: 1792936165295
         });
 
         // Telegram Bots Collection
-        await db.TelegramBots.deleteMany({});
-        await db.TelegramBots.insertMany([
+        await db.resetTelegramBots([
             {
                 botId: "dxbmnq_bot",
                 name: "Nasdaq Alert",
@@ -114,15 +99,12 @@ const addInitialData = async () => {
         ]);
 
         // Telegram Users Collection
-        await db.TelegramUsers.deleteMany({});
-        await db.TelegramUsers.insertMany([
+        await db.resetTelegramUsers([
             {
                 role: "admin",
                 chatId: "7670215141",
                 botId: "dxbmnq_bot",
-                userInfo: {
-                    "first_name": "mohd dxb",
-                },
+                userInfo: { first_name: "mohd dxb" },
                 name: "mohd dxb",
                 isActive: true,
                 createdAt: new Date(),
@@ -132,9 +114,7 @@ const addInitialData = async () => {
                 role: "admin",
                 chatId: "7670215141",
                 botId: "dxblog_bot",
-                userInfo: {
-                    "first_name": "mohd dxb",
-                },
+                userInfo: { first_name: "mohd dxb" },
                 name: "mohd dxb",
                 isActive: true,
                 createdAt: new Date(),

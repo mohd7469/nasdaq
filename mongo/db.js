@@ -46,6 +46,11 @@ export async function getAllSignals(options = { sort: { timestamp: 1 } }) {
 // Config Operations
 // ----------------------------------------------------
 
+export async function resetAppConfig() {
+    await mongo._deleteMany(mongo.Configs, {});
+    return await mongo._create(mongo.Configs, {});
+}
+
 export async function getAppConfig() {
     const configDoc = await mongo._read(mongo.Configs, {});
     if (!configDoc) return {};
@@ -57,8 +62,18 @@ export async function getBotsConfig() {
     return await mongo._readMany(mongo.TelegramBots, {});
 }
 
+export async function resetTelegramBots(bots = []) {
+    await mongo._deleteMany(mongo.TelegramBots, {});
+    return await mongo._createMany(mongo.TelegramBots, bots);
+}
+
 export async function getIronbeamConfig(filter = { isActive: true, isDemo: true }) {
     return await mongo._readMany(mongo.IronbeamUsers, filter);
+}
+
+export async function resetIronbeamUsers(users = []) {
+    await mongo._deleteMany(mongo.IronbeamUsers, {});
+    return await mongo._createMany(mongo.IronbeamUsers, users);
 }
 
 // ----------------------------------------------------
@@ -142,6 +157,11 @@ export async function batchUpdateTelegramUsers(updates = []) {
 
 export async function removeTelegramUser(botId, chatId) {
     return await mongo._delete(mongo.TelegramUsers, { chatId, botId });
+}
+
+export async function resetTelegramUsers(users = []) {
+    await mongo._deleteMany(mongo.TelegramUsers, {});
+    return await mongo._createMany(mongo.TelegramUsers, users);
 }
 
 // ----------------------------------------------------
