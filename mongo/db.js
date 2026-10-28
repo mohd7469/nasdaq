@@ -120,8 +120,8 @@ export async function updateTelegramUser(botId, chatId, updateFields = {}) {
         userInfo: cleanedUserInfo,
         name: updateFields.name !== undefined ? updateFields.name : existingUser.name,
         isActive: updateFields.isActive !== undefined ? updateFields.isActive : existingUser.isActive,
-        createdAt: existingUser.createdAt || mongo.getCurrentDate(),
-        updatedAt: mongo.getCurrentDate()
+        createdAt: existingUser.createdAt || mongo.getTimezone().toDate(),
+        updatedAt: mongo.getTimezone().toDate()
     };
 
     delete mergedData._id;
@@ -147,7 +147,7 @@ export async function createOrUpdateUser(botId, chatId, userInfo = {}, role = 'u
             userInfo: cleanUserInfo,
             name: '',
             isActive: finalRole === 'admin',
-            createdAt: mongo.getCurrentDate(),
+            createdAt: mongo.getTimezone().toDate(),
             updatedAt: null
         });
     }
@@ -190,7 +190,7 @@ export async function processTradingSignal(signalId, payload) {
 
         await mongo._create(mongo.TradingSignals, {
             ...payload,
-            createdAt: mongo.getCurrentDate()
+            createdAt: mongo.getTimezone().toDate()
         });
         return true;
     } catch (error) {

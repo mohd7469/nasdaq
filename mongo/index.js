@@ -1,18 +1,7 @@
 import mongoose from 'mongoose';
-import moment from 'moment-timezone';
+import { getTimezone } from '../utils';
 
 const DB_NAME = 'nasdaq-database';
-const PKT_TIMEZONE = 'Asia/Karachi';
-const DXB_TIMEZONE = 'Asia/Dubai';
-
-export const getTimezone = (time = moment(), timezone = PKT_TIMEZONE) => {
-    const m = moment(time).tz(timezone);
-    return m.isValid() ? m : moment().tz(timezone);
-};
-
-export const getCurrentDate = (timezone = PKT_TIMEZONE) => {
-    return getTimezone(undefined, timezone).toDate();
-};
 
 let cached = global.mongoose;
 if (!cached) {
@@ -41,7 +30,7 @@ const ironbeamUsersSchema = new mongoose.Schema({
     apiKey: { type: String, required: true },
     symbol: { type: String, default: 'XCME:MNQ.Z26' },
     isActive: { type: Boolean, default: false },
-    createdAt: { type: Date, default: () => getCurrentDate() },
+    createdAt: { type: Date, default: () => getTimezone().toDate() },
     updatedAt: { type: Date, default: null }
 }, { strict: false, versionKey: false });
 
@@ -58,7 +47,7 @@ telegramBotsSchema.index({ botId: 1 }, { unique: true });
 const telegramReloadSchema = new mongoose.Schema({
     botId: { type: String, required: true },
     payload: { type: Object, required: true },
-    createdAt: { type: Date, default: () => getCurrentDate() },
+    createdAt: { type: Date, default: () => getTimezone().toDate() },
     updatedAt: { type: Date, default: null }
 }, { strict: false, versionKey: false });
 
@@ -71,7 +60,7 @@ const telegramUsersSchema = new mongoose.Schema({
     userInfo: { type: Object, default: {} },
     name: { type: String, default: '' },
     isActive: { type: Boolean, default: false },
-    createdAt: { type: Date, default: () => getCurrentDate() },
+    createdAt: { type: Date, default: () => getTimezone().toDate() },
     updatedAt: { type: Date, default: null }
 }, { strict: false, versionKey: false });
 
@@ -87,7 +76,7 @@ const tradingSignalsSchema = new mongoose.Schema({
     sl: { type: Number, default: null },
     PKT: { type: String },
     DXB: { type: String },
-    createdAt: { type: Date, default: () => getCurrentDate(), expires: 3 * 24 * 60 * 60 } // 3 din baad auto delete
+    createdAt: { type: Date, default: () => getTimezone().toDate(), expires: 3 * 24 * 60 * 60 } // 3 din baad auto delete
 }, { strict: false, versionKey: false });
 
 tradingSignalsSchema.index({ id: 1 }, { unique: true });
@@ -141,7 +130,7 @@ export async function _create(Model, payload) {
     await connect();
     return await Model.create({
         ...payload,
-        createdAt: payload.createdAt || getCurrentDate(),
+        createdAt: payload.createdAt || getTimezone().toDate(),
         updatedAt: payload.updatedAt !== undefined ? payload.updatedAt : null
     });
 }
@@ -150,7 +139,7 @@ export async function _createMany(Model, payloads = []) {
     await connect();
     const dataWithTimestamps = payloads.map(item => ({
         ...item,
-        createdAt: item.createdAt || getCurrentDate(),
+        createdAt: item.createdAt || getTimezone().toDate(),
         updatedAt: item.updatedAt !== undefined ? item.updatedAt : null
     }));
     return await Model.insertMany(dataWithTimestamps);
@@ -177,7 +166,7 @@ export async function _update(Model, filter = {}, updateData = {}, options = { n
     await connect();
     return await Model.findOneAndUpdate(
         filter,
-        { ...updateData, updatedAt: getCurrentDate() },
+        { ...updateData, updatedAt: getTimezone().toDate() },
         options
     ).lean();
 }
@@ -186,7 +175,7 @@ export async function _updateMany(Model, filter = {}, updateData = {}) {
     await connect();
     return await Model.updateMany(
         filter,
-        { ...updateData, updatedAt: getCurrentDate() }
+        { ...updateData, updatedAt: getTimezone().toDate() }
     );
 }
 
@@ -207,8 +196,8 @@ export async function _upsert(Model, filter = {}, updateData = {}) {
     return await Model.findOneAndUpdate(
         filter,
         {
-            $set: { ...updateData, updatedAt: getCurrentDate() },
-            $setOnInsert: { createdAt: getCurrentDate() }
+            $set: { ...updateData, updatedAt: getTimezone().toDate() },
+            $setOnInsert: { createdAt: getTimezone().toDate() }
         },
         { new: true, upsert: true }
     ).lean();
