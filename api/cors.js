@@ -7,7 +7,7 @@ export default function cors(req, res, options = {}) {
     } = options;
 
     console.log(`${req?.method}: ${req?.url}`);
-    if (req?.method === 'POST' || req?.method === 'PUT' || req?.method === 'PATCH') {
+    if (req?.method === 'POST') {
         console.log('Payload:', req?.body);
     }
 
