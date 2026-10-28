@@ -67,9 +67,7 @@ const addInitialData = async () => {
                 password: "Awais51429427",
                 apiKey: "24993c8742f046c2a53fa9edb6634819",
                 symbol: "XCME:MNQ.Z26",
-                isActive: true,
-                createdAt: new Date(),
-                updatedAt: new Date()
+                isActive: true
             }
         ]);
 
@@ -83,16 +81,14 @@ const addInitialData = async () => {
                     command: "reload",
                     chatId: "7670215141",
                     from: {
-                        id: 7670215141,
+                        id: "7670215141",
                         is_bot: false,
                         first_name: "Mohammad",
                         username: "dxb786327",
                         language_code: "en"
                     },
                     timestamp: 1792936165295
-                },
-                createdAt: new Date(),
-                updatedAt: new Date()
+                }
             }
         ]);
 
@@ -118,9 +114,7 @@ const addInitialData = async () => {
                 botId: "dxbmnq_bot",
                 userInfo: { first_name: "mohd dxb" },
                 name: "mohd dxb",
-                isActive: true,
-                createdAt: new Date(),
-                updatedAt: new Date()
+                isActive: true
             },
             {
                 role: "admin",
@@ -128,9 +122,7 @@ const addInitialData = async () => {
                 botId: "dxblog_bot",
                 userInfo: { first_name: "mohd dxb" },
                 name: "mohd dxb",
-                isActive: true,
-                createdAt: new Date(),
-                updatedAt: new Date()
+                isActive: true
             },
             {
                 role: "user",
@@ -144,9 +136,7 @@ const addInitialData = async () => {
                     language_code: "en"
                 },
                 name: "bilal telenor",
-                isActive: false,
-                createdAt: new Date(),
-                updatedAt: new Date()
+                isActive: false
             },
             {
                 role: "user",
@@ -160,9 +150,7 @@ const addInitialData = async () => {
                     language_code: "en"
                 },
                 name: "awais jazz",
-                isActive: false,
-                createdAt: new Date(),
-                updatedAt: new Date()
+                isActive: false
             }
         ]);
 
