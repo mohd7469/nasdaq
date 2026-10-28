@@ -4,20 +4,20 @@ import moment from 'moment';
 
 import * as db from '../mongo/db.js';
 
-const appConfig = await db.getAppConfig();
+const config = await db.getAppConfig();
 const bots = await db.getBotsConfig();
 
 const initDefaultTelegramUsersAccess = async () => {
     try {
         for (const bot of bots) {
-            await db.createOrUpdateUser(bot.botId, appConfig.defaultChatId, { first_name: 'mohd' }, 'admin');
+            await db.createOrUpdateUser(bot.botId, config.defaultChatId, { first_name: 'mohd' }, 'admin');
         }
 
         await db.batchUpdateTelegramUsers([
             ...bots.map(bot => ({
                 botId: bot.botId,
                 isActive: true,
-                chatId: appConfig.defaultChatId,
+                chatId: config.defaultChatId,
                 name: 'mohd'
             })),
             ...bots.map(bot => ({
@@ -183,7 +183,7 @@ const addInitialData = async () => {
 const testkWebhook = async (text = 'typing') => {
     try {
         for (const bot of bots) {
-            await axios.post(`${appConfig.apiUrl}/send`, { bot, text });
+            await axios.post(`${config.apiUrl}/send`, { bot, text });
         }
     } catch (err) {
         console.error('Webhook Error:', err?.message);
@@ -192,7 +192,7 @@ const testkWebhook = async (text = 'typing') => {
 
 const handleTrade = async (payload) => {
     try {
-        await axios.post(`${appConfig.apiUrl}/trade`, payload);
+        await axios.post(`${config.apiUrl}/trade`, payload);
     } catch (err) {
         console.error('Trade Error:', err?.message);
     }
