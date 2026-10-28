@@ -10,17 +10,25 @@ export default async function handler(req, res) {
     }
 
     try {
-        const config = await db.getAppConfig();
-        const bots = await db.getBotsConfig();
+        if (req.method !== 'GET') {
+            return res.status(405).json({ success: false, error: 'Method Not Allowed' });
+        }
 
-        return res.status(200).json({
-            success: true,
-            apiUrl: config.apiUrl,
-            defaultChatId: config.defaultChatId,
-            defaultText: config.defaultText,
-            bots: bots.map(({ botId, name }) => ({ botId, name }))
-        });
+        return await handleGet(req, res);
     } catch (err) {
         return res.status(500).json({ success: false, error: err.message });
     }
+}
+
+async function handleGet(req, res) {
+    const config = await db.getAppConfig();
+    const bots = await db.getBotsConfig();
+
+    return res.status(200).json({
+        success: true,
+        apiUrl: config.apiUrl,
+        defaultChatId: config.defaultChatId,
+        defaultText: config.defaultText,
+        bots: bots.map(({ botId, name }) => ({ botId, name }))
+    });
 }
