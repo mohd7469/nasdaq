@@ -4,8 +4,6 @@ import moment from 'moment';
 
 import * as db from '../mongo/db.js';
 
-const ORDER_STATUS_ACTIVE = new Set(['NEW', 'SUBMITTED', 'PENDING_NEW', 'QUEUED_NEW', 'ACCEPTED_FOR_BIDDING']);
-
 export default async function handler(req, res) {
     if (cors(req, res)) {
         return;
@@ -273,6 +271,8 @@ async function flattenAll(token, ibConfig) {
 
     const ordersRes = await axios.get(`${ibConfig.apiUrl}/order/${ibConfig.accountId}/ANY`, { headers });
     const ordersData = ordersRes.data.orders || ordersRes.data || [];
+
+    const ORDER_STATUS_ACTIVE = new Set(['NEW', 'SUBMITTED', 'PENDING_NEW', 'QUEUED_NEW', 'ACCEPTED_FOR_BIDDING']);
 
     const activeOrders = ordersData.filter(o => ORDER_STATUS_ACTIVE.has(o.status || o.st));
     const activeOrderIds = activeOrders.map(o => o.orderId || o.oid);
