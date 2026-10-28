@@ -21,8 +21,10 @@ export default async function handler(req, res) {
 }
 
 async function handleGet(req, res) {
-    const config = await db.getAppConfig();
-    const bots = await db.getBotsConfig();
+    const [config, bots] = await Promise.all([
+        db.getAppConfig(),
+        db.getBotsConfig()
+    ]);
 
     await registerWebhooks(req, config, bots);
 

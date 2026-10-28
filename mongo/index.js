@@ -106,7 +106,12 @@ export async function connect() {
             throw new Error('MONGODB_URI is not defined in environment variables');
         }
 
-        cached.promise = mongoose.connect(uri, { dbName: DB_NAME }).then((m) => m);
+        cached.promise = mongoose.connect(uri, {
+            dbName: DB_NAME,
+            maxPoolSize: 10,
+            serverSelectionTimeoutMS: 5000,
+            socketTimeoutMS: 45000
+        }).then((m) => m);
     }
 
     try {
