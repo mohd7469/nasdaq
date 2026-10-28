@@ -35,6 +35,23 @@ export async function getAppConfig() {
     return config;
 }
 
+// ----------------------------------------------------
+// Telegram Bots
+// ----------------------------------------------------
+
+export async function resetIronbeamUsers(data = []) {
+    await mongo._deleteMany(mongo.IronbeamUsers, {});
+    return await mongo._createMany(mongo.IronbeamUsers, toArray(data));
+}
+
+export async function getIronbeamConfig(filter = { isActive: true, isDemo: true }) {
+    return await mongo._readMany(mongo.IronbeamUsers, filter);
+}
+
+// ----------------------------------------------------
+// Telegram Bots
+// ----------------------------------------------------
+
 export async function getBotsConfig() {
     return await mongo._readMany(mongo.TelegramBots, {});
 }
@@ -44,14 +61,6 @@ export async function resetTelegramBots(data = []) {
     return await mongo._createMany(mongo.TelegramBots, toArray(data));
 }
 
-export async function getIronbeamConfig(filter = { isActive: true, isDemo: true }) {
-    return await mongo._readMany(mongo.IronbeamUsers, filter);
-}
-
-export async function resetIronbeamUsers(data = []) {
-    await mongo._deleteMany(mongo.IronbeamUsers, {});
-    return await mongo._createMany(mongo.IronbeamUsers, toArray(data));
-}
 
 // ----------------------------------------------------
 // Telegram Reload
