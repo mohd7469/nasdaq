@@ -39,13 +39,13 @@ async function handlePost(req, res) {
     }
 
     const { id, timestamp, action, side, price, tp, sl, orderType, sandbox } = req.body || {};
-    const isSandbox = sandbox === true || sandbox === 'true'; // for api testing - temporary bypass signal expiration/trigger check 
 
     if (!action) {
         return res.status(400).json({ success: false, message: '"action" parameter is required' });
     }
 
-    if (!isSandbox) {
+    // for api testing - temporary bypass signal expiration/trigger check 
+    if (!sandbox) {
         const validationResult = validateSignal({ timestamp, id, action, side, body: req.body });
         if (!validationResult.isValid) {
             return res.status(validationResult.status).json(validationResult.payload);
@@ -61,7 +61,8 @@ async function handlePost(req, res) {
         return res.status(400).json({ success: false, message: '"side" must be LONG or SHORT.' });
     }
 
-    if (!isSandbox && id) {
+    // for api testing - temporary bypass signal expiration/trigger check 
+    if (!sandbox && id) {
         const isNewSignal = await db.processTradingSignal(id, req.body);
         if (!isNewSignal) {
             return res.status(200).json({
