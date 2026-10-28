@@ -152,6 +152,9 @@ export async function createOrUpdateUser(botId, chatId, userInfo = {}, role = 'u
         });
     }
 
+    console.log('userInfo', userInfo)
+    console.log('cleanUserInfo', cleanUserInfo)
+
     return await updateTelegramUser(botId, chatId, { role: finalRole, userInfo: cleanUserInfo });
 }
 
