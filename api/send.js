@@ -4,8 +4,6 @@ import moment from 'moment';
 
 import * as db from '../mongo/db.js';
 
-const RELOAD_COMMANDS = new Set(['reload', 'refresh', '/reload', '/refresh']);
-
 export default async function handler(req, res) {
     if (cors(req, res)) {
         return;
@@ -28,9 +26,9 @@ async function handleGet(req, res) {
 
     const { text, bot, chatId } = req.query || {};
 
-    if (text === '') throw new Error('text is missing');
-    if (bot === '') throw new Error('bot is missing');
-    if (chatId === '') throw new Error('chatId is missing');
+    if (text !== undefined && text === '') throw new Error('text is missing');
+    if (bot !== undefined && bot === '') throw new Error('bot is missing');
+    if (chatId !== undefined && chatId === '') throw new Error('chatId is missing');
 
     const finalMessage = text || appConfig.defaultText;
     const isTyping = Boolean(text && (text.startsWith('...') || text.startsWith('typing')));
@@ -122,9 +120,18 @@ async function handleTelegramWebhookRequest(req, res, { appConfig, botsConfig, b
     const userInfo = message.from || {};
     const cleanText = text.trim().toLowerCase();
 
+    if (cleanText.startsWith('/stop')) {
+        await db.removeTelegramUser(botId, chatId);
+        const responseText = `[${chatId}] Disconnected, send <b>/start</b> to connect again`;
+        await sendTelegramMessage(botConfig.token, chatId, responseText);
+        const savedChatsCount = await db.countBotTelegramUsers(botId);
+        return res.status(200).json({ success: true, savedChatsCount });
+    }
+
+    const userRecord = await db.createOrUpdateUser(botId, chatId, userInfo);
+    const isActive = Boolean(userRecord?.isActive);
+
     if (cleanText.startsWith('/start')) {
-        const userRecord = await db.createOrUpdateUser(botId, chatId, userInfo);
-        const isActive = Boolean(userRecord?.isActive);
         const responseText = isActive
             ? `[${chatId}] Connected, send <b>/stop</b> to disconnect`
             : `[${chatId}] Request sent..`;
@@ -134,17 +141,9 @@ async function handleTelegramWebhookRequest(req, res, { appConfig, botsConfig, b
         return res.status(200).json({ success: true, savedChatsCount, userInfo });
     }
 
-    if (cleanText.startsWith('/stop')) {
-        await db.removeTelegramUser(botId, chatId);
-        const responseText = `[${chatId}] Disconnected, send <b>/start</b> to connect again`;
-        await sendTelegramMessage(botConfig.token, chatId, responseText);
-        const savedChatsCount = await db.countBotTelegramUsers(botId);
-        return res.status(200).json({ success: true, savedChatsCount });
-    }
+    const RELOAD_COMMANDS = new Set(['reload', 'refresh', '/reload', '/refresh']);
 
     if (RELOAD_COMMANDS.has(cleanText)) {
-        await db.createOrUpdateUser(botId, chatId, userInfo);
-
         const reloadPayload = {
             bot: botId,
             botName: botConfig.name,
@@ -160,14 +159,11 @@ async function handleTelegramWebhookRequest(req, res, { appConfig, botsConfig, b
         return res.status(200).json({ success: true, message: responseText, reload: reloadPayload });
     }
 
-    const userRecord = await db.getTelegramUser(botId, chatId);
-    const isActive = Boolean(userRecord?.isActive);
     const responseText = isActive
         ? `[${chatId}] Connected, send <b>/stop</b> to disconnect`
         : `[${chatId}] In progress..`;
 
     await sendTelegramMessage(botConfig.token, chatId, responseText);
-    await db.createOrUpdateUser(botId, chatId, userInfo);
     const savedChatsCount = await db.countBotTelegramUsers(botId);
 
     return res.status(200).json({ success: true, savedChatsCount, userInfo });
@@ -211,8 +207,8 @@ async function dispatchTelegramMessages(recipients, message, isTyping) {
             await sendTelegramChatAction(target.token, target.chatId);
             results[target.bId].push({ chatId: target.chatId, action: 'typing' });
         } else {
-            const resMsg = await sendTelegramMessage(target.token, target.chatId, message);
-            results[target.bId].push({ chatId: target.chatId, result: resMsg });
+            const responseText = await sendTelegramMessage(target.token, target.chatId, message);
+            results[target.bId].push({ chatId: target.chatId, result: responseText });
         }
     }
 
@@ -239,6 +235,6 @@ async function sendTelegramChatAction(token, chatId, action = 'typing') {
             action
         });
     } catch (err) {
-        console.error(`Failed sending ACTION to [${chatId}]:`, err.message);
+        return { success: false, error: err.response?.data || `Failed sending ACTION to [${chatId}]: ${err.message}` };
     }
 }
