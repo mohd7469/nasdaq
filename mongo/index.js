@@ -89,7 +89,7 @@ export const IronbeamUsers = mongoose.models.IronbeamUsers || mongoose.model('Ir
 export const TelegramReload = mongoose.models.TelegramReload || mongoose.model('TelegramReload', telegramReloadSchema, 'telegram_reload');
 export const TelegramBots = mongoose.models.TelegramBots || mongoose.model('TelegramBots', telegramBotsSchema, 'telegram_bots');
 export const TelegramUsers = mongoose.models.TelegramUsers || mongoose.model('TelegramUsers', telegramUsersSchema, 'telegram_users');
-export const TelegramSignals = mongoose.models.TelegramSignals || mongoose.model('TelegramSignals', telegramSignalsSchema, 'telegram_signals');
+export const TelegramSignals = mongoose.models.TelegramSignals || mongoose.model('TelegramSignals', telegramSignalsSchema, 'trade_signals');
 
 // ----------------------------------------------------
 // DB Connection Initializer
