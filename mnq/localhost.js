@@ -50,7 +50,12 @@ const initDefaultTelegramUsersAccess = async () => {
 const addInitialData = async () => {
     try {
         // Configs Collection
-        await db.resetAppConfig();
+        await db.resetAppConfig({
+            apiUrl: "https://app-nasdaq.vercel.app/api",
+            defaultChatId: "7670215141",
+            webhookSecret: "dxbbot",
+            defaultText: "Test Success"
+        });
 
         // Ironbeam Users Collection
         await db.resetIronbeamUsers([
@@ -96,12 +101,12 @@ const addInitialData = async () => {
             {
                 botId: "dxbmnq_bot",
                 name: "Nasdaq Alert",
-                token: "8883267489:AAFeXTRqVpMR4-gG1Adi76NTqmtrDCJUj2A"
+                token: process.env.NASDAQ_ALERT
             },
             {
                 botId: "dxblog_bot",
                 name: "Nasdaq Logs",
-                token: "8846747499:AAECpWSsjXSjzWDgAp5-8iMslCis8iFJYi8"
+                token: process.env.NASDAQ_LOGS
             }
         ]);
 
