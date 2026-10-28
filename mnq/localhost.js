@@ -151,6 +151,20 @@ const resetMongoDB = async () => {
             }
         ]);
 
+        await db.resetTradingSignals([
+            {
+                id: "SHORT_ENTRY_29787.5_2026-10-28T18:45:00.000+05:00",
+                timestamp: "2026-10-28T18:45:00.000+05:00",
+                side: "SHORT",
+                action: "ENTRY",
+                price: 29787.5,
+                tp: 29732.25,
+                sl: 29879.75,
+                PKT: "Wed, Oct 28, 6:45 PM",
+                DXB: "Wed, Oct 28, 5:45 PM"
+            }
+        ]);
+
         console.log("Initial seed data added successfully!");
         process.exit(0);
     } catch (error) {
