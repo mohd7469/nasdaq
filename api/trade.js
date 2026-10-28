@@ -22,7 +22,7 @@ export default async function handler(req, res) {
 
 async function handleGet(req, res) {
     try {
-        const signals = await db.getAllSignals({ sort: { timestamp: 1 } });
+        const signals = await db.getTradeSignals({ sort: { timestamp: 1 } });
         return res.status(200).json({ success: true, signals });
     } catch (error) {
         return res.status(500).json({ success: false, error: error.message });

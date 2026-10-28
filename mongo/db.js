@@ -43,7 +43,7 @@ export async function processTradeSignal(signalId, payload) {
     }
 }
 
-export async function getAllSignals(options = { sort: { timestamp: 1 } }) {
+export async function getTradeSignals(options = { sort: { timestamp: 1 } }) {
     return await mongo._readMany(mongo.TradeSignals, {}, { sort: options.sort });
 }
 
