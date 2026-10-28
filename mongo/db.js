@@ -165,20 +165,20 @@ export async function resetTelegramUsers(users = []) {
 }
 
 // ----------------------------------------------------
-// Reload Signal Operations
+// Telegram Reload Operations
 // ----------------------------------------------------
 
-export async function resetReloadSignals(signals = []) {
-    await mongo._deleteMany(mongo.ReloadSignals, {});
-    return await mongo._createMany(mongo.ReloadSignals, signals);
+export async function resetTelegramReload(signals = []) {
+    await mongo._deleteMany(mongo.TelegramReload, {});
+    return await mongo._createMany(mongo.TelegramReload, signals);
 }
 
-export async function consumeReloadSignal(filter = {}) {
-    return await mongo._findOneAndDelete(mongo.ReloadSignals, filter);
+export async function consumeTelegramReload(filter = {}) {
+    return await mongo._findOneAndDelete(mongo.TelegramReload, filter);
 }
 
-export async function upsertReloadSignal(botId, payload) {
-    const existingSignal = await mongo._read(mongo.ReloadSignals, { botId });
+export async function upsertTelegramReload(botId, payload) {
+    const existingSignal = await mongo._read(mongo.TelegramReload, { botId });
     const now = new Date();
 
     const reloadDoc = {
@@ -189,7 +189,7 @@ export async function upsertReloadSignal(botId, payload) {
     };
 
     return await mongo._replace(
-        mongo.ReloadSignals,
+        mongo.TelegramReload,
         { botId },
         reloadDoc,
         { upsert: true, returnDocument: 'after' }

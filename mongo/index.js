@@ -35,14 +35,14 @@ const ironbeamUsersSchema = new mongoose.Schema({
 
 ironbeamUsersSchema.index({ accountId: 1 }, { unique: true });
 
-const reloadSignalsSchema = new mongoose.Schema({
+const telegramReloadSchema = new mongoose.Schema({
     botId: { type: String, required: true, unique: true },
     payload: { type: Object, required: true },
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now }
 }, { strict: false, versionKey: false });
 
-reloadSignalsSchema.index({ botId: 1 }, { unique: true });
+telegramReloadSchema.index({ botId: 1 }, { unique: true });
 
 const telegramBotsSchema = new mongoose.Schema({
     botId: { type: String, required: true, unique: true },
@@ -86,7 +86,7 @@ telegramSignalsSchema.index({ id: 1 }, { unique: true });
 
 export const Configs = mongoose.models.Configs || mongoose.model('Configs', configsSchema, 'config');
 export const IronbeamUsers = mongoose.models.IronbeamUsers || mongoose.model('IronbeamUsers', ironbeamUsersSchema, 'ironbeam_users');
-export const ReloadSignals = mongoose.models.ReloadSignals || mongoose.model('ReloadSignals', reloadSignalsSchema, 'reload_signals');
+export const TelegramReload = mongoose.models.TelegramReload || mongoose.model('TelegramReload', telegramReloadSchema, 'telegram_reload');
 export const TelegramBots = mongoose.models.TelegramBots || mongoose.model('TelegramBots', telegramBotsSchema, 'telegram_bots');
 export const TelegramUsers = mongoose.models.TelegramUsers || mongoose.model('TelegramUsers', telegramUsersSchema, 'telegram_users');
 export const TelegramSignals = mongoose.models.TelegramSignals || mongoose.model('TelegramSignals', telegramSignalsSchema, 'telegram_signals');

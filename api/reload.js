@@ -23,7 +23,7 @@ export default async function handler(req, res) {
 async function handleGet(req, res) {
     const targetBot = req.query?.bot;
     const filter = targetBot ? { botId: targetBot } : {};
-    const reloadDoc = await db.consumeReloadSignal(filter);
+    const reloadDoc = await db.consumeTelegramReload(filter);
 
     return res.status(200).json(Boolean(reloadDoc));
 }

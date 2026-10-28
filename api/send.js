@@ -157,7 +157,7 @@ async function handleTelegramWebhookRequest(req, res, { config, bots, botId }) {
             timestamp: Date.now()
         };
 
-        await db.upsertReloadSignal(botId, reloadPayload);
+        await db.upsertTelegramReload(botId, reloadPayload);
 
         const responseText = `[${botConfig.name}] Reload signal received: "${text}" from ${chatId}`;
         return res.status(200).json({ success: true, message: responseText, reload: reloadPayload });

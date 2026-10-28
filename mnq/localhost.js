@@ -68,8 +68,8 @@ const addInitialData = async () => {
             }
         ]);
 
-        // Reload Signals Collection
-        await db.resetReloadSignals([
+        // Telegram Reload Collection
+        await db.resetTelegramReload([
             {
                 botId: "dxblog_bot",
                 payload: {
