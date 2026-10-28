@@ -151,7 +151,6 @@ const initMongoSeed = async () => {
         // ]);
 
         console.log("Init mongo seed success!");
-        process.exit(0);
     } catch (error) {
         console.error("Error init mongo seed:", error);
         process.exit(1);
@@ -176,32 +175,36 @@ const handleTrade = async (payload) => {
     }
 }
 
-// (async () => await initMongoSeed())()
+(async () => {
+    console.log('Starting..')
 
-// testkWebhook(`...`)
+    await initMongoSeed()
 
-// handleTrade({
-//     "timestamp": "2026-10-26T18:30:00.000+05:00",
-//     "side": "LONG",
-//     "action": "ENTRY",
-//     "price": ,
-//     "tp": ,
-//     "sl": ,
-// })
-// handleTrade({
-//     "action": "EXIT"
-// })
+    // testkWebhook(`...`)
 
-// handleTrade({
-//     "timestamp": "2026-10-26T18:30:00.000+05:00",
-//     "side": "SHORT",
-//     "action": "ENTRY",
-//     "price": ,
-//     "tp": ,
-//     "sl": ,
-// })
-// handleTrade({
-//     "action": "EXIT"
-// })
+    // handleTrade({
+    //     "timestamp": "2026-10-26T18:30:00.000+05:00",
+    //     "side": "LONG",
+    //     "action": "ENTRY",
+    //     "price": ,
+    //     "tp": ,
+    //     "sl": ,
+    // })
+    // handleTrade({
+    //     "action": "EXIT"
+    // })
 
-process.exit(0);
+    // handleTrade({
+    //     "timestamp": "2026-10-26T18:30:00.000+05:00",
+    //     "side": "SHORT",
+    //     "action": "ENTRY",
+    //     "price": ,
+    //     "tp": ,
+    //     "sl": ,
+    // })
+    // handleTrade({
+    //     "action": "EXIT"
+    // })
+
+    process.exit(0);
+})()
