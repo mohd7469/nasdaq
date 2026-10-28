@@ -30,7 +30,7 @@ const ironbeamUsersSchema = new mongoose.Schema({
     symbol: { type: String, default: 'XCME:MNQ.Z26' },
     isActive: { type: Boolean, default: false },
     createdAt: { type: Date, default: Date.now },
-    updatedAt: { type: Date, default: Date.now }
+    updatedAt: { type: Date, default: null }
 }, { strict: false, versionKey: false });
 
 ironbeamUsersSchema.index({ accountId: 1 }, { unique: true });
@@ -47,7 +47,7 @@ const telegramReloadSchema = new mongoose.Schema({
     botId: { type: String, required: true },
     payload: { type: Object, required: true },
     createdAt: { type: Date, default: Date.now },
-    updatedAt: { type: Date, default: Date.now }
+    updatedAt: { type: Date, default: null }
 }, { strict: false, versionKey: false });
 
 telegramReloadSchema.index({ botId: 1 }, { unique: true });
@@ -60,7 +60,7 @@ const telegramUsersSchema = new mongoose.Schema({
     name: { type: String, default: '' },
     isActive: { type: Boolean, default: false },
     createdAt: { type: Date, default: Date.now },
-    updatedAt: { type: Date, default: Date.now }
+    updatedAt: { type: Date, default: null }
 }, { strict: false, versionKey: false });
 
 telegramUsersSchema.index({ chatId: 1, botId: 1 }, { unique: true });
@@ -129,7 +129,7 @@ export async function _create(Model, payload) {
     return await Model.create({
         ...payload,
         createdAt: payload.createdAt || new Date(),
-        updatedAt: payload.updatedAt || new Date()
+        updatedAt: payload.updatedAt !== undefined ? payload.updatedAt : null
     });
 }
 
@@ -138,7 +138,7 @@ export async function _createMany(Model, payloads = []) {
     const dataWithTimestamps = payloads.map(item => ({
         ...item,
         createdAt: item.createdAt || new Date(),
-        updatedAt: item.updatedAt || new Date()
+        updatedAt: item.updatedAt !== undefined ? item.updatedAt : null
     }));
     return await Model.insertMany(dataWithTimestamps);
 }

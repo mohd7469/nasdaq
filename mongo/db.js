@@ -148,7 +148,7 @@ export async function createOrUpdateUser(botId, chatId, userInfo = {}, role = 'u
             name: '',
             isActive: finalRole === 'admin',
             createdAt: new Date(),
-            updatedAt: new Date()
+            updatedAt: null
         });
     }
 
