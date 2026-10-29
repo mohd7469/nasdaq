@@ -5,7 +5,7 @@ import { retryUntil } from './retryUntil.js';
 export async function placeOrder(token, payload, ibConfig) {
     const { success: positionCleared } = await retryUntil(
         async () => {
-            const { isPositionActive } = await hasActivePosition(token, ibConfig);
+            const { isPositionActive } = await hasActivePosition(token, ibConfig, null);
             return !isPositionActive;
         },
         { maxRetries: 5, delaySeconds: 1 }
