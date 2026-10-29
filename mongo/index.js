@@ -97,7 +97,7 @@ export const TradingSignals = mongoose.models.TradingSignals || mongoose.model('
 // DB Connection Initializer
 // ----------------------------------------------------
 
-export async function connect() {
+async function connect() {
     if (cached.conn && mongoose.connection.readyState >= 1) {
         return cached.conn;
     }
