@@ -31,6 +31,30 @@
         return day === 0 || day === 6;
     };
 
+    const terminate = async () => {
+        try {
+            const now = getTimezone(moment(), PKT_TIMEZONE);
+            const todayKey = now.format('YYYY-MM-DD');
+            const lastTerminateDate = localStorage.getItem('_botRecentTerminateTriggeredDate');
+            const isPast130AM = now.hour() > 1 || (now.hour() === 1 && now.minute() >= 30);
+
+            if (isPast130AM && lastTerminateDate !== todayKey) {
+                const endpoint = isWindows ? LOCALHOST : API_URL;
+                const payload = {
+                    action: 'TERMINATE',
+                    reason: 'Time crossed 1:30 AM PKT',
+                    timestamp: now.toISOString()
+                };
+                await axios.post(`${endpoint}/terminate`, payload);
+
+                localStorage.setItem('_botRecentTerminateTriggeredDate', todayKey);
+                await sendLog(`Terminating all active orders/positions`).catch(err => { });
+            }
+        } catch (err) {
+            console.error('Terminate Error:', err?.message);
+        }
+    };
+
     const isReloadingHours = () => {
         const now = getTimezone();
         const currentHour = now.hour(); // 0 to 23
