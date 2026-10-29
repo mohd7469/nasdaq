@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import { getTimezone } from '../utils.js';
+console.log('getTimezone', getTimezone);
 
 const DB_NAME = 'nasdaq-database';
 
