@@ -1,7 +1,6 @@
 import cors from './cors.js';
 import axios from 'axios';
-import { getTimezone } from '../utils.js';
-console.log(getTimezone().duration);
+import moment from 'moment';
 
 import * as db from '../mongo/db.js';
 
@@ -32,7 +31,7 @@ async function handleGet(req, res) {
     return res.status(200).json({
         success: true,
         message: 'Serverless webhook running..',
-        uptime: `${getTimezone().duration(process.uptime(), 'seconds').humanize()} ago`,
+        uptime: `${moment.duration(process.uptime(), 'seconds').humanize()} ago`,
         timestamp: new Date().toISOString()
     });
 
