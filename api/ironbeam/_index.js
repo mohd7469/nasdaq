@@ -1,6 +1,6 @@
 export { getAuthToken } from './getAuthToken.js';
-export { hasOpenPosition } from './hasOpenPosition.js';
-export { hasOpenOrder } from './hasOpenOrder.js';
+export { hasActivePosition } from './hasActivePosition.js';
+export { hasActiveOrder } from './hasActiveOrder.js';
 export { flattenAll } from './flattenAll.js';
 
 export { validateSignal } from './validateSignal.js';
