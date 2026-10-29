@@ -177,7 +177,7 @@ function validateSide(action, side) {
 }
 
 async function isSignalProcessed(id, body) {
-    const isNewSignal = await db.processTradingSignal(id, body);
+    const isNewSignal = await db.processSignal(id, body);
     return !isNewSignal;
 }
 
