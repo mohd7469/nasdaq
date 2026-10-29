@@ -10,8 +10,8 @@ export const getTimezone = (time = moment(), timezone = PKT_TIMEZONE) => {
 
 export const isWeekend = (timezone = PKT_TIMEZONE) => {
     const currentTime = getTimezone(moment(), timezone);
-    const dayOfWeek = currentTime.day(); // 0 = Sunday, 6 = Saturday
-    return dayOfWeek === 0 || dayOfWeek === 6;
+    const day = currentTime.day(); // 0 = Sunday, 6 = Saturday
+    return day === 0 || day === 6;
 };
 
 export const isMaintenanceWindow = (startHour = 2, endHour = 3, timezone = PKT_TIMEZONE) => {

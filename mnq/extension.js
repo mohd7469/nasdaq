@@ -25,8 +25,9 @@
         Notification.requestPermission();
     }
 
-    const isWeekend = () => {
-        const day = getTimezone().day();
+    const isWeekend = (timezone = PKT_TIMEZONE) => {
+        const currentTime = getTimezone(moment(), timezone);
+        const day = currentTime.day(); // 0 = Sunday, 6 = Saturday
         return day === 0 || day === 6;
     };
 
