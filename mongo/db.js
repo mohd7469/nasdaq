@@ -181,7 +181,7 @@ export async function resetTradingSignals(data = []) {
     return await mongo._createMany(mongo.TradingSignals, items);
 }
 
-export async function processSignal(signalId, payload) {
+export async function storeSignal(signalId, payload) {
     try {
         const existingSignal = await mongo._read(mongo.TradingSignals, { id: signalId });
         if (existingSignal) {
