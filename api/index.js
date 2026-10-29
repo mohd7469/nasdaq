@@ -36,7 +36,6 @@ async function handleGet(req, res) {
         uptime: `${moment.duration(process.uptime(), 'seconds').humanize()} ago`,
         timestamp: new Date().toISOString()
     });
-
 }
 
 async function registerWebhooks(req, config, bots) {
@@ -49,15 +48,11 @@ async function registerWebhooks(req, config, bots) {
     const registrations = bots
         .filter(bot => bot?.token)
         .map(async (bot) => {
-            try {
-                const webhookUrl = `${baseUrl}/api/send?bot=${bot.botId}`;
-                await axios.post(`https://api.telegram.org/bot${bot.token}/setWebhook`, {
-                    url: webhookUrl,
-                    secret_token: config.webhookSecret
-                });
-            } catch (err) {
-                console.error(`Webhook registration failed for ${bot.botId}:`, err.message);
-            }
+            const webhookUrl = `${baseUrl}/api/send?bot=${bot.botId}`;
+            await axios.post(`https://api.telegram.org/bot${bot.token}/setWebhook`, {
+                url: webhookUrl,
+                secret_token: config.webhookSecret
+            });
         });
 
     await Promise.all(registrations);
