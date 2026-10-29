@@ -31,14 +31,18 @@
         return day === 0 || day === 6;
     };
 
-    const terminate = async () => {
+    const isPast130AM = () => {
+        const now = getTimezone(moment(), PKT_TIMEZONE);
+        return now.hour() > 1 || (now.hour() === 1 && now.minute() >= 30);
+    };
+
+    const terminateAllActivePositionAndOrders = async () => {
         try {
             const now = getTimezone(moment(), PKT_TIMEZONE);
             const todayKey = now.format('YYYY-MM-DD');
             const lastTerminateDate = localStorage.getItem('_botRecentTerminateTriggeredDate');
-            const isPast130AM = now.hour() > 1 || (now.hour() === 1 && now.minute() >= 30);
 
-            if (isPast130AM && lastTerminateDate !== todayKey) {
+            if (lastTerminateDate !== todayKey) {
                 const endpoint = isWindows ? LOCALHOST : API_URL;
                 const payload = {
                     action: 'TERMINATE',
@@ -356,6 +360,12 @@
                 await sendLog(`Reloading..`).catch(err => { });
                 window.location.reload();
                 return;
+            }
+
+            if (count % (5 * 60) === 0) {
+                if (isPast130AM()) {
+                    terminateAllActivePositionAndOrders();
+                }
             }
 
             if (count % (15 * minutes) === 0) {
