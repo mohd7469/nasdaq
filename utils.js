@@ -20,7 +20,7 @@ export const isMaintenanceWindow = (startHour = 2, endHour = 3, timezone = PKT_T
     return hours >= startHour && hours < endHour;
 };
 
-export function validateAction(action) {
+export const validateAction = (action) => {
     const normalizedAction = action.toUpperCase();
     if (normalizedAction !== 'ENTRY' && normalizedAction !== 'EXIT') {
         return { error: '"action" must be ENTRY or EXIT.' };
@@ -28,7 +28,7 @@ export function validateAction(action) {
     return { value: normalizedAction };
 }
 
-export function validateSide(action, side) {
+export const validateSide = (action, side) => {
     if (action === 'ENTRY') {
         const normalizedSide = side?.toUpperCase();
         if (normalizedSide !== 'LONG' && normalizedSide !== 'SHORT') {

@@ -1,4 +1,6 @@
-import cors from './cors.js';
+import '../logger.js';
+
+import cors from '../cors.js';
 import axios from 'axios';
 import moment from 'moment';
 
