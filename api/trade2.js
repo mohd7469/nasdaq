@@ -195,7 +195,7 @@ async function executeTradeForUser(ibConfig, { action, side, price, tp, sl, orde
                 resolvedEntryPrice = marketPrice;
             }
 
-            const payload = generateOrderPayload(ibConfig, { side, resolvedEntryPrice, tp, sl }, resolvedOrderType);
+            const payload = generatePayload(ibConfig, { side, resolvedEntryPrice, tp, sl }, resolvedOrderType);
             const orderResult = await placeOrder(token, payload, ibConfig);
 
             if (!orderResult.success) {
@@ -294,7 +294,7 @@ async function determineOrderType(token, ibConfig, { side, price }, requestedOrd
     return { orderType: 'LIMIT', marketPrice };
 }
 
-function generateOrderPayload(ibConfig, { side, resolvedEntryPrice, tp, sl }, orderType = 'LIMIT') {
+function generatePayload(ibConfig, { side, resolvedEntryPrice, tp, sl }, orderType = 'LIMIT') {
     const basePayload = {
         accountId: ibConfig.accountId,
         exchSym: ibConfig.symbol,

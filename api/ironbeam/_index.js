@@ -8,6 +8,6 @@ export { storeSignal } from './storeSignal.js';
 
 export { getLiveMarketPrice } from './getLiveMarketPrice.js';
 export { determineOrderType } from './determineOrderType.js';
-export { generateOrderPayload } from './generateOrderPayload.js';
+export { generatePayload } from './generatePayload.js';
 export { placeOrder } from './placeOrder.js';
 
