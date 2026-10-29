@@ -2,7 +2,7 @@ import cors from './cors.js';
 import axios from 'axios';
 import { getTimezone } from './utils.js';
 
-import * as db from '../mongo/db.js';
+import * as db from './mongo/db.js';
 
 export default async function handler(req, res) {
     if (cors(req, res)) {
