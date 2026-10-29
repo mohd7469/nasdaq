@@ -1,26 +1,24 @@
 import axios from 'axios';
 import { hasActivePosition } from './hasActivePosition.js';
-
-function delay(seconds) {
-    return new Promise(resolve => setTimeout(resolve, seconds * 1000));
-}
+import { retryUntil } from './retryUntil.js';
 
 export async function placeOrder(token, payload, ibConfig) {
     const maxRetries = 5;
     const delaySeconds = 1;
 
-    for (let i = 0; i < maxRetries; i++) {
-        const { isPositionActive } = await hasActivePosition(token, ibConfig);
-        if (!isPositionActive) break;
+    const { success: positionCleared } = await retryUntil(
+        async () => {
+            const { isPositionActive } = await hasActivePosition(token, ibConfig);
+            return !isPositionActive;
+        },
+        { maxRetries, delaySeconds }
+    );
 
-        if (i === maxRetries - 1) {
-            return {
-                success: false,
-                message: `Order Rejected: Position currently active for [${ibConfig.accountId}] after several retry attempts`
-            };
-        }
-
-        await delay(delaySeconds);
+    if (!positionCleared) {
+        return {
+            success: false,
+            message: `Order Rejected: Position currently active for [${ibConfig.accountId}] after several retry attempts`
+        };
     }
 
     try {

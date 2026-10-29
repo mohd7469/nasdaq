@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { hasActiveOrder } from './hasActiveOrder.js';
 import { hasActivePosition } from './hasActivePosition.js';
+import { retryUntil } from './retryUntil.js';
 
 export async function flattenAll(token, ibConfig) {
     const headers = { Authorization: `Bearer ${token}` };
@@ -18,31 +19,46 @@ export async function flattenAll(token, ibConfig) {
         });
     }
 
-    const { isPositionActive, activePositionsData } = await hasActivePosition(token, ibConfig);
+    const { isPositionActive, activePositionsData } = await hasActivePosition(token, ibConfig, null);
     if (isPositionActive && activePositionsData.length > 0) {
         for (const pos of activePositionsData) {
-            const sym = pos.symbol || pos.exchSym || pos.s;
             const qty = pos.quantity !== undefined ? pos.quantity : pos.q;
+            if (!qty || qty === 0) continue;
 
-            if (sym === ibConfig.symbol && qty && qty !== 0) {
-                const closePayload = {
-                    accountId: ibConfig.accountId,
-                    exchSym: ibConfig.symbol,
-                    side: qty > 0 ? 'SELL' : 'BUY',
-                    quantity: Math.abs(qty),
-                    orderType: 'MARKET',
-                    duration: 'DAY',
-                    waitForOrderId: true
-                };
+            const closePayload = {
+                accountId: ibConfig.accountId,
+                exchSym: pos.exchSym || pos.symbol || pos.s || ibConfig.symbol,
+                side: qty > 0 ? 'SELL' : 'BUY',
+                quantity: Math.abs(qty),
+                orderType: 'MARKET',
+                duration: 'DAY',
+                waitForOrderId: true
+            };
 
-                await axios.post(`${ibConfig.apiUrl}/order/${ibConfig.accountId}/place`, closePayload, {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        Authorization: `Bearer ${token}`
-                    }
-                });
-            }
+            await axios.post(`${ibConfig.apiUrl}/order/${ibConfig.accountId}/place`, closePayload, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                }
+            });
         }
+    }
+
+    // 3. Verify positions are actually flat before reporting success
+    const maxRetries = 10;
+    const delaySeconds = 2;
+
+    const { success: flatConfirmed } = await retryUntil(
+        async () => {
+            const { isPositionActive } = await hasActivePosition(token, ibConfig, null);
+            return !isPositionActive;
+        },
+        { maxRetries, delaySeconds }
+    );
+
+    if (!flatConfirmed) {
+        const { activePositionsData: remaining } = await hasActivePosition(token, ibConfig, null);
+        return { success: false, error: 'Position still active after flatten attempt', remainingPositions: remaining || [] };
     }
 
     return { success: true };

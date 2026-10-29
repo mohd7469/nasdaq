@@ -37,7 +37,28 @@ export default async function handler(req, res) {
                 try {
                     const token = await ib.getAuthToken(ibConfig);
 
-                    await ib.flattenAll(token, ibConfig);
+                    const flattenResult = await ib.flattenAll(token, ibConfig);
+
+                    if (!flattenResult.success) {
+                        try {
+                            const remaining = flattenResult.remainingPositions || [];
+                            const qtyDetail = remaining
+                                .map((p) => `${p.symbol || p.exchSym || p.s}: ${p.quantity || p.q || '?'}`)
+                                .join(', ') || 'unknown';
+                            await sendAlert(
+                                `❌ Terminate Failed\nAccount: ${ibConfig.accountId}\nSymbol: ${ibConfig.symbol}\nError: ${flattenResult.error}\nRemaining Qty: ${qtyDetail}`
+                            );
+                        } catch (alertErr) {
+                            // ignore alert errors, still report flatten failure below
+                        }
+
+                        return {
+                            accountId: ibConfig.accountId,
+                            symbol: ibConfig.symbol,
+                            success: false,
+                            error: flattenResult.error || 'Flatten failed'
+                        };
+                    }
 
                     return {
                         accountId: ibConfig.accountId,

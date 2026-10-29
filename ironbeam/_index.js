@@ -2,6 +2,7 @@ export { getAuthToken } from './getAuthToken.js';
 export { hasActivePosition } from './hasActivePosition.js';
 export { hasActiveOrder } from './hasActiveOrder.js';
 export { flattenAll } from './flattenAll.js';
+export { retryUntil } from './retryUntil.js';
 
 export { validateSignal } from './validateSignal.js';
 export { storeSignal } from './storeSignal.js';
