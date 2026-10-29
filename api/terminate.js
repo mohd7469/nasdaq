@@ -58,7 +58,7 @@ export default async function handler(req, res) {
 
         const successfulCount = results.filter(r => r.success).length;
 
-        await sendAlert(`Terminating: ${reason ? reason : 'All active positions and orders'}`)
+        await sendAlert(`Terminating: ${reason ? reason : 'Time crossed 1:30 AM PKT'}`)
 
         return res.status(200).json({
             success: successfulCount > 0,
