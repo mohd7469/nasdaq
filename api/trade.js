@@ -1,8 +1,6 @@
 import cors from './cors.js';
-import axios from 'axios';
-import { getTimezone, isSignalExpired } from '../utils.js';
-
 import * as db from '../mongo/db.js';
+import * as ib from './ironbeam/_index.js';
 
 export default async function handler(req, res) {
     if (cors(req, res)) {
@@ -44,14 +42,6 @@ async function handlePost(req, res) {
         return res.status(400).json({ success: false, message: '"action" parameter is required' });
     }
 
-    // for api testing - temporary bypass signal expiration/trigger check 
-    if (!sandbox) {
-        const validationResult = validateSignal({ timestamp, id, action, side, body: req.body });
-        if (!validationResult.isValid) {
-            return res.status(validationResult.status).json(validationResult.payload);
-        }
-    }
-
     const normalizedAction = action.toUpperCase();
     if (normalizedAction !== 'ENTRY' && normalizedAction !== 'EXIT') {
         return res.status(400).json({ success: false, message: '"action" must be ENTRY or EXIT.' });
@@ -63,7 +53,12 @@ async function handlePost(req, res) {
 
     // for api testing - temporary bypass signal expiration/trigger check 
     if (!sandbox && id) {
-        const isNewSignal = await db.processTradingSignal(id, req.body);
+        const validationResult = ib.validateSignal({ timestamp, id, action, side, body: req.body });
+        if (!validationResult.isValid) {
+            return res.status(validationResult.status).json(validationResult.payload);
+        }
+
+        const isNewSignal = await ib.storeSignal(id, req.body);
         if (!isNewSignal) {
             return res.status(200).json({
                 success: false,
@@ -86,26 +81,14 @@ async function handlePost(req, res) {
     });
 }
 
-function validateSignal({ timestamp, id }) {
-    if (timestamp && isSignalExpired(timestamp)) {
-        return {
-            isValid: false,
-            status: 409,
-            payload: { success: false, signalId: id, message: 'Signal expired.' }
-        };
-    }
-
-    return { isValid: true };
-}
-
 async function executeTradeForUser(ibConfig, { action, side, price, tp, sl, orderType }) {
     try {
-        const token = await getAuthToken(ibConfig);
+        const token = await ib.getAuthToken(ibConfig);
 
         if (action === 'ENTRY') {
-            await flattenAll(token, ibConfig);
+            await ib.flattenAll(token, ibConfig);
 
-            const { orderType: resolvedOrderType, marketPrice } = await determineOrderType(token, ibConfig, { side, price }, orderType);
+            const { orderType: resolvedOrderType, marketPrice } = await ib.determineOrderType(token, ibConfig, { side, price }, orderType);
             let resolvedEntryPrice = price;
 
             if (resolvedOrderType === 'MARKET') {
@@ -114,8 +97,8 @@ async function executeTradeForUser(ibConfig, { action, side, price, tp, sl, orde
                 }
             }
 
-            const payload = generateOrderPayload(ibConfig, { side, resolvedEntryPrice, tp, sl }, resolvedOrderType);
-            const orderResult = await placeOrder(token, payload, ibConfig);
+            const payload = ib.generatePayload(ibConfig, { side, resolvedEntryPrice, tp, sl }, resolvedOrderType);
+            const orderResult = await ib.placeOrder(token, payload, ibConfig);
 
             if (!orderResult.success) {
                 return {
@@ -137,7 +120,7 @@ async function executeTradeForUser(ibConfig, { action, side, price, tp, sl, orde
         }
 
         if (action === 'EXIT') {
-            await flattenAll(token, ibConfig);
+            await ib.flattenAll(token, ibConfig);
             return {
                 success: true,
                 accountId: ibConfig.accountId,
@@ -157,202 +140,4 @@ async function executeTradeForUser(ibConfig, { action, side, price, tp, sl, orde
     }
 }
 
-async function getAuthToken(ibConfig) {
-    try {
-        const response = await axios.post(`${ibConfig.apiUrl}/auth`, {
-            username: ibConfig.username,
-            password: ibConfig.password,
-            apiKey: ibConfig.apiKey
-        });
-        return response.data.token;
-    } catch (error) {
-        throw new Error(`Failed to authenticate account ${ibConfig.accountId}: ${error.response?.data?.message || error.message}`);
-    }
-}
 
-async function getCurrentMarketPrice(token, ibConfig) {
-    try {
-        const response = await axios.get(`${ibConfig.apiUrl}/market/quotes`, {
-            headers: { Authorization: `Bearer ${token}` },
-            params: { symbols: ibConfig.symbol }
-        });
-
-        const quotes = response.data.Quotes || response.data.quotes || response.data || [];
-        const quoteObj = quotes.find(q => (q.s === ibConfig.symbol || q.symbol === ibConfig.symbol));
-        const marketPrice = quoteObj?.l !== undefined ? quoteObj.l : quoteObj?.lastPrice;
-
-        return marketPrice !== undefined && marketPrice !== null ? Number(marketPrice) : null;
-    } catch (error) {
-        return null;
-    }
-}
-
-async function determineOrderType(token, ibConfig, { side, price }, requestedOrderType) {
-    if (requestedOrderType?.trim()) {
-        const customType = requestedOrderType.toUpperCase();
-        const marketPrice = customType === 'MARKET' ? await getCurrentMarketPrice(token, ibConfig) : null;
-        return { orderType: customType, marketPrice };
-    }
-
-    const marketPrice = await getCurrentMarketPrice(token, ibConfig);
-    if (marketPrice === null) {
-        return { orderType: 'LIMIT', marketPrice: null };
-    }
-
-    const sigPrice = Number(price);
-    const upperSide = side.toUpperCase();
-
-    if (upperSide === 'LONG') {
-        return { orderType: sigPrice <= marketPrice ? 'LIMIT' : 'STOP', marketPrice };
-    }
-
-    if (upperSide === 'SHORT') {
-        return { orderType: sigPrice >= marketPrice ? 'LIMIT' : 'STOP', marketPrice };
-    }
-
-    return { orderType: 'LIMIT', marketPrice };
-}
-
-function generateOrderPayload(ibConfig, { side, resolvedEntryPrice, tp, sl }, orderType = 'LIMIT') {
-    const basePayload = {
-        accountId: ibConfig.accountId,
-        exchSym: ibConfig.symbol,
-        quantity: 1,
-        side: side === 'LONG' ? 'BUY' : 'SELL',
-        duration: 'DAY'
-    };
-
-    const normalizedType = orderType.toUpperCase();
-
-    if (normalizedType === 'MARKET') {
-        const entryPrice = Number(resolvedEntryPrice);
-        const takeProfitOffset = Math.abs(Number(tp) - entryPrice);
-        const stopLossOffset = Math.abs(entryPrice - Number(sl));
-
-        return {
-            ...basePayload,
-            orderType: 'MARKET',
-            stopLossOffset: Number(stopLossOffset.toFixed(2)),
-            takeProfitOffset: Number(takeProfitOffset.toFixed(2))
-        };
-    }
-
-    if (normalizedType === 'STOP') {
-        return {
-            ...basePayload,
-            orderType: 'STOP',
-            stopPrice: Number(resolvedEntryPrice),
-            takeProfit: Number(tp),
-            stopLoss: Number(sl)
-        };
-    }
-
-    return {
-        ...basePayload,
-        orderType: 'LIMIT',
-        limitPrice: Number(resolvedEntryPrice),
-        takeProfit: Number(tp),
-        stopLoss: Number(sl)
-    };
-}
-
-async function hasOpenPosition(token, ibConfig) {
-    try {
-        const response = await axios.get(`${ibConfig.apiUrl}/account/${ibConfig.accountId}/positions`, {
-            headers: { Authorization: `Bearer ${token}` }
-        });
-
-        const positions = response.data.positions || response.data || [];
-        return positions.some(
-            p => (p.symbol === ibConfig.symbol || p.exchSym === ibConfig.symbol) && p.quantity !== 0
-        );
-    } catch (error) {
-        return true;
-    }
-}
-
-async function flattenAll(token, ibConfig) {
-    const headers = { Authorization: `Bearer ${token}` };
-
-    const ordersRes = await axios.get(`${ibConfig.apiUrl}/order/${ibConfig.accountId}/ANY`, { headers });
-    const ordersData = ordersRes.data.orders || ordersRes.data || [];
-
-    const ORDER_STATUS_ACTIVE = new Set(['NEW', 'SUBMITTED', 'PENDING_NEW', 'QUEUED_NEW', 'ACCEPTED_FOR_BIDDING']);
-
-    const activeOrders = ordersData.filter(o => ORDER_STATUS_ACTIVE.has(o.status || o.st));
-    const activeOrderIds = activeOrders.map(o => o.orderId || o.oid);
-
-    if (activeOrderIds.length > 0) {
-        await axios.delete(`${ibConfig.apiUrl}/order/${ibConfig.accountId}/cancelMultiple`, {
-            headers,
-            data: {
-                accountId: ibConfig.accountId,
-                orderIds: activeOrderIds
-            }
-        });
-    }
-
-    const posRes = await axios.get(`${ibConfig.apiUrl}/account/${ibConfig.accountId}/positions`, { headers });
-    const positions = posRes.data.positions || posRes.data || [];
-
-    for (const pos of positions) {
-        const sym = pos.symbol || pos.exchSym || pos.s;
-        const qty = pos.quantity !== undefined ? pos.quantity : pos.q;
-
-        if (sym === ibConfig.symbol && qty && qty !== 0) {
-            const closePayload = {
-                accountId: ibConfig.accountId,
-                exchSym: ibConfig.symbol,
-                side: qty > 0 ? 'SELL' : 'BUY',
-                quantity: Math.abs(qty),
-                orderType: 'MARKET',
-                duration: 'DAY',
-                waitForOrderId: true
-            };
-
-            await axios.post(`${ibConfig.apiUrl}/order/${ibConfig.accountId}/place`, closePayload, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`
-                }
-            });
-        }
-    }
-
-    return { success: true };
-}
-
-async function placeOrder(token, payload, ibConfig) {
-    const maxRetries = 5;
-    const delaySeconds = 1;
-
-    for (let i = 0; i < maxRetries; i++) {
-        const isPositionOpen = await hasOpenPosition(token, ibConfig);
-        if (!isPositionOpen) break;
-
-        if (i === maxRetries - 1) {
-            return {
-                success: false,
-                message: `Order Rejected: Position currently active for [${ibConfig.accountId}] after several retry attempts`
-            };
-        }
-
-        await delay(delaySeconds);
-    }
-
-    try {
-        const response = await axios.post(`${ibConfig.apiUrl}/order/${ibConfig.accountId}/place`, payload, {
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`
-            }
-        });
-        return { success: true, data: response.data };
-    } catch (error) {
-        throw new Error(error.response?.data?.message || error.message);
-    }
-}
-
-function delay(seconds) {
-    return new Promise(resolve => setTimeout(resolve, seconds * 1000));
-}
