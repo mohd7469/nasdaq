@@ -251,7 +251,7 @@ async function getAuthToken(ibConfig) {
     }
 }
 
-async function getCurrentMarketPrice(token, ibConfig) {
+async function getLiveMarketPrice(token, ibConfig) {
     try {
         const response = await axios.get(`${ibConfig.apiUrl}/market/quotes`, {
             headers: { Authorization: `Bearer ${token}` },
@@ -271,11 +271,11 @@ async function getCurrentMarketPrice(token, ibConfig) {
 async function determineOrderType(token, ibConfig, { side, price }, requestedOrderType) {
     if (requestedOrderType?.trim()) {
         const customType = requestedOrderType.toUpperCase();
-        const marketPrice = customType === 'MARKET' ? await getCurrentMarketPrice(token, ibConfig) : null;
+        const marketPrice = customType === 'MARKET' ? await getLiveMarketPrice(token, ibConfig) : null;
         return { orderType: customType, marketPrice };
     }
 
-    const marketPrice = await getCurrentMarketPrice(token, ibConfig);
+    const marketPrice = await getLiveMarketPrice(token, ibConfig);
     if (marketPrice === null) {
         return { orderType: 'LIMIT', marketPrice: null };
     }
