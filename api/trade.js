@@ -2,6 +2,8 @@ import cors from './cors.js';
 import * as db from '../mongo/db.js';
 import * as ib from './ironbeam/_index.js';
 
+import { isWeekend, isMaintenanceWindow, validateAction, validateSide } from '../utils.js';
+
 export default async function handler(req, res) {
     if (cors(req, res)) {
         return;
@@ -28,27 +30,20 @@ async function handleGet(req, res) {
 }
 
 async function handlePost(req, res) {
-    const ironbeamUsers = await db.getIronbeamConfig({ isActive: true, isDemo: true });
-    if (!ironbeamUsers?.length) {
-        return res.status(404).json({
-            success: false,
-            message: 'No active Ironbeam accounts found matching criteria (isActive: true, isDemo: true)'
-        });
-    }
-
     const { id, timestamp, action, side, price, tp, sl, orderType, sandbox } = req.body || {};
 
     if (!action) {
         return res.status(400).json({ success: false, message: '"action" parameter is required' });
     }
 
-    const normalizedAction = action.toUpperCase();
-    if (normalizedAction !== 'ENTRY' && normalizedAction !== 'EXIT') {
-        return res.status(400).json({ success: false, message: '"action" must be ENTRY or EXIT.' });
+    const normalizedAction = validateAction(action);
+    if (normalizedAction.error) {
+        return res.status(400).json({ success: false, message: normalizedAction.error });
     }
 
-    if (normalizedAction === 'ENTRY' && side?.toUpperCase() !== 'LONG' && side?.toUpperCase() !== 'SHORT') {
-        return res.status(400).json({ success: false, message: '"side" must be LONG or SHORT.' });
+    const normalizedSide = validateSide(normalizedAction.value, side);
+    if (normalizedSide.error) {
+        return res.status(400).json({ success: false, message: normalizedSide.error });
     }
 
     // for api testing - temporary bypass signal expiration/trigger check 
@@ -68,8 +63,37 @@ async function handlePost(req, res) {
         }
     }
 
+    if (isWeekend()) {
+        return res.status(200).json({
+            success: false,
+            message: 'Market is closed on weekends'
+        });
+    }
+
+    if (isMaintenanceWindow()) {
+        return res.status(200).json({
+            success: true,
+            message: 'Trade execution skipped due to maintenance window (2:00 AM - 3:00 AM).'
+        });
+    }
+
+    const ironbeamUsers = await ib.getTradingAccounts();
+    if (!ironbeamUsers?.length) {
+        return res.status(404).json({
+            success: false,
+            message: 'No active Ironbeam accounts found matching criteria (isActive: true, isDemo: true)'
+        });
+    }
+
     const results = await Promise.all(
-        ironbeamUsers.map(user => executeTradeForUser(user, { action: normalizedAction, side, price, tp, sl, orderType }))
+        ironbeamUsers.map(user => executeTradeForUser(user, {
+            action: normalizedAction.value,
+            side: normalizedSide.value,
+            price,
+            tp,
+            sl,
+            orderType
+        }))
     );
 
     const successfulCount = results.filter(r => r.success).length;
@@ -91,10 +115,8 @@ async function executeTradeForUser(ibConfig, { action, side, price, tp, sl, orde
             const { orderType: resolvedOrderType, marketPrice } = await ib.determineOrderType(token, ibConfig, { side, price }, orderType);
             let resolvedEntryPrice = price;
 
-            if (resolvedOrderType === 'MARKET') {
-                if (marketPrice !== null) {
-                    resolvedEntryPrice = marketPrice;
-                }
+            if (resolvedOrderType === 'MARKET' && marketPrice !== null) {
+                resolvedEntryPrice = marketPrice;
             }
 
             const payload = ib.generatePayload(ibConfig, { side, resolvedEntryPrice, tp, sl }, resolvedOrderType);
@@ -114,7 +136,7 @@ async function executeTradeForUser(ibConfig, { action, side, price, tp, sl, orde
                 accountId: ibConfig.accountId,
                 symbol: ibConfig.symbol,
                 success: true,
-                message: `${ibConfig.symbol}: 1 ${side} futures contract opened on account [${ibConfig.accountId}] at ${new Date().toISOString()}`,
+                message: `${ibConfig.symbol}: 1 ${side} futures contract opened on account [${ibConfig.accountId}] at ${getTimezone().toISOString()}`,
                 details: orderResult.data
             };
         }
@@ -125,7 +147,7 @@ async function executeTradeForUser(ibConfig, { action, side, price, tp, sl, orde
                 success: true,
                 accountId: ibConfig.accountId,
                 symbol: ibConfig.symbol,
-                message: `[${ibConfig.accountId}] Positions cleared at ${new Date().toISOString()}`
+                message: `[${ibConfig.accountId}] Positions cleared at ${getTimezone().toISOString()}`
             };
         }
 
