@@ -15,6 +15,15 @@ export default async function handler(req, res) {
     }
 
     try {
+        if (req.method !== 'POST') {
+            return res.status(405).json({ success: false, error: 'Method Not Allowed' });
+        }
+
+        const { action, reason } = req.body || {};
+        if (!action || action.toUpperCase() !== 'TERMINATE') {
+            return res.status(400).json({ success: false, message: '"action" must be TERMINATE' });
+        }
+
         const ironbeamUsers = await ib.getTradingAccounts();
         if (!ironbeamUsers?.length) {
             return res.status(404).json({
@@ -49,11 +58,21 @@ export default async function handler(req, res) {
 
         const successfulCount = results.filter(r => r.success).length;
 
+        await sendAlert(`Terminating: ${reason}`)
+
         return res.status(200).json({
             success: successfulCount > 0,
             message: `All positions and orders terminated on ${successfulCount}/${ironbeamUsers.length} accounts`,
             results
         });
+    } catch (err) {
+        return res.status(500).json({ success: false, error: err.message });
+    }
+}
+
+async function sendAlert(text = 'Terminating..') {
+    try {
+        await axios.post(`https://app-nasdaq.vercel.app/api/send`, { bot: 'dxbmnq_bot', text });
     } catch (err) {
         return res.status(500).json({ success: false, error: err.message });
     }
