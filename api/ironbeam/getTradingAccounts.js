@@ -1,4 +1,4 @@
-import * as db from '../../mongo/db.js';
+import * as db from '../mongo/db.js';
 
 export async function getTradingAccounts() {
     try {
