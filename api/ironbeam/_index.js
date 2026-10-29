@@ -6,6 +6,7 @@ export { flattenAll } from './flattenAll.js';
 export { validateSignal } from './validateSignal.js';
 export { storeSignal } from './storeSignal.js';
 
+export { getTradingAccounts } from './getTradingAccounts.js';
 export { getLiveMarketPrice } from './getLiveMarketPrice.js';
 export { determineOrderType } from './determineOrderType.js';
 export { generatePayload } from './generatePayload.js';
