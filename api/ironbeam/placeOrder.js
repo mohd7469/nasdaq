@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { hasOpenPosition } from './hasOpenPosition.js';
+import { hasActivePosition } from './hasActivePosition.js';
 
 function delay(seconds) {
     return new Promise(resolve => setTimeout(resolve, seconds * 1000));
@@ -10,8 +10,8 @@ export async function placeOrder(token, payload, ibConfig) {
     const delaySeconds = 1;
 
     for (let i = 0; i < maxRetries; i++) {
-        const isPositionOpen = await hasOpenPosition(token, ibConfig);
-        if (!isPositionOpen) break;
+        const { isPositionActive } = await hasActivePosition(token, ibConfig);
+        if (!isPositionActive) break;
 
         if (i === maxRetries - 1) {
             return {

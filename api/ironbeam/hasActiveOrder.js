@@ -10,8 +10,8 @@ export async function hasActiveOrder(token, ibConfig) {
         const ORDER_STATUS_ACTIVE = new Set(['NEW', 'SUBMITTED', 'PENDING_NEW', 'QUEUED_NEW', 'ACCEPTED_FOR_BIDDING']);
 
         const activeOrders = ordersData.filter(o => ORDER_STATUS_ACTIVE.has(o.status || o.st));
-        return { hasActiveOrder: activeOrders.length > 0, data: activeOrders };
+        return { isOrderActive: activeOrders.length > 0, activeOrdersData: activeOrders };
     } catch (error) {
-        return { hasActiveOrder: true, data: [] };
+        return { isOrderActive: true, activeOrdersData: [] };
     }
 }

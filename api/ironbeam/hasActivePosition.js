@@ -10,8 +10,8 @@ export async function hasActivePosition(token, ibConfig) {
         const activePositions = positions.filter(
             p => (p.symbol === ibConfig.symbol || p.exchSym === ibConfig.symbol) && p.quantity !== 0
         );
-        return { hasActivePosition: activePositions.length > 0, data: activePositions };
+        return { isPositionActive: activePositions.length > 0, activePositionsData: activePositions };
     } catch (error) {
-        return { hasActivePosition: true, data: [] };
+        return { isPositionActive: true, activePositionsData: [] };
     }
 }
