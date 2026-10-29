@@ -45,15 +45,12 @@ export async function flattenAll(token, ibConfig) {
     }
 
     // 3. Verify positions are actually flat before reporting success
-    const maxRetries = 10;
-    const delaySeconds = 2;
-
     const { success: flatConfirmed } = await retryUntil(
         async () => {
             const { isPositionActive } = await hasActivePosition(token, ibConfig, null);
             return !isPositionActive;
         },
-        { maxRetries, delaySeconds }
+        { maxRetries: 10, delaySeconds: 2 }
     );
 
     if (!flatConfirmed) {

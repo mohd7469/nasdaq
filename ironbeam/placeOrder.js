@@ -3,15 +3,12 @@ import { hasActivePosition } from './hasActivePosition.js';
 import { retryUntil } from './retryUntil.js';
 
 export async function placeOrder(token, payload, ibConfig) {
-    const maxRetries = 5;
-    const delaySeconds = 1;
-
     const { success: positionCleared } = await retryUntil(
         async () => {
             const { isPositionActive } = await hasActivePosition(token, ibConfig);
             return !isPositionActive;
         },
-        { maxRetries, delaySeconds }
+        { maxRetries: 5, delaySeconds: 1 }
     );
 
     if (!positionCleared) {
