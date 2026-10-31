@@ -259,6 +259,7 @@
                 const currentTimestamp = getTimezone(currentData.timestamp);
                 if (!recentTimestamp || currentTimestamp.isAfter(getTimezone(recentTimestamp))) {
                     // add new property
+                    currentData['orderType'] = null;
                     currentData['PKT'] = getTimezone(currentData.timestamp, PKT_TIMEZONE).format('ddd, MMM D, h:mm A');
                     currentData['DXB'] = getTimezone(currentData.timestamp, DXB_TIMEZONE).format('ddd, MMM D, h:mm A');
 

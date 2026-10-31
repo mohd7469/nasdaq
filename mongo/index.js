@@ -72,6 +72,7 @@ const tradingSignalsSchema = new mongoose.Schema({
     side: { type: String },
     action: { type: String },
     price: { type: Number },
+    orderType: { type: String, default: null },
     tp: { type: Number, default: null },
     sl: { type: Number, default: null },
     PKT: { type: String },
