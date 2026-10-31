@@ -157,6 +157,7 @@
         try {
             const recentPineLogsTimestamp = localStorage.getItem('_botRecentPineLogsTimestamp');
             if (!recentPineLogsTimestamp) {
+                console.log('Syncing recent signal from server..');
                 const endpoint = isWindows ? LOCALHOST : API_URL;
                 const response = await axios.get(`${endpoint}/trade`);
                 if (response.data && response.data.signals && response.data.signals.length > 0) {
@@ -172,7 +173,7 @@
                     if (latestSignal && latestSignal.timestamp) {
                         const latestIso = getTimezone(latestSignal.timestamp).toISOString();
                         localStorage.setItem('_botRecentPineLogsTimestamp', latestIso);
-                        console.log('Syncing most recent signal from server:', latestIso);
+                        console.log('Synced:', latestIso);
                     }
                 }
             }
