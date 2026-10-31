@@ -69,12 +69,12 @@ telegramUsersSchema.index({ chatId: 1, botId: 1 }, { unique: true });
 const tradingSignalsSchema = new mongoose.Schema({
     id: { type: String, required: true },
     timestamp: { type: String },
+    orderType: { type: String, default: null },
     side: { type: String },
     action: { type: String },
     price: { type: Number },
     tp: { type: Number, default: null },
     sl: { type: Number, default: null },
-    orderType: { type: String, default: null },
     PKT: { type: String },
     DXB: { type: String },
     createdAt: { type: Date, default: () => getTimezone().toDate(), expires: 3 * 24 * 60 * 60 } // 3 din baad auto delete
