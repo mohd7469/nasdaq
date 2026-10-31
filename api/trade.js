@@ -53,14 +53,14 @@ async function handlePost(req, res) {
 
     // for api testing - temporary bypass signal expiration/trigger check 
     if (!sandbox && id) {
-        const validationResult = ib.validateSignal({ timestamp, id, action, side, body: req.body });
+        const validationResult = ib.validateSignalExpiry({ timestamp, id, action, side, body: req.body });
         if (!validationResult.isValid) {
             return res.status(validationResult.status).json(validationResult.payload);
         }
 
         const isNewSignal = await ib.storeSignal(id, req.body);
         if (!isNewSignal) {
-            return res.status(200).json({
+            return res.status(409).json({
                 success: false,
                 signalId: id,
                 message: 'Signal already processed'
@@ -81,6 +81,8 @@ async function handlePost(req, res) {
             message: 'Trade execution skipped due to maintenance window (2:00 AM - 3:00 AM).'
         });
     }
+
+    console.log('************* STARTING ORDER EXECUTION *************');
 
     const ironbeamUsers = await ib.getTradingAccounts();
     if (!ironbeamUsers?.length) {
