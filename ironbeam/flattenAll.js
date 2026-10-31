@@ -6,11 +6,12 @@ import { retryUntil } from './retryUntil.js';
 export async function flattenAll(token, ibConfig) {
     const headers = { Authorization: `Bearer ${token}` };
 
-    let hasOrdersOrPositions = false;
+    let hasOpenOrder;
+    let hasOpenPosition;
 
     const { isOrderActive, activeOrdersData } = await hasActiveOrder(token, ibConfig);
     if (isOrderActive && activeOrdersData.length > 0) {
-        hasOrdersOrPositions = activeOrdersData.length > 0;
+        hasOpenOrder = true;
         const activeOrderIds = activeOrdersData.map(o => o.orderId || o.oid);
 
         await axios.delete(`${ibConfig.apiUrl}/order/${ibConfig.accountId}/cancelMultiple`, {
@@ -20,11 +21,12 @@ export async function flattenAll(token, ibConfig) {
                 orderIds: activeOrderIds
             }
         });
+        hasOpenOrder = false;
     }
 
     const { isPositionActive, activePositionsData } = await hasActivePosition(token, ibConfig, null);
     if (isPositionActive && activePositionsData.length > 0) {
-        hasOrdersOrPositions = activePositionsData.length > 0;
+        hasOpenPosition = true;
         for (const pos of activePositionsData) {
             const qty = pos.quantity !== undefined ? pos.quantity : pos.q;
             if (!qty || qty === 0) continue;
@@ -45,6 +47,7 @@ export async function flattenAll(token, ibConfig) {
                     Authorization: `Bearer ${token}`
                 }
             });
+            hasOpenPosition = false;
         }
     }
 
@@ -62,8 +65,8 @@ export async function flattenAll(token, ibConfig) {
         return { success: false, error: 'Position still active after flatten attempt', remainingPositions: remaining || [], hasOrdersOrPositions };
     }
 
-    // sirf tb true hoga jb sb orders/positions close hongy
-    const flattenSuccess = flatConfirmed && !hasOrdersOrPositions;
+    // flattenSuccess sirf tb true hoga jb flattening mukammal ho jaye
+    const flattenSuccess = flatConfirmed && !hasOpenOrder && !hasOpenPosition;
 
     return { success: true, flattenSuccess };
 }
