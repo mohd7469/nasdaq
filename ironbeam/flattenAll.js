@@ -62,7 +62,7 @@ export async function flattenAll(token, ibConfig) {
 
     if (!flatConfirmed) {
         const { activePositionsData: remaining } = await hasActivePosition(token, ibConfig, null);
-        return { success: false, error: 'Position still active after flatten attempt', remainingPositions: remaining || [], hasOrdersOrPositions };
+        return { success: false, error: 'Position still active after flatten attempt', remainingPositions: remaining || [], flattenSuccess: !hasOpenOrder && !hasOpenPosition};
     }
 
     // flattenSuccess sirf tb true hoga jb flattening mukammal ho jaye
