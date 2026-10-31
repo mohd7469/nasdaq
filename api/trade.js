@@ -69,14 +69,14 @@ async function handlePost(req, res) {
     }
 
     if (isWeekend()) {
-        return res.status(200).json({
+        return res.status(503).json({
             success: false,
             message: 'Market is closed on weekends'
         });
     }
 
     if (isMaintenanceWindow()) {
-        return res.status(200).json({
+        return res.status(503).json({
             success: true,
             message: 'Trade execution skipped due to maintenance window (2:00 AM - 3:00 AM).'
         });
