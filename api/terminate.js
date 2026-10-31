@@ -56,8 +56,7 @@ export default async function handler(req, res) {
                             accountId: ibConfig.accountId,
                             symbol: ibConfig.symbol,
                             success: false,
-                            error: flattenResult.error || 'Flatten failed',
-                            flattenSuccess: flattenResult.flattenSuccess
+                            error: flattenResult.error || 'Flatten failed'
                         };
                     }
 
@@ -65,25 +64,23 @@ export default async function handler(req, res) {
                         accountId: ibConfig.accountId,
                         symbol: ibConfig.symbol,
                         success: true,
-                        message: `[${ibConfig.accountId}] All open positions and orders flattened at ${getTimezone(timestamp).toISOString()}`,
-                        flattenSuccess: flattenResult.flattenSuccess
+                        message: `[${ibConfig.accountId}] All open positions and orders flattened at ${getTimezone(timestamp).toISOString()}`
                     };
                 } catch (err) {
                     return {
                         accountId: ibConfig.accountId,
                         symbol: ibConfig.symbol,
                         success: false,
-                        error: err.message,
-                        flattenSuccess: false
+                        error: err.message
                     };
                 }
             })
         );
 
         const successfulCount = results.filter(r => r.success).length;
-        const isFlattenSuccess = results.some(r => r.flattenSuccess === true);
+        const allSuccessful = results.every(r => r.success);
 
-        if (isFlattenSuccess) {
+        if (allSuccessful) {
             await sendAlert('Terminating active orders/positions to prevent overnight fees & margin risk')
         } else {
             await sendAlert('Warning: Please terminate overnight position to avoid risk and margin limit')
