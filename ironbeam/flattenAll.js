@@ -6,8 +6,11 @@ import { retryUntil } from './retryUntil.js';
 export async function flattenAll(token, ibConfig) {
     const headers = { Authorization: `Bearer ${token}` };
 
+    let hasOrdersOrPositions = false;
+
     const { isOrderActive, activeOrdersData } = await hasActiveOrder(token, ibConfig);
     if (isOrderActive && activeOrdersData.length > 0) {
+        hasOrdersOrPositions = activeOrdersData.length > 0;
         const activeOrderIds = activeOrdersData.map(o => o.orderId || o.oid);
 
         await axios.delete(`${ibConfig.apiUrl}/order/${ibConfig.accountId}/cancelMultiple`, {
@@ -21,6 +24,7 @@ export async function flattenAll(token, ibConfig) {
 
     const { isPositionActive, activePositionsData } = await hasActivePosition(token, ibConfig, null);
     if (isPositionActive && activePositionsData.length > 0) {
+        hasOrdersOrPositions = activePositionsData.length > 0;
         for (const pos of activePositionsData) {
             const qty = pos.quantity !== undefined ? pos.quantity : pos.q;
             if (!qty || qty === 0) continue;
@@ -55,8 +59,11 @@ export async function flattenAll(token, ibConfig) {
 
     if (!flatConfirmed) {
         const { activePositionsData: remaining } = await hasActivePosition(token, ibConfig, null);
-        return { success: false, error: 'Position still active after flatten attempt', remainingPositions: remaining || [] };
+        return { success: false, error: 'Position still active after flatten attempt', remainingPositions: remaining || [], hasOrdersOrPositions };
     }
 
-    return { success: true };
+    // sirf tb true hoga jb sb orders/positions close hongy
+    const flattenSuccess = flatConfirmed && !hasOrdersOrPositions;
+
+    return { success: true, flattenSuccess };
 }
