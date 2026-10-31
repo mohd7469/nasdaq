@@ -19,7 +19,7 @@ export default async function handler(req, res) {
             return res.status(405).json({ success: false, error: 'Method Not Allowed' });
         }
 
-        const { action, reason } = req.body || {};
+        const { action, timestamp } = req.body || {};
         if (!action || action.toUpperCase() !== 'TERMINATE') {
             return res.status(400).json({ success: false, message: '"action" must be TERMINATE' });
         }
@@ -56,7 +56,8 @@ export default async function handler(req, res) {
                             accountId: ibConfig.accountId,
                             symbol: ibConfig.symbol,
                             success: false,
-                            error: flattenResult.error || 'Flatten failed'
+                            error: flattenResult.error || 'Flatten failed',
+                            flattenSuccess: flattenResult.flattenSuccess
                         };
                     }
 
@@ -64,22 +65,29 @@ export default async function handler(req, res) {
                         accountId: ibConfig.accountId,
                         symbol: ibConfig.symbol,
                         success: true,
-                        message: `[${ibConfig.accountId}] All open positions and orders flattened at ${getTimezone().toISOString()}`
+                        message: `[${ibConfig.accountId}] All open positions and orders flattened at ${getTimezone(timestamp).toISOString()}`,
+                        flattenSuccess: flattenResult.flattenSuccess
                     };
                 } catch (err) {
                     return {
                         accountId: ibConfig.accountId,
                         symbol: ibConfig.symbol,
                         success: false,
-                        error: err.message
+                        error: err.message,
+                        flattenSuccess: false
                     };
                 }
             })
         );
 
         const successfulCount = results.filter(r => r.success).length;
+        const isFlattenSuccess = results.some(r => r.flattenSuccess === true);
 
-        await sendAlert(`Terminating: ${reason ? reason : 'Time crossed 1:30 AM PKT'}`)
+        if (isFlattenSuccess) {
+            await sendAlert('Terminating active orders/positions to prevent overnight fees & margin risk')
+        } else {
+            await sendAlert('Warning: Please terminate overnight position to avoid risk and margin limit')
+        }
 
         return res.status(200).json({
             success: successfulCount > 0,
