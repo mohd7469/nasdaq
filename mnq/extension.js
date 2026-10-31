@@ -25,6 +25,10 @@
         Notification.requestPermission();
     }
 
+    const formatGMT5 = (time = moment()) => {
+        return getTimezone(time).format('YYYY-MM-DDTHH:mm:ss.SSSZ');
+    };
+
     const isWeekend = (timezone = PKT_TIMEZONE) => {
         const currentTime = getTimezone(moment(), timezone);
         const day = currentTime.day(); // 0 = Sunday, 6 = Saturday
@@ -51,7 +55,7 @@
                 const endpoint = isWindows ? LOCALHOST : API_URL;
                 const payload = {
                     action: 'TERMINATE',
-                    timestamp: now.toISOString()
+                    timestamp: formatGMT5()
                 };
                 await axios.post(`${endpoint}/terminate`, payload);
 
@@ -171,7 +175,7 @@
                     // Sorting ke baad sab se aakhri (most recent) signal utha lo
                     const latestSignal = signals[signals.length - 1];
                     if (latestSignal && latestSignal.timestamp) {
-                        const latestIso = getTimezone(latestSignal.timestamp).toISOString();
+                        const latestIso = formatGMT5(latestSignal.timestamp);
                         localStorage.setItem('_botRecentPineLogsTimestamp', latestIso);
                         console.log('Synced:', latestIso);
                     }
@@ -261,7 +265,7 @@
                     const { id, ...cleanData } = currentData;
                     console.log(JSON.stringify(currentData, null, 1));
 
-                    localStorage.setItem('_botRecentPineLogsTimestamp', currentTimestamp.toISOString());
+                    localStorage.setItem('_botRecentPineLogsTimestamp', formatGMT5(currentTimestamp));
 
                     if (!isWeekend()) {
                         // showDesktopAlert('Setup is executed');
@@ -317,7 +321,7 @@
                     for (let i = 0; i < 2; i++) sendAlert(signal);
                     recentNasdaqAlert = signal;
                     localStorage.setItem('_botRecentNasdaqAlert', signal);
-                    localStorage.setItem('_botRecentNasdaqAlertTimestamp', getTimezone().toISOString());
+                    localStorage.setItem('_botRecentNasdaqAlertTimestamp', formatGMT5());
                 } else {
                     console.log("Skipping duplicate signal..");
                 }

@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { getTimezone } from '../utils.js';
+import { getTimezone, formatGMT5 } from '../utils.js';
 
 const DB_NAME = 'nasdaq-database';
 
@@ -31,7 +31,7 @@ const ironbeamUsersSchema = new mongoose.Schema({
     symbol: { type: String, default: 'XCME:MNQ.Z26' },
     isActive: { type: Boolean, default: false },
     createdAt: { type: Date, default: () => getTimezone().toDate() },
-    updatedAt: { type: Date, default: null }
+    updatedAt: { type: String, default: null }
 }, { strict: false, versionKey: false });
 
 ironbeamUsersSchema.index({ accountId: 1 }, { unique: true });
@@ -48,7 +48,7 @@ const telegramReloadSchema = new mongoose.Schema({
     botId: { type: String, required: true },
     payload: { type: Object, required: true },
     createdAt: { type: Date, default: () => getTimezone().toDate() },
-    updatedAt: { type: Date, default: null }
+    updatedAt: { type: String, default: null }
 }, { strict: false, versionKey: false });
 
 telegramReloadSchema.index({ botId: 1 }, { unique: true });
@@ -61,7 +61,7 @@ const telegramUsersSchema = new mongoose.Schema({
     name: { type: String, default: '' },
     isActive: { type: Boolean, default: false },
     createdAt: { type: Date, default: () => getTimezone().toDate() },
-    updatedAt: { type: Date, default: null }
+    updatedAt: { type: String, default: null }
 }, { strict: false, versionKey: false });
 
 telegramUsersSchema.index({ chatId: 1, botId: 1 }, { unique: true });
@@ -166,7 +166,7 @@ export async function _update(Model, filter = {}, updateData = {}, options = { n
     await connect();
     return await Model.findOneAndUpdate(
         filter,
-        { ...updateData, updatedAt: getTimezone().toDate() },
+        { ...updateData, updatedAt: formatGMT5() },
         options
     ).lean();
 }
@@ -175,7 +175,7 @@ export async function _updateMany(Model, filter = {}, updateData = {}) {
     await connect();
     return await Model.updateMany(
         filter,
-        { ...updateData, updatedAt: getTimezone().toDate() }
+        { ...updateData, updatedAt: formatGMT5() }
     );
 }
 
@@ -196,7 +196,7 @@ export async function _upsert(Model, filter = {}, updateData = {}) {
     return await Model.findOneAndUpdate(
         filter,
         {
-            $set: { ...updateData, updatedAt: getTimezone().toDate() },
+            $set: { ...updateData, updatedAt: formatGMT5() },
             $setOnInsert: { createdAt: getTimezone().toDate() }
         },
         { new: true, upsert: true }

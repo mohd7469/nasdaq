@@ -7,7 +7,7 @@ import moment from 'moment';
 import * as db from '../mongo/db.js';
 import * as ib from '../ironbeam/_index.js';
 
-import { getTimezone } from '../utils.js';
+import { formatGMT5 } from '../utils.js';
 
 export default async function handler(req, res) {
     if (cors(req, res)) {
@@ -64,7 +64,7 @@ export default async function handler(req, res) {
                         accountId: ibConfig.accountId,
                         symbol: ibConfig.symbol,
                         success: true,
-                        message: `[${ibConfig.accountId}] All open positions and orders flattened at ${getTimezone(timestamp).toISOString()}`
+                        message: `[${ibConfig.accountId}] All open positions and orders flattened at ${formatGMT5(timestamp)}`
                     };
                 } catch (err) {
                     return {

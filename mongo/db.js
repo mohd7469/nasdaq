@@ -1,4 +1,4 @@
-import { getTimezone } from '../utils.js';
+import { getTimezone, formatGMT5 } from '../utils.js';
 
 import * as mongo from './index.js';
 
@@ -123,7 +123,7 @@ export async function updateTelegramUser(botId, chatId, updateFields = {}) {
         name: updateFields.name !== undefined ? updateFields.name : existingUser.name,
         isActive: updateFields.isActive !== undefined ? updateFields.isActive : existingUser.isActive,
         createdAt: existingUser.createdAt || getTimezone().toDate(),
-        updatedAt: getTimezone().toDate()
+        updatedAt: formatGMT5()
     };
 
     delete mergedData._id;

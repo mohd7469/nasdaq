@@ -5,6 +5,7 @@ import axios from 'axios';
 import moment from 'moment';
 
 import * as db from '../mongo/db.js';
+import { formatGMT5 } from '../utils.js';
 
 export default async function handler(req, res) {
     if (cors(req, res)) {
@@ -34,7 +35,7 @@ async function handleGet(req, res) {
         success: true,
         message: 'Serverless webhook running..',
         uptime: `${moment.duration(process.uptime(), 'seconds').humanize()} ago`,
-        timestamp: new Date().toISOString()
+        timestamp: formatGMT5()
     });
 }
 

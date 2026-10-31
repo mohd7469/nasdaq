@@ -40,6 +40,10 @@ export const validateSide = (action, side) => {
     return { value: side };
 }
 
+export const formatGMT5 = (time = moment()) => {
+    return getTimezone(time).format('YYYY-MM-DDTHH:mm:ss.SSSZ');
+};
+
 export const isSignalExpired = (timestamp) => {
     if (timestamp) {
         const signalTime = getTimezone(timestamp);

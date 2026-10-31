@@ -7,7 +7,7 @@ import moment from 'moment';
 import * as db from '../mongo/db.js';
 import * as ib from '../ironbeam/_index.js';
 
-import { isWeekend, isMaintenanceWindow, validateAction, validateSide } from '../utils.js';
+import { isWeekend, isMaintenanceWindow, validateAction, validateSide, formatGMT5 } from '../utils.js';
 
 export default async function handler(req, res) {
     if (cors(req, res)) {
@@ -143,7 +143,7 @@ async function executeTradeForUser(ibConfig, { action, side, price, tp, sl, orde
                 success: true,
                 accountId: ibConfig.accountId,
                 symbol: ibConfig.symbol,
-                message: `${ibConfig.symbol}: 1 ${side} futures contract opened on account [${ibConfig.accountId}] at ${getTimezone().toISOString()}`,
+                message: `${ibConfig.symbol}: 1 ${side} futures contract opened on account [${ibConfig.accountId}] at ${formatGMT5()}`,
                 details: orderResult.data
             };
         }
@@ -154,7 +154,7 @@ async function executeTradeForUser(ibConfig, { action, side, price, tp, sl, orde
                 success: true,
                 accountId: ibConfig.accountId,
                 symbol: ibConfig.symbol,
-                message: `[${ibConfig.accountId}] Positions cleared at ${getTimezone().toISOString()}`
+                message: `[${ibConfig.accountId}] Positions cleared at ${formatGMT5()}`
             };
         }
 
