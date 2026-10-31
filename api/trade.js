@@ -140,9 +140,9 @@ async function executeTradeForUser(ibConfig, { action, side, price, tp, sl, orde
             }
 
             return {
+                success: true,
                 accountId: ibConfig.accountId,
                 symbol: ibConfig.symbol,
-                success: true,
                 message: `${ibConfig.symbol}: 1 ${side} futures contract opened on account [${ibConfig.accountId}] at ${getTimezone().toISOString()}`,
                 details: orderResult.data
             };
