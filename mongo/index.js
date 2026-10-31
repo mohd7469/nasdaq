@@ -72,9 +72,9 @@ const tradingSignalsSchema = new mongoose.Schema({
     side: { type: String },
     action: { type: String },
     price: { type: Number },
-    orderType: { type: String, default: null },
     tp: { type: Number, default: null },
     sl: { type: Number, default: null },
+    orderType: { type: String, default: null },
     PKT: { type: String },
     DXB: { type: String },
     createdAt: { type: Date, default: () => getTimezone().toDate(), expires: 3 * 24 * 60 * 60 } // 3 din baad auto delete
