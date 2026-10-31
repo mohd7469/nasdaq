@@ -187,6 +187,7 @@ export async function storeSignal(signalId, payload) {
     try {
         const existingSignal = await mongo._read(mongo.TradingSignals, { id: signalId });
         if (existingSignal) {
+            await mongo._update(mongo.TradingSignals, { id: signalId }, { ...payload });
             return false;
         }
 
