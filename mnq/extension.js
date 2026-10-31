@@ -51,7 +51,6 @@
                 const endpoint = isWindows ? LOCALHOST : API_URL;
                 const payload = {
                     action: 'TERMINATE',
-                    reason: 'Overnight session starting',
                     timestamp: now.toISOString()
                 };
                 await axios.post(`${endpoint}/terminate`, payload);
