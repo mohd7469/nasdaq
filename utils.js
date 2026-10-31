@@ -1,5 +1,6 @@
 import moment from 'moment-timezone';
 
+const NY_TIMEZONE = "America/New_York";
 const PKT_TIMEZONE = 'Asia/Karachi';
 const DXB_TIMEZONE = 'Asia/Dubai';
 

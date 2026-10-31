@@ -1,5 +1,6 @@
 // file://D:\projects\nasdaq\new\background.js
 
+const NY_TIMEZONE = "America/New_York";
 const PKT_TIMEZONE = 'Asia/Karachi';
 const DXB_TIMEZONE = 'Asia/Dubai';
 
