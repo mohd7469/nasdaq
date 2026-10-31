@@ -172,10 +172,9 @@
                     if (latestSignal && latestSignal.timestamp) {
                         const latestIso = getTimezone(latestSignal.timestamp).toISOString();
                         localStorage.setItem('_botRecentPineLogsTimestamp', latestIso);
-                        console.log('Synced latest pine log timestamp from backend:', latestIso);
+                        console.log('Syncing most recent signal from server:', latestIso);
                     }
                 }
-                console.log('Syncing most recent signal from server..');
             }
         } catch (err) {
             console.error('Sync Timestamp Error:', err?.message);
