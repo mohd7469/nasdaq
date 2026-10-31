@@ -31,9 +31,14 @@
         return day === 0 || day === 6;
     };
 
-    const isPast130AM = () => {
-        const now = getTimezone(moment(), PKT_TIMEZONE);
-        return now.hour() > 1 || (now.hour() === 1 && now.minute() >= 30);
+    const isOvernightWindowApproaching = () => {
+        const OFFSET_MINUTES = 15;
+        const NY_CLOSING_HOUR = "16:00"; // 4 PM NY Closing Time
+
+        const nyCurrentTime = getTimezone(moment(), NY_TIMEZONE);
+        const nyClosingOffsetTime = moment.tz(NY_CLOSING_HOUR, "HH:mm", NY_TIMEZONE).subtract(OFFSET_MINUTES, 'minutes');
+
+        return nyCurrentTime.isAfter(nyClosingOffsetTime);
     };
 
     const terminateAllActivePositionAndOrders = async () => {
@@ -46,7 +51,7 @@
                 const endpoint = isWindows ? LOCALHOST : API_URL;
                 const payload = {
                     action: 'TERMINATE',
-                    reason: 'Time crossed 1:30 AM PKT',
+                    reason: 'Overnight session starting',
                     timestamp: now.toISOString()
                 };
                 await axios.post(`${endpoint}/terminate`, payload);
@@ -362,8 +367,8 @@
                 return;
             }
 
-            if (count % (5 * 60) === 0) {
-                if (isPast130AM()) {
+            if (count % (5 * minutes) === 0) {
+                if (isOvernightWindowApproaching()) {
                     terminateAllActivePositionAndOrders();
                 }
             }
