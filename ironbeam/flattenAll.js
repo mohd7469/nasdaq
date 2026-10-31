@@ -7,7 +7,7 @@ export async function flattenAll(token, ibConfig) {
     const headers = { Authorization: `Bearer ${token}` };
 
     // 1. Cancel active orders
-    const { isOrderActive, activeOrdersData } = await hasActiveOrder(token, ibConfig);
+    const { isOrderActive, activeOrdersData } = await hasActiveOrder(token, ibConfig, null);
     if (isOrderActive && activeOrdersData.length > 0) {
         const activeOrderIds = activeOrdersData.map(o => o.orderId || o.oid);
 
