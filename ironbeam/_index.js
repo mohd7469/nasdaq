@@ -4,7 +4,7 @@ export { hasActiveOrder } from './hasActiveOrder.js';
 export { flattenAll } from './flattenAll.js';
 export { retryUntil } from './retryUntil.js';
 
-export { validateSignal } from './validateSignal.js';
+export { validateSignalExpiry } from './validateSignalExpiry.js';
 export { storeSignal } from './storeSignal.js';
 
 export { getTradingAccounts } from './getTradingAccounts.js';

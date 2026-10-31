@@ -1,6 +1,6 @@
 import { isSignalExpired } from '../utils.js';
 
-export function validateSignal({ timestamp, id }) {
+export function validateSignalExpiry({ timestamp, id }) {
     if (timestamp && isSignalExpired(timestamp)) {
         return {
             isValid: false,
