@@ -26,8 +26,8 @@ export async function flattenAll(token, ibConfig) {
 
     const { isPositionActive, activePositionsData } = await hasActivePosition(token, ibConfig, null);
     if (isPositionActive && activePositionsData.length > 0) {
-        hasOpenPosition = true;
         for (const pos of activePositionsData) {
+            hasOpenPosition = true;
             const qty = pos.quantity !== undefined ? pos.quantity : pos.q;
             if (!qty || qty === 0) continue;
 
@@ -62,7 +62,7 @@ export async function flattenAll(token, ibConfig) {
 
     if (!flatConfirmed) {
         const { activePositionsData: remaining } = await hasActivePosition(token, ibConfig, null);
-        return { success: false, error: 'Position still active after flatten attempt', remainingPositions: remaining || [], flattenSuccess: !hasOpenOrder && !hasOpenPosition};
+        return { success: false, error: 'Position still active after flatten attempt', remainingPositions: remaining || [], flattenSuccess: false };
     }
 
     // flattenSuccess sirf tb true hoga jb flattening mukammal ho jaye
