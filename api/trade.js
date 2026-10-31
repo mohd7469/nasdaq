@@ -82,7 +82,7 @@ async function handlePost(req, res) {
         });
     }
 
-    console.log('************* STARTING ORDER EXECUTION *************');
+    console.log('************* ORDER EXECUTION *************');
 
     const ironbeamUsers = await ib.getTradingAccounts();
     if (!ironbeamUsers?.length) {

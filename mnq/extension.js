@@ -175,6 +175,7 @@
                         console.log('Synced latest pine log timestamp from backend:', latestIso);
                     }
                 }
+                console.log('Syncing most recent signal from server..');
             }
         } catch (err) {
             console.error('Sync Timestamp Error:', err?.message);
