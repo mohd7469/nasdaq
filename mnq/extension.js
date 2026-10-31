@@ -57,7 +57,6 @@
                 await axios.post(`${endpoint}/terminate`, payload);
 
                 localStorage.setItem('_botRecentTerminateTriggeredDate', todayKey);
-                await sendLog(`Terminating all active orders/positions`).catch(err => { });
             }
         } catch (err) {
             console.error('Terminate Error:', err?.message);
