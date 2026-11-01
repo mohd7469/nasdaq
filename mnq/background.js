@@ -1,8 +1,34 @@
 // file://D:\projects\nasdaq\new\background.js
 
+const config = JSON.parse(GM_info.script.description);
+const { APP_ENV, API_URL } = config;
+
+console.log(`Running in ${APP_ENV} environment`);
+
 const NY_TIMEZONE = "America/New_York";
 const PKT_TIMEZONE = 'Asia/Karachi';
 const DXB_TIMEZONE = 'Asia/Dubai';
+
+const isDev = typeof APP_ENV !== 'undefined' && APP_ENV === 'development';
+const devPrefix = isDev ? '[dev] ' : '';
+
+const originalLog = console.log;
+console.log = (...args) => {
+    if (devPrefix) {
+        originalLog(devPrefix, ...args);
+    } else {
+        originalLog(...args);
+    }
+};
+
+const originalError = console.error;
+console.error = (...args) => {
+    if (devPrefix) {
+        originalError(devPrefix, ...args);
+    } else {
+        originalError(...args);
+    }
+};
 
 const getTimezone = (time = moment(), timezone = PKT_TIMEZONE) => {
     const m = moment(time).tz(timezone);
