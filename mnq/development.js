@@ -1,5 +1,15 @@
 // file://D:\projects\nasdaq\mnq\development.js
 
+const CONFIG = {
+    ENV: 'development',
+    DATABASE: 'nasdaq-development',
+    API_BASE_URL: 'https://app-nasdaq-dev.vercel.app/api',
+};
+
+const { ENV, DATABASE, API_BASE_URL } = CONFIG;
+
+console.log(`Running in ${ENV} environment`);
+
 (async function () {
     'use strict';
 
@@ -15,7 +25,6 @@
     })();
 
     const isWindows = /Win/i.test(navigator.userAgent || navigator.platform);
-    const API_BASE_URL = 'https://app-nasdaq.vercel.app/api';
     const LOCALHOST = `http://localhost:3000/api`;
 
     const PINE_LOGS_CONTAINER = '[data-test-id-widget-type="pine_logs"] [class*="logsList-"]';
@@ -52,7 +61,7 @@
             const lastTerminateDate = localStorage.getItem('_botRecentTerminateTriggeredDate');
 
             if (lastTerminateDate !== todayKey) {
-                const endpoint = isWindows ? LOCALHOST : API_BASE_URL;
+const endpoint = isWindows ? LOCALHOST : API_BASE_URL;
                 const payload = {
                     action: 'TERMINATE',
                     timestamp: formatGMT5()
@@ -119,7 +128,7 @@
 
     const handleTrade = async (payload) => {
         try {
-            const endpoint = isWindows ? LOCALHOST : API_BASE_URL;
+const endpoint = isWindows ? LOCALHOST : API_BASE_URL;
             await axios.post(`${endpoint}/trade`, payload);
         } catch (err) {
             console.error('Trade Error:', err?.message);
@@ -161,6 +170,9 @@
         try {
             const recentPineLogsTimestamp = localStorage.getItem('_botRecentPineLogsTimestamp');
             if (!recentPineLogsTimestamp) {
+                console.log('Syncing recent signal from server..');
+const endpoint = isWindows ? LOCALHOST : API_BASE_URL;
+ntPineLogsTimestamp) {
                 console.log('Syncing recent signal from server..');
                 const endpoint = isWindows ? LOCALHOST : API_BASE_URL;
                 const response = await axios.get(`${endpoint}/trade`);
