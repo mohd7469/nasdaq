@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "start": "vercel dev",
-    "localhost": "node --env-file=.env localhost.js"
+    "development": "node --env-file=.env.development localhost.js",
+    "production": "node --env-file=.env.production localhost.js"
   },
   "dependencies": {
     "axios": "^1.20.0",
