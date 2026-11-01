@@ -1,5 +1,9 @@
 // file://D:\projects\nasdaq\mnq\extension.js
 
+const config = JSON.parse(GM_info.script.description);
+const { ENV, DATABASE, API_URL } = config;
+console.log(`Running in ${ENV} environment`);
+
 (async function () {
     'use strict';
 
@@ -15,8 +19,7 @@
     })();
 
     const isWindows = /Win/i.test(navigator.userAgent || navigator.platform);
-    const API_URL = 'https://app-nasdaq.vercel.app/api';
-    const LOCALHOST = `http://localhost:3000/api`;
+    const localhost = `http://localhost:3000/api`;
 
     const PINE_LOGS_CONTAINER = '[data-test-id-widget-type="pine_logs"] [class*="logsList-"]';
     const OHLC_CONTAINER = '[data-qa-id="legend-series-item"]';
@@ -52,7 +55,7 @@
             const lastTerminateDate = localStorage.getItem('_botRecentTerminateTriggeredDate');
 
             if (lastTerminateDate !== todayKey) {
-                const endpoint = isWindows ? LOCALHOST : API_URL;
+                const endpoint = isWindows ? localhost : API_URL;
                 const payload = {
                     action: 'TERMINATE',
                     timestamp: formatGMT5()
@@ -119,7 +122,7 @@
 
     const handleTrade = async (payload) => {
         try {
-            const endpoint = isWindows ? LOCALHOST : API_URL;
+            const endpoint = isWindows ? localhost : API_URL;
             await axios.post(`${endpoint}/trade`, payload);
         } catch (err) {
             console.error('Trade Error:', err?.message);
@@ -162,7 +165,7 @@
             const recentPineLogsTimestamp = localStorage.getItem('_botRecentPineLogsTimestamp');
             if (!recentPineLogsTimestamp) {
                 console.log('Syncing recent signal from server..');
-                const endpoint = isWindows ? LOCALHOST : API_URL;
+                const endpoint = isWindows ? localhost : API_URL;
                 const response = await axios.get(`${endpoint}/trade`);
                 if (response.data && response.data.signals && response.data.signals.length > 0) {
                     const signals = response.data.signals;
