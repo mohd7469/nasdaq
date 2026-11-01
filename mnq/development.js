@@ -1,13 +1,7 @@
-// file://D:\projects\nasdaq\mnq\development.js
+// file://D:\projects\nasdaq\mnq\extension.js
 
-const CONFIG = {
-    ENV: 'development',
-    DATABASE: 'nasdaq-development',
-    API_BASE_URL: 'https://app-nasdaq-dev.vercel.app/api',
-};
-
-const { ENV, DATABASE, API_BASE_URL } = CONFIG;
-
+const config = JSON.parse(GM_info.script.description);
+const { ENV, DATABASE, API_URL } = config;
 console.log(`Running in ${ENV} environment`);
 
 (async function () {
@@ -25,7 +19,7 @@ console.log(`Running in ${ENV} environment`);
     })();
 
     const isWindows = /Win/i.test(navigator.userAgent || navigator.platform);
-    const LOCALHOST = `http://localhost:3000/api`;
+    const localhost = `http://localhost:3000/api`;
 
     const PINE_LOGS_CONTAINER = '[data-test-id-widget-type="pine_logs"] [class*="logsList-"]';
     const OHLC_CONTAINER = '[data-qa-id="legend-series-item"]';
@@ -61,7 +55,7 @@ console.log(`Running in ${ENV} environment`);
             const lastTerminateDate = localStorage.getItem('_botRecentTerminateTriggeredDate');
 
             if (lastTerminateDate !== todayKey) {
-const endpoint = isWindows ? LOCALHOST : API_BASE_URL;
+                const endpoint = isWindows ? localhost : API_URL;
                 const payload = {
                     action: 'TERMINATE',
                     timestamp: formatGMT5()
@@ -108,7 +102,7 @@ const endpoint = isWindows ? LOCALHOST : API_BASE_URL;
 
     const isReloadRequested = async () => {
         try {
-            const response = await fetch(`${API_BASE_URL}/reload`, { cache: 'no-store' });
+            const response = await fetch(`${API_URL}/reload`, { cache: 'no-store' });
             const shouldReload = await response.json();
             if (shouldReload === true) {
                 await sendLog(`Reloading..`).catch(err => { });
@@ -128,7 +122,7 @@ const endpoint = isWindows ? LOCALHOST : API_BASE_URL;
 
     const handleTrade = async (payload) => {
         try {
-const endpoint = isWindows ? LOCALHOST : API_BASE_URL;
+            const endpoint = isWindows ? localhost : API_URL;
             await axios.post(`${endpoint}/trade`, payload);
         } catch (err) {
             console.error('Trade Error:', err?.message);
@@ -137,7 +131,7 @@ const endpoint = isWindows ? LOCALHOST : API_BASE_URL;
 
     const sendAlert = async (text = 'Test Alert') => {
         try {
-            await axios.post(`${API_BASE_URL}/send`, { bot: 'dxbmnq_bot', text });
+            await axios.post(`${API_URL}/send`, { bot: 'dxbmnq_bot', text });
         } catch (err) {
             console.error('Alert Error:', err?.message);
         }
@@ -145,7 +139,7 @@ const endpoint = isWindows ? LOCALHOST : API_BASE_URL;
 
     const sendLog = async (text = 'Test Log') => {
         try {
-            await axios.post(`${API_BASE_URL}/send`, { bot: 'dxblog_bot', text });
+            await axios.post(`${API_URL}/send`, { bot: 'dxblog_bot', text });
         } catch (err) {
             console.error('Log Error:', err?.message);
         }
@@ -171,10 +165,7 @@ const endpoint = isWindows ? LOCALHOST : API_BASE_URL;
             const recentPineLogsTimestamp = localStorage.getItem('_botRecentPineLogsTimestamp');
             if (!recentPineLogsTimestamp) {
                 console.log('Syncing recent signal from server..');
-const endpoint = isWindows ? LOCALHOST : API_BASE_URL;
-ntPineLogsTimestamp) {
-                console.log('Syncing recent signal from server..');
-                const endpoint = isWindows ? LOCALHOST : API_BASE_URL;
+                const endpoint = isWindows ? localhost : API_URL;
                 const response = await axios.get(`${endpoint}/trade`);
                 if (response.data && response.data.signals && response.data.signals.length > 0) {
                     const signals = response.data.signals;
