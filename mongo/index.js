@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import { getTimezone, formatGMT5 } from '../utils.js';
 
-const DB_NAME = 'nasdaq-database';
+const DB_NAME = process.env.DATABASE || 'nasdaq-development';
 
 let cached = global.mongoose;
 if (!cached) {
@@ -13,7 +13,7 @@ if (!cached) {
 // ----------------------------------------------------
 
 const configsSchema = new mongoose.Schema({
-    apiUrl: { type: String, default: 'https://app-nasdaq.vercel.app/api' },
+    apiUrl: { type: String, default: process.env.API_URL || 'https://dev-nasdaq.vercel.app/api' },
     defaultChatId: { type: String, default: '7670215141' },
     webhookSecret: { type: String, default: process.env.WEBHOOK_SECRET },
     defaultText: { type: String, default: 'Test Success' }
@@ -23,7 +23,7 @@ configsSchema.index({ apiUrl: 1 }, { unique: true });
 
 const ironbeamUsersSchema = new mongoose.Schema({
     isDemo: { type: Boolean, default: true },
-    apiUrl: { type: String, default: 'https://demo.ironbeamapi.com/v2' },
+    apiUrl: { type: String, default: process.env.IRONBEAM_API_URL || 'https://demo.ironbeamapi.com/v2' },
     accountId: { type: String, required: true },
     username: { type: String, required: true },
     password: { type: String, required: true },
