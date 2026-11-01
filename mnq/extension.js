@@ -1,7 +1,7 @@
 // file://D:\projects\nasdaq\mnq\extension.js
 
-const config = JSON.parse(GM_info.script.description);
-const { APP_ENV, API_URL } = config;
+// const config = JSON.parse(GM_info.script.description);
+// const { APP_ENV, API_URL } = config;
 
 (async function () {
 	'use strict';

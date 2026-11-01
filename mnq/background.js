@@ -1,4 +1,4 @@
-// file://D:\projects\nasdaq\new\background.js
+// file://D:\projects\nasdaq\mnq\background.js
 
 const config = JSON.parse(GM_info.script.description);
 const { APP_ENV, API_URL } = config;
