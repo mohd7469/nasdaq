@@ -5,9 +5,8 @@ import axios from 'axios';
 import moment from 'moment';
 
 import * as db from '../mongo/db.js';
+import * as util from '../utils.js';
 import * as ib from '../ironbeam/_index.js';
-
-import { isWeekend, isMaintenanceWindow, validateAction, validateSide, formatGMT5 } from '../utils.js';
 
 export default async function handler(req, res) {
     if (cors(req, res)) {
@@ -41,12 +40,12 @@ async function handlePost(req, res) {
         return res.status(400).json({ success: false, message: '"action" parameter is required' });
     }
 
-    const normalizedAction = validateAction(action);
+    const normalizedAction = util.validateAction(action);
     if (normalizedAction.error) {
         return res.status(400).json({ success: false, message: normalizedAction.error });
     }
 
-    const normalizedSide = validateSide(normalizedAction.value, side);
+    const normalizedSide = util.validateSide(normalizedAction.value, side);
     if (normalizedSide.error) {
         return res.status(400).json({ success: false, message: normalizedSide.error });
     }
@@ -68,14 +67,14 @@ async function handlePost(req, res) {
         }
     }
 
-    if (isWeekend()) {
+    if (util.isWeekend()) {
         return res.status(503).json({
             success: false,
             message: 'Market is closed on weekends'
         });
     }
 
-    if (isMaintenanceWindow()) {
+    if (util.isMaintenanceWindow()) {
         return res.status(503).json({
             success: true,
             message: 'Trade execution skipped due to maintenance window (2:00 AM - 3:00 AM).'
@@ -143,7 +142,7 @@ async function executeTradeForUser(ibConfig, { action, side, price, tp, sl, orde
                 success: true,
                 accountId: ibConfig.accountId,
                 symbol: ibConfig.symbol,
-                message: `${ibConfig.symbol}: 1 ${side} futures contract opened on account [${ibConfig.accountId}] at ${formatGMT5()}`,
+                message: `${ibConfig.symbol}: 1 ${side} futures contract opened on account [${ibConfig.accountId}] at ${util.formatGMT5()}`,
                 details: orderResult.data
             };
         }
@@ -154,7 +153,7 @@ async function executeTradeForUser(ibConfig, { action, side, price, tp, sl, orde
                 success: true,
                 accountId: ibConfig.accountId,
                 symbol: ibConfig.symbol,
-                message: `[${ibConfig.accountId}] Positions cleared at ${formatGMT5()}`
+                message: `[${ibConfig.accountId}] Positions cleared at ${util.formatGMT5()}`
             };
         }
 

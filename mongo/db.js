@@ -1,5 +1,4 @@
-import { getTimezone, formatGMT5 } from '../utils.js';
-
+import * as util from '../utils.js';
 import * as mongo from './index.js';
 
 function toArray(data) {
@@ -122,8 +121,8 @@ export async function updateTelegramUser(botId, chatId, updateFields = {}) {
         userInfo: cleanedUserInfo,
         name: updateFields.name !== undefined ? updateFields.name : existingUser.name,
         isActive: updateFields.isActive !== undefined ? updateFields.isActive : existingUser.isActive,
-        createdAt: existingUser.createdAt || getTimezone().toDate(),
-        updatedAt: formatGMT5()
+        createdAt: existingUser.createdAt || util.getTimezone().toDate(),
+        updatedAt: util.formatGMT5()
     };
 
     delete mergedData._id;
@@ -149,7 +148,7 @@ export async function createOrUpdateUser(botId, chatId, userInfo = {}, role = 'u
             userInfo: cleanUserInfo,
             name: '',
             isActive: finalRole === 'admin',
-            createdAt: getTimezone().toDate(),
+            createdAt: util.getTimezone().toDate(),
             updatedAt: null
         });
     }
@@ -193,7 +192,7 @@ export async function storeSignal(signalId, payload) {
 
         await mongo._create(mongo.TradingSignals, {
             ...payload,
-            createdAt: getTimezone().toDate()
+            createdAt: util.getTimezone().toDate()
         });
         return true;
     } catch (error) {

@@ -4,8 +4,8 @@ import cors from '../cors.js';
 import axios from 'axios';
 import moment from 'moment';
 
-import { sendTelegramMessage, sendTelegramChatAction } from '../utils.js';
 import * as db from '../mongo/db.js';
+import * as util from '../utils.js';
 
 export default async function handler(req, res) {
     if (cors(req, res)) {
@@ -130,7 +130,7 @@ async function handleTelegramWebhookRequest(req, res, { config, bots, botId }) {
     if (cleanText.startsWith('/stop')) {
         await db.removeTelegramUser(botId, chatId);
         const responseText = `[${chatId}] Disconnected, send <b>/start</b> to connect again`;
-        await sendTelegramMessage(botConfig.token, chatId, responseText);
+        await util.sendTelegramMessage(botConfig.token, chatId, responseText);
         const savedChatsCount = await db.countBotTelegramUsers(botId);
         return res.status(200).json({ success: true, savedChatsCount });
     }
@@ -143,7 +143,7 @@ async function handleTelegramWebhookRequest(req, res, { config, bots, botId }) {
             ? `[${chatId}] Connected, send <b>/stop</b> to disconnect`
             : `[${chatId}] Request sent..`;
 
-        await sendTelegramMessage(botConfig.token, chatId, responseText);
+        await util.sendTelegramMessage(botConfig.token, chatId, responseText);
         const savedChatsCount = await db.countBotTelegramUsers(botId);
         return res.status(200).json({ success: true, savedChatsCount, userInfo });
     }
@@ -170,7 +170,7 @@ async function handleTelegramWebhookRequest(req, res, { config, bots, botId }) {
         ? `[${chatId}] Connected, send <b>/stop</b> to disconnect`
         : `[${chatId}] In progress..`;
 
-    await sendTelegramMessage(botConfig.token, chatId, responseText);
+    await util.sendTelegramMessage(botConfig.token, chatId, responseText);
     const savedChatsCount = await db.countBotTelegramUsers(botId);
 
     return res.status(200).json({ success: true, savedChatsCount, userInfo });
@@ -209,10 +209,10 @@ async function dispatchTelegramMessages(recipients, message, isTyping) {
         }
 
         if (isTyping) {
-            await sendTelegramChatAction(target.token, target.chatId);
+            await util.sendTelegramChatAction(target.token, target.chatId);
             results[target.bId].push({ chatId: target.chatId, action: 'typing' });
         } else {
-            const responseText = await sendTelegramMessage(target.token, target.chatId, message);
+            const responseText = await util.sendTelegramMessage(target.token, target.chatId, message);
             results[target.bId].push({ chatId: target.chatId, result: responseText });
         }
     }
