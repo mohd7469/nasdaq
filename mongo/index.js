@@ -5,7 +5,7 @@ const DB_NAME = process.env.DATABASE || 'nasdaq-development';
 
 let cached = global.mongoose;
 if (!cached) {
-    cached = global.mongoose = { conn: null, promise: null };
+    cached = global.mongoose = { conn: null, promise: null, targetDb: null };
 }
 
 // ----------------------------------------------------
@@ -98,19 +98,19 @@ export const TradingSignals = mongoose.models.TradingSignals || mongoose.model('
 // DB Connection Initializer
 // ----------------------------------------------------
 
-async function connect() {
-    if (cached.conn && mongoose.connection.readyState >= 1) {
+export async function connect(dbName = DB_NAME) {
+    if (cached.conn && mongoose.connection.readyState >= 1 && cached.targetDb === dbName) {
         return cached.conn;
     }
 
-    if (!cached.promise) {
+    if (!cached.promise || cached.targetDb !== dbName) {
         const uri = process.env.MONGODB_URI;
         if (!uri) {
             throw new Error('MONGODB_URI is not defined in environment variables');
         }
 
         cached.promise = mongoose.connect(uri, {
-            dbName: DB_NAME,
+            dbName,
             maxPoolSize: 10,
             serverSelectionTimeoutMS: 5000,
             socketTimeoutMS: 45000
@@ -119,6 +119,7 @@ async function connect() {
 
     try {
         cached.conn = await cached.promise;
+        cached.targetDb = dbName;
     } catch (e) {
         cached.promise = null;
         throw e;
