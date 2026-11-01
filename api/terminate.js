@@ -98,7 +98,8 @@ export default async function handler(req, res) {
 
 async function sendAlert(text = 'Terminating..') {
     try {
-        await axios.post(`https://app-nasdaq.vercel.app/api/send`, { bot: 'dxbmnq_bot', text });
+        const apiUrl = process.env.API_URL || 'https://dev-nasdaq.vercel.app/api';
+        await axios.post(`${apiUrl}/send`, { bot: 'dxbmnq_bot', text });
     } catch (err) {
         return res.status(500).json({ success: false, error: err.message });
     }
