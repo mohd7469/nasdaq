@@ -18,7 +18,7 @@ console.log(`Running in ${APP_ENV} environment`);
         document.body.prepend(overlay);
     })();
 
-    const isWindows = /Win/i.test(navigator.userAgent || navigator.platform);
+    const isWindows = (/Win/i.test(navigator.userAgent || navigator.platform)) && false;
     const localhost = `http://localhost:3000/api`;
 
     const PINE_LOGS_CONTAINER = '[data-test-id-widget-type="pine_logs"] [class*="logsList-"]';
@@ -131,7 +131,8 @@ console.log(`Running in ${APP_ENV} environment`);
 
     const sendAlert = async (text = 'Test Alert') => {
         try {
-            await axios.post(`${API_URL}/send`, { bot: 'dxbmnq_bot', text });
+            const endpoint = isWindows ? localhost : API_URL;
+            await axios.post(`${endpoint}/send`, { bot: 'dxbmnq_bot', text });
         } catch (err) {
             console.error('Alert Error:', err?.message);
         }
@@ -139,7 +140,8 @@ console.log(`Running in ${APP_ENV} environment`);
 
     const sendLog = async (text = 'Test Log') => {
         try {
-            await axios.post(`${API_URL}/send`, { bot: 'dxblog_bot', text });
+            const endpoint = isWindows ? localhost : API_URL;
+            await axios.post(`${endpoint}/send`, { bot: 'dxblog_bot', text });
         } catch (err) {
             console.error('Log Error:', err?.message);
         }
