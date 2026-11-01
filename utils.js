@@ -57,13 +57,26 @@ export const isSignalExpired = (timestamp) => {
 };
 
 // ----------------------------------------------------
+// Environment helpers (centralized)
+// ----------------------------------------------------
+export const getEnv = () => {
+    return process.env.NODE_ENV || process.env.VERCEL_ENV || process.env.APP_ENV || 'development';
+};
+
+export const isDevEnv = () => {
+    const env = getEnv();
+    return env === 'development' || env === 'preview';
+};
+
+// ----------------------------------------------------
 // Reusable Telegram API helpers
 // ----------------------------------------------------
 export async function sendTelegramMessage(token, chatId, text) {
     try {
+        const prefix = isDevEnv() ? '[dev] ' : '';
         const response = await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
             chat_id: chatId,
-            text,
+            text: prefix + text,
             parse_mode: 'HTML'
         });
         return { success: true, data: response.data };
