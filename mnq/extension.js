@@ -1,8 +1,8 @@
 // file://D:\projects\nasdaq\mnq\extension.js
 
 const config = JSON.parse(GM_info.script.description);
-const { ENV, DATABASE, API_URL } = config;
-console.log(`Running in ${ENV} environment`);
+const { APP_ENV, DATABASE, API_URL } = config;
+console.log(`Running in ${APP_ENV} environment`);
 
 (async function () {
     'use strict';
