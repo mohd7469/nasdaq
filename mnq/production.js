@@ -1,4 +1,4 @@
-// file://D:\projects\nasdaq\mnq\extension.js
+// file://D:\projects\nasdaq\mnq\production.js
 
 (async function () {
     'use strict';

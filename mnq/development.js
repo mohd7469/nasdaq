@@ -1,4 +1,4 @@
-// file://D:\projects\nasdaq\mnq\extension.js
+// file://D:\projects\nasdaq\mnq\development.js
 
 (async function () {
     'use strict';
@@ -15,7 +15,7 @@
     })();
 
     const isWindows = /Win/i.test(navigator.userAgent || navigator.platform);
-    const API_URL = 'https://app-nasdaq.vercel.app/api';
+    const API_BASE_URL = 'https://app-nasdaq.vercel.app/api';
     const LOCALHOST = `http://localhost:3000/api`;
 
     const PINE_LOGS_CONTAINER = '[data-test-id-widget-type="pine_logs"] [class*="logsList-"]';
@@ -52,7 +52,7 @@
             const lastTerminateDate = localStorage.getItem('_botRecentTerminateTriggeredDate');
 
             if (lastTerminateDate !== todayKey) {
-                const endpoint = isWindows ? LOCALHOST : API_URL;
+                const endpoint = isWindows ? LOCALHOST : API_BASE_URL;
                 const payload = {
                     action: 'TERMINATE',
                     timestamp: formatGMT5()
@@ -99,7 +99,7 @@
 
     const isReloadRequested = async () => {
         try {
-            const response = await fetch(`${API_URL}/reload`, { cache: 'no-store' });
+            const response = await fetch(`${API_BASE_URL}/reload`, { cache: 'no-store' });
             const shouldReload = await response.json();
             if (shouldReload === true) {
                 await sendLog(`Reloading..`).catch(err => { });
@@ -119,7 +119,7 @@
 
     const handleTrade = async (payload) => {
         try {
-            const endpoint = isWindows ? LOCALHOST : API_URL;
+            const endpoint = isWindows ? LOCALHOST : API_BASE_URL;
             await axios.post(`${endpoint}/trade`, payload);
         } catch (err) {
             console.error('Trade Error:', err?.message);
@@ -128,7 +128,7 @@
 
     const sendAlert = async (text = 'Test Alert') => {
         try {
-            await axios.post(`${API_URL}/send`, { bot: 'dxbmnq_bot', text });
+            await axios.post(`${API_BASE_URL}/send`, { bot: 'dxbmnq_bot', text });
         } catch (err) {
             console.error('Alert Error:', err?.message);
         }
@@ -136,7 +136,7 @@
 
     const sendLog = async (text = 'Test Log') => {
         try {
-            await axios.post(`${API_URL}/send`, { bot: 'dxblog_bot', text });
+            await axios.post(`${API_BASE_URL}/send`, { bot: 'dxblog_bot', text });
         } catch (err) {
             console.error('Log Error:', err?.message);
         }
@@ -162,7 +162,7 @@
             const recentPineLogsTimestamp = localStorage.getItem('_botRecentPineLogsTimestamp');
             if (!recentPineLogsTimestamp) {
                 console.log('Syncing recent signal from server..');
-                const endpoint = isWindows ? LOCALHOST : API_URL;
+                const endpoint = isWindows ? LOCALHOST : API_BASE_URL;
                 const response = await axios.get(`${endpoint}/trade`);
                 if (response.data && response.data.signals && response.data.signals.length > 0) {
                     const signals = response.data.signals;
