@@ -1,3 +1,4 @@
+import axios from 'axios';
 import moment from 'moment-timezone';
 
 const NY_TIMEZONE = "America/New_York";
@@ -53,4 +54,32 @@ export const isSignalExpired = (timestamp) => {
         }
     }
     return false;
+};
+
+// ----------------------------------------------------
+// Reusable Telegram API helpers
+// ----------------------------------------------------
+export async function sendTelegramMessage(token, chatId, text) {
+    try {
+        const response = await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
+            chat_id: chatId,
+            text,
+            parse_mode: 'HTML'
+        });
+        return { success: true, data: response.data };
+    } catch (err) {
+        return { success: false, error: err.response?.data || err.message };
+    }
+}
+
+export async function sendTelegramChatAction(token, chatId, action = 'typing') {
+    try {
+        const response = await axios.post(`https://api.telegram.org/bot${token}/sendChatAction`, {
+            chat_id: chatId,
+            action
+        });
+        return { success: true, data: response.data };
+    } catch (err) {
+        return { success: false, error: err.response?.data || err.message };
+    }
 }

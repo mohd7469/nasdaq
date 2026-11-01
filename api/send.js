@@ -4,6 +4,7 @@ import cors from '../cors.js';
 import axios from 'axios';
 import moment from 'moment';
 
+import { sendTelegramMessage, sendTelegramChatAction } from '../utils.js';
 import * as db from '../mongo/db.js';
 
 export default async function handler(req, res) {
@@ -217,28 +218,4 @@ async function dispatchTelegramMessages(recipients, message, isTyping) {
     }
 
     return results;
-}
-
-async function sendTelegramMessage(token, chatId, text) {
-    try {
-        const response = await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
-            chat_id: chatId,
-            text,
-            parse_mode: 'HTML'
-        });
-        return { success: true, data: response.data };
-    } catch (err) {
-        return { success: false, error: err.response?.data || err.message };
-    }
-}
-
-async function sendTelegramChatAction(token, chatId, action = 'typing') {
-    try {
-        await axios.post(`https://api.telegram.org/bot${token}/sendChatAction`, {
-            chat_id: chatId,
-            action
-        });
-    } catch (err) {
-        return { success: false, error: err.response?.data || `Failed sending ACTION to [${chatId}]: ${err.message}` };
-    }
 }
