@@ -65,6 +65,7 @@ export const getEnv = () => {
 
 export const isDevEnv = () => {
     const env = getEnv();
+    console.log('env:', env);
     return env === 'development' || env === 'preview';
 };
 
