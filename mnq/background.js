@@ -9,8 +9,12 @@ const NY_TIMEZONE = "America/New_York";
 const PKT_TIMEZONE = 'Asia/Karachi';
 const DXB_TIMEZONE = 'Asia/Dubai';
 
-const isDev = typeof APP_ENV !== 'undefined' && APP_ENV === 'development';
-const devPrefix = isDev ? '[dev] ' : '';
+export const isDev = () => {
+    const env = APP_ENV || 'development';
+    return Boolean(API_URL?.includes('dev') || env === 'development');
+};
+
+const devPrefix = isDev() ? '[dev] ' : '';
 
 const originalLog = console.log;
 console.log = (...args) => {
