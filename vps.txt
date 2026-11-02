@@ -5,6 +5,7 @@ sudo apt update && sudo apt upgrade -y
 
 sudo apt install -y lxde xrdp
 echo "startlxde" > ~/.xsession
+sudo systemctl enable xrdp
 sudo systemctl restart xrdp
 sudo ufw allow 3389/tcp
 
