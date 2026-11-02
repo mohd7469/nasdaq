@@ -17,7 +17,7 @@
 		document.body.prepend(overlay);
 	})();
 
-	const isWindows = (/Win/i.test(navigator.userAgent || navigator.platform)) && false;
+	const isWindows = (/Win/i.test(navigator.userAgent || navigator.platform)) && isDev;
 	const localhost = `http://localhost:3000/api`;
 
 	const PINE_LOGS_CONTAINER = '[data-test-id-widget-type="pine_logs"] [class*="logsList-"]';
