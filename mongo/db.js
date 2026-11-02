@@ -204,36 +204,6 @@ export async function storeSignal(signalId, payload) {
     }
 }
 
-// Simple: connect to other DB, insert/update trading_signals collection, connect back
-async function writeSignalToOtherDb(signalId, payload, isUpdate) {
-    try {
-        const currentDb = process.env.DATABASE || 'nasdaq-development';
-        const otherDb = currentDb === 'nasdaq-development'
-            ? 'nasdaq-production'
-            : 'nasdaq-development';
-
-        await mongo.connect(otherDb);
-        const db = mongoose.connection.db;
-
-        if (isUpdate) {
-            await db.collection('trading_signals').updateOne(
-                { id: signalId },
-                { $set: { ...payload, updatedAt: util.formatGMT5() } },
-                { upsert: true }
-            );
-        } else {
-            await db.collection('trading_signals').insertOne({
-                ...payload,
-                createdAt: util.getTimezone().toDate(),
-                updatedAt: null
-            });
-        }
-
-        await mongo.connect(currentDb);
-    } catch (err) {
-        console.error('Other DB signal write error:', err.message);
-    }
-}
 
 export async function getTradingSignals(options = {}) {
     const sort = options.sort || { timestamp: 1 };
