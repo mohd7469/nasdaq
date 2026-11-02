@@ -87,7 +87,7 @@ async function handlePost(req, res) {
     if (!ironbeamUsers?.length) {
         return res.status(404).json({
             success: false,
-            message: 'No active Ironbeam accounts found matching criteria (isActive: true, isDemo: true)'
+            message: `No active Ironbeam accounts found matching criteria (isActive: true, isDemo: ${util.isDev()})`
         });
     }
 
