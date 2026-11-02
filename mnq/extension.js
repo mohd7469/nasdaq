@@ -160,6 +160,16 @@
 		}
 	};
 
+	const getSelectedInterval = () => {
+		try {
+			const intervalElement = document.querySelector('[data-qa-id="title-wrapper legend-source-interval"] button');
+			const intervalValue = intervalElement ? intervalElement.textContent.trim() : '';
+			return intervalValue
+		} catch (err) {
+			console.warn(`Unable to get tradingview interval`);
+		}
+	};
+
 	const syncRecentPineLogsTimestampFromBackend = async () => {
 		try {
 			const recentPineLogsTimestamp = localStorage.getItem('_botRecentPineLogsTimestamp');
