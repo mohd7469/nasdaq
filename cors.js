@@ -1,3 +1,5 @@
+import './logger.js';
+
 export default function cors(req, res, options = {}) {
     const {
         origin = '*',
