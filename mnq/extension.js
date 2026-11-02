@@ -160,6 +160,16 @@
 		}
 	};
 
+	const getSelectedInterval = () => {
+		try {
+			const intervalElement = document.querySelector('[data-qa-id="title-wrapper legend-source-interval"] button');
+			const intervalValue = intervalElement ? intervalElement.textContent.trim() : '';
+			return intervalValue ? parseInt(intervalValue, 10) : 0;
+		} catch (err) {
+			return 0;
+		}
+	};
+
 	const syncRecentPineLogsTimestampFromBackend = async () => {
 		try {
 			const recentPineLogsTimestamp = localStorage.getItem('_botRecentPineLogsTimestamp');
@@ -357,6 +367,11 @@
 			syncRecentPineLogsTimestampFromBackend().catch(err => { });
 		},
 		onTick: async (count, time, logs) => {
+			const interval = getSelectedInterval();
+			if (!interval || interval > 5) {
+				return;
+			}
+
 			let minutes = 60;
 
 			waitScrollToBottom();
