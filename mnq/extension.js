@@ -164,9 +164,9 @@
 		try {
 			const intervalElement = document.querySelector('[data-qa-id="title-wrapper legend-source-interval"] button');
 			const intervalValue = intervalElement ? intervalElement.textContent.trim() : '';
-			return intervalValue
+			return intervalValue ? parseInt(intervalValue, 10) : 0;
 		} catch (err) {
-			console.warn(`Unable to get tradingview interval`);
+			return 0;
 		}
 	};
 
@@ -367,6 +367,11 @@
 			syncRecentPineLogsTimestampFromBackend().catch(err => { });
 		},
 		onTick: async (count, time, logs) => {
+			const interval = getSelectedInterval();
+			if (!interval || interval > 5) {
+				return;
+			}
+
 			let minutes = 60;
 
 			waitScrollToBottom();
