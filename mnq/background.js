@@ -9,7 +9,7 @@ const NY_TIMEZONE = "America/New_York";
 const PKT_TIMEZONE = 'Asia/Karachi';
 const DXB_TIMEZONE = 'Asia/Dubai';
 
-export const isDev = () => {
+const isDev = () => {
     const env = APP_ENV || 'development';
     return Boolean(API_URL?.includes('dev') || env === 'development');
 };
