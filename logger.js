@@ -1,8 +1,8 @@
 // logger.js for central error logging
 import { ServerResponse } from 'http';
-import { isDevEnv } from './utils.js';
+import { isDev } from './utils.js';
 
-const devPrefix = isDevEnv() ? '[dev] ' : '';
+const devPrefix = isDev() ? '[dev] ' : '';
 
 const originalLog = console.log;
 console.log = (...args) => {

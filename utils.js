@@ -59,13 +59,9 @@ export const isSignalExpired = (timestamp) => {
 // ----------------------------------------------------
 // Environment helpers (centralized)
 // ----------------------------------------------------
-export const getEnv = () => {
-    return process.env.NODE_ENV || process.env.VERCEL_ENV || process.env.APP_ENV || 'development';
-};
-
-export const isDevEnv = () => {
-    const env = getEnv();
-    return env === 'development' || env === 'preview';
+export const isDev = () => {
+    const env = process.env.APP_ENV || 'development';
+    return Boolean(process.env.API_URL?.includes('dev') || env === 'development');
 };
 
 // ----------------------------------------------------
@@ -73,7 +69,7 @@ export const isDevEnv = () => {
 // ----------------------------------------------------
 export async function sendTelegramMessage(token, chatId, text) {
     try {
-        const prefix = isDevEnv() ? '[dev] ' : '';
+        const prefix = isDev() ? '[dev] ' : '';
         const response = await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
             chat_id: chatId,
             text: prefix + text,
