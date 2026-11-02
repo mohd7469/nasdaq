@@ -59,13 +59,9 @@ export const isSignalExpired = (timestamp) => {
 // ----------------------------------------------------
 // Environment helpers (centralized)
 // ----------------------------------------------------
-export const getEnv = () => {
-    return process.env.NODE_ENV || process.env.VERCEL_ENV || process.env.APP_ENV || 'development';
-};
-
 export const isDevEnv = () => {
-    const env = getEnv();
-    return env === 'development' || env === 'preview';
+    const env = process.env.APP_ENV || 'development';
+    return Boolean(process.env.API_URL?.includes('dev') || env === 'development');
 };
 
 // ----------------------------------------------------
