@@ -17,8 +17,11 @@
 		document.body.prepend(overlay);
 	})();
 
-	const isWindows = (/Win/i.test(navigator.userAgent || navigator.platform)) && isDev;
-	const localhost = `http://localhost:3000/api`;
+	const isLocalMachineTesting = false;
+	const isWindows = (/Win/i.test(navigator.userAgent || navigator.platform));
+	const baseUrl = (isLocalMachineTesting && isWindows) ? `http://localhost:3000/api` : API_URL;
+
+	isLocalMachineTesting && alert('Please run npm start first');
 
 	const PINE_LOGS_CONTAINER = '[data-test-id-widget-type="pine_logs"] [class*="logsList-"]';
 	const OHLC_CONTAINER = '[data-qa-id="legend-series-item"]';
@@ -54,12 +57,11 @@
 			const lastTerminateDate = localStorage.getItem('_botRecentTerminateTriggeredDate');
 
 			if (lastTerminateDate !== todayKey) {
-				const endpoint = isWindows ? localhost : API_URL;
 				const payload = {
 					action: 'TERMINATE',
 					timestamp: formatGMT5()
 				};
-				await axios.post(`${endpoint}/terminate`, payload);
+				await axios.post(`${baseUrl}/terminate`, payload);
 
 				localStorage.setItem('_botRecentTerminateTriggeredDate', todayKey);
 			}
@@ -121,8 +123,7 @@
 
 	const handleTrade = async (payload) => {
 		try {
-			const endpoint = isWindows ? localhost : API_URL;
-			await axios.post(`${endpoint}/trade`, payload);
+			await axios.post(`${baseUrl}/trade`, payload);
 		} catch (err) {
 			console.error('Trade Error:', err?.message);
 		}
@@ -130,8 +131,7 @@
 
 	const sendAlert = async (text = 'Test Alert') => {
 		try {
-			const endpoint = isWindows ? localhost : API_URL;
-			await axios.post(`${endpoint}/send`, { bot: 'dxbmnq_bot', text });
+			await axios.post(`${baseUrl}/send`, { bot: 'dxbmnq_bot', text });
 		} catch (err) {
 			console.error('Alert Error:', err?.message);
 		}
@@ -139,8 +139,7 @@
 
 	const sendLog = async (text = 'Test Log') => {
 		try {
-			const endpoint = isWindows ? localhost : API_URL;
-			await axios.post(`${endpoint}/send`, { bot: 'dxblog_bot', text });
+			await axios.post(`${baseUrl}/send`, { bot: 'dxblog_bot', text });
 		} catch (err) {
 			console.error('Log Error:', err?.message);
 		}
@@ -166,8 +165,7 @@
 			const recentPineLogsTimestamp = localStorage.getItem('_botRecentPineLogsTimestamp');
 			if (!recentPineLogsTimestamp) {
 				console.log('Syncing recent signal from server..');
-				const endpoint = isWindows ? localhost : API_URL;
-				const response = await axios.get(`${endpoint}/trade`);
+				const response = await axios.get(`${baseUrl}/trade`);
 				if (response.data && response.data.signals && response.data.signals.length > 0) {
 					const signals = response.data.signals;
 
