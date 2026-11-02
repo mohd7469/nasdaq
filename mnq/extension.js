@@ -21,6 +21,8 @@
 	const isWindows = (/Win/i.test(navigator.userAgent || navigator.platform));
 	const baseUrl = (isLocalMachineTesting && isWindows) ? `http://localhost:3000/api` : API_URL;
 
+	isLocalMachineTesting && alert('Please run npm start first');
+
 	const PINE_LOGS_CONTAINER = '[data-test-id-widget-type="pine_logs"] [class*="logsList-"]';
 	const OHLC_CONTAINER = '[data-qa-id="legend-series-item"]';
 
