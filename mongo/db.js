@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import * as util from '../utils.js';
 import * as mongo from './index.js';
 
@@ -184,22 +185,46 @@ export async function resetTradingSignals(data = []) {
 
 export async function storeSignal(signalId, payload) {
     try {
+        const currentDb = process.env.DATABASE || 'nasdaq-development';
+        const dbs = ['nasdaq-development', 'nasdaq-production'];
+
+        // Check if signal exists in primary database
         const existingSignal = await mongo._read(mongo.TradingSignals, { id: signalId });
-        if (existingSignal) {
-            await mongo._update(mongo.TradingSignals, { id: signalId }, { ...payload });
-            return false;
+        const isUpdate = !!existingSignal;
+
+        // Write to both databases
+        for (const dbName of dbs) {
+            await writeSignalToDb(dbName, signalId, payload, isUpdate);
         }
 
-        await mongo._create(mongo.TradingSignals, {
-            ...payload,
-            createdAt: util.getTimezone().toDate()
-        });
-        return true;
+        // Reconnect to primary database for subsequent operations
+        await mongo.connect(currentDb);
+
+        return !isUpdate;
     } catch (error) {
         if (error.code === 11000) {
             return false;
         }
         throw error;
+    }
+}
+
+async function writeSignalToDb(dbName, signalId, payload, isUpdate) {
+    await mongo.connect(dbName);
+    const db = mongoose.connection.db;
+
+    if (isUpdate) {
+        await db.collection('trading_signals').updateOne(
+            { id: signalId },
+            { $set: { ...payload, updatedAt: util.formatGMT5() } },
+            { upsert: true }
+        );
+    } else {
+        await db.collection('trading_signals').insertOne({
+            ...payload,
+            createdAt: util.getTimezone().toDate(),
+            updatedAt: null
+        });
     }
 }
 
