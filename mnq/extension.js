@@ -336,7 +336,7 @@
 					localStorage.setItem('_botRecentNasdaqAlert', signal);
 					localStorage.setItem('_botRecentNasdaqAlertTimestamp', formatGMT5());
 				} else {
-					console.log("Skipping duplicate signal..");
+					// console.log("Skipping duplicate signal..");
 				}
 			}
 		}
