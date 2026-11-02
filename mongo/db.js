@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import * as util from '../utils.js';
 import * as mongo from './index.js';
 
@@ -202,6 +203,7 @@ export async function storeSignal(signalId, payload) {
         throw error;
     }
 }
+
 
 export async function getTradingSignals(options = {}) {
     const sort = options.sort || { timestamp: 1 };
