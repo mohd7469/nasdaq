@@ -48,8 +48,10 @@ export const formatGMT5 = (time = moment()) => {
 export const isSignalExpired = (timestamp) => {
     if (timestamp) {
         const signalTime = getTimezone(timestamp);
-        const startOfDay = getTimezone().startOf('day');
-        if (signalTime.isBefore(startOfDay)) {
+        // const startOfDay = getTimezone().startOf('day');
+        // signalTime.isBefore(startOfDay);
+        const fewMinutesAgo = getTimezone().subtract(5, 'minutes');
+        if (signalTime.isBefore(fewMinutesAgo)) {
             return true;
         }
     }
