@@ -106,7 +106,7 @@ async function handlePost(req, res) {
 
     return res.status(200).json({
         success: successfulCount > 0,
-        message: `Position active on ${successfulCount}/${ironbeamUsers.length} accounts`,
+        message: `Total: ${successfulCount} of ${ironbeamUsers.length} accounts`,
         results
     });
 }
