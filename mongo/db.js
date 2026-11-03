@@ -1,4 +1,3 @@
-import mongoose from 'mongoose';
 import * as util from '../utils.js';
 import * as mongo from './index.js';
 
@@ -62,7 +61,6 @@ export async function resetTelegramBots(data = []) {
     await mongo._deleteMany(mongo.TelegramBots, {});
     return await mongo._createMany(mongo.TelegramBots, toArray(data));
 }
-
 
 // ----------------------------------------------------
 // Telegram Reload
