@@ -1,6 +1,8 @@
 import axios from 'axios';
 
 export async function getAuthToken(ibConfig) {
+    console.log('getAuthToken(ibConfig): ', ibConfig);
+
     try {
         const response = await axios.post(`${ibConfig.apiUrl}/auth`, {
             username: ibConfig.username,
