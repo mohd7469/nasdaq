@@ -163,8 +163,9 @@
 	const getSelectedInterval = () => {
 		try {
 			const intervalElement = document.querySelector('[data-qa-id="title-wrapper legend-source-interval"] button');
-			const intervalValue = intervalElement ? intervalElement.textContent.trim() : '';
-			return intervalValue ? parseInt(intervalValue, 10) : 0;
+			const interval = intervalElement ? intervalElement.textContent.trim() : '';
+			const val = Number(interval);
+			return isNaN(val) ? 0 : val;
 		} catch (err) {
 			return 0;
 		}
