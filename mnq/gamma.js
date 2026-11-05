@@ -76,7 +76,36 @@ const { userName, password, apiKey } = config;
     async function calculateLevels() {
         try {
             const clipboardText = await navigator.clipboard.readText();
-            console.log(clipboardText);
+            if (!clipboardText || !liveNqPrice) return;
+
+            let qqqSpot = null;
+            let parsedLevels = [];
+
+            clipboardText.split('\n').forEach(line => {
+                let parts = line.split(':');
+                if (parts.length === 2) {
+                    let key = parts[0].trim();
+                    let val = parseFloat(parts[1].trim());
+
+                    if (!isNaN(val)) {
+                        if (key.toLowerCase().includes('spot')) {
+                            qqqSpot = val;
+                        } else {
+                            parsedLevels.push({ key, val });
+                        }
+                    }
+                }
+            });
+
+            if (!qqqSpot) return;
+
+            const multiplier = liveNqPrice / qqqSpot;
+
+            console.log(`MNQ: ${liveNqPrice}`);
+            parsedLevels.forEach(item => {
+                let nqLevel = (item.val * multiplier).toFixed(2);
+                console.log(`(QQQ: ${item.val}) - ${item.key}: NQ ${nqLevel}`);
+            });
         } catch (err) {
             console.log(`Click anywhere on Page`);
         }
