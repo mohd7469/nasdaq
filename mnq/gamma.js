@@ -1,7 +1,7 @@
 // file://D:\projects\nasdaq\mnq\gamma.js
 
 const config = JSON.parse(GM_info.script.description);
-const { username, password, apiKey  } = config;
+const { username, password, apiKey } = config;
 
 (function () {
     'use strict';
