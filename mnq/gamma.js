@@ -145,9 +145,22 @@ const { userName, password, apiKey } = config;
 
                 parsedLevels.forEach(item => {
                     let nqLevel = Math.round(item.val * multiplier);
+
+                    let labelColor = '#94a3b8';
+                    let lowerKey = item.key.toLowerCase();
+                    if (lowerKey.includes('call wall')) {
+                        labelColor = '#ff5252'; // Resistance
+                    } else if (lowerKey.includes('put wall')) {
+                        labelColor = '#00e676'; // Support
+                    } else if (lowerKey.includes('gamma flip')) {
+                        labelColor = '#ffab40'; // Flip
+                    } else if (lowerKey.includes('gex')) {
+                        labelColor = '#40c4ff'; // GEX
+                    }
+
                     html += `<div style="display: flex; justify-content: space-between; gap: 15px; margin-bottom: 3px;">
-                        <span style="color: #94a3b8;">${item.key}:</span>
-                        <strong style="color: #f8fafc;">MNQ ${nqLevel}</strong>
+                        <span style="color: ${labelColor};">${item.key}:</span>
+                        <strong style="color: ${labelColor};">${nqLevel}</strong>
                     </div>`;
                 });
 
