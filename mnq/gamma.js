@@ -1,7 +1,7 @@
 // file://D:\projects\nasdaq\mnq\gamma.js
 
 const config = JSON.parse(GM_info.script.description);
-const { username, password, apiKey } = config;
+const { userName, password, apiKey } = config;
 
 (function () {
     'use strict';
@@ -9,7 +9,7 @@ const { username, password, apiKey } = config;
     const ibConfig = {
         apiUrl: "https://live.ironbeamapi.com/v2",
         symbol: "XCME:MNQ.Z26",
-        username: username.slice(0, -1),
+        userName: userName.slice(0, -1),
         password: password.slice(0, -1),
         apiKey: apiKey.slice(0, -1)
     };
@@ -22,7 +22,7 @@ const { username, password, apiKey } = config;
             console.log("Authenticating..");
 
             const response = await axios.post(`${ibConfig.apiUrl}/auth`, {
-                username: ibConfig.username,
+                userName: ibConfig.userName,
                 password: ibConfig.password,
                 apiKey: ibConfig.apiKey
             }, {
