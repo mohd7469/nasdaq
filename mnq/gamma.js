@@ -14,8 +14,38 @@ const { userName, password, apiKey } = config;
         apiKey: apiKey.slice(0, -1)
     };
 
+    let tooltipEl = null;
     let liveNqPrice = null;
     let bearerToken = null;
+
+    function createTooltip() {
+        if (tooltipEl) return;
+        tooltipEl = document.createElement('div');
+        tooltipEl.id = 'nq-live-tooltip';
+        tooltipEl.style.position = 'fixed';
+        tooltipEl.style.top = '20px';
+        tooltipEl.style.right = '20px';
+        tooltipEl.style.zIndex = '999999';
+        tooltipEl.style.background = 'rgba(18, 24, 36, 0.95)';
+        tooltipEl.style.border = '1px solid #00e676';
+        tooltipEl.style.borderRadius = '8px';
+        tooltipEl.style.padding = '12px 16px';
+        tooltipEl.style.color = '#fff';
+        tooltipEl.style.fontFamily = 'sans-serif';
+        tooltipEl.style.fontSize = '12px';
+        tooltipEl.style.boxShadow = '0 4px 12px rgba(0,0,0,0.5)';
+        tooltipEl.style.pointerEvents = 'auto';
+        tooltipEl.style.transition = 'opacity 0.2s ease-in-out';
+
+        tooltipEl.addEventListener('mouseenter', () => {
+            tooltipEl.style.opacity = '0.1';
+        });
+        tooltipEl.addEventListener('mouseleave', () => {
+            tooltipEl.style.opacity = '1';
+        });
+
+        document.body.appendChild(tooltipEl);
+    }
 
     async function authenticateIronbeam() {
         try {
@@ -101,19 +131,32 @@ const { userName, password, apiKey } = config;
 
             const multiplier = liveNqPrice / qqqSpot;
 
-            console.log(`MNQ: ${liveNqPrice}`);
-            parsedLevels.forEach(item => {
-                let nqLevel = Math.round(item.val * multiplier);
-                console.log(`(QQQ: ${item.val}) - ${item.key}: NQ ${nqLevel}`);
-            });
+            // Sirf content update hoga, element dobara create nahi hoga
+            if (tooltipEl) {
+                let html = `<div style="font-weight: bold; color: #00e676; margin-bottom: 6px; border-bottom: 1px solid #334155; padding-bottom: 4px;">MNQ: ${liveNqPrice.toFixed(2)}</div>`;
+
+                parsedLevels.forEach(item => {
+                    let nqLevel = Math.round(item.val * multiplier);
+                    html += `<div style="display: flex; justify-content: space-between; gap: 15px; margin-bottom: 3px;">
+                        <span style="color: #94a3b8;">${item.key}:</span>
+                        <strong style="color: #f8fafc;">NQ ${nqLevel}</strong>
+                    </div>`;
+                });
+
+                tooltipEl.innerHTML = html;
+            }
+
         } catch (err) {
-            console.log(`Click anywhere on Page`);
+            if (tooltipEl) {
+                tooltipEl.innerHTML = `<div style="color: #ff9800;">Click anywhere on Page to allow clipboard</div>`;
+            }
         }
     }
 
     async function init() {
+        createTooltip();
         await authenticateIronbeam();
-        fetchIronbeamPrice();
+        await fetchIronbeamPrice();
         setInterval(fetchIronbeamPrice, 4000);
     }
 
