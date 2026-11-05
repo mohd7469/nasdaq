@@ -70,17 +70,16 @@ const { userName, password, apiKey } = config;
         const copyBtn = document.querySelector('[aria-label="Copy levels to clipboard"]');
         if (copyBtn) {
             copyBtn.click();
-            try {
-                const clipboardText = await navigator.clipboard.readText();
-                console.log(clipboardText);
-            } catch (clipErr) {
-                console.log(`Click anywhere on Page`);
-            }
         }
     }
 
     async function calculateLevels() {
-
+        try {
+            const clipboardText = await navigator.clipboard.readText();
+            console.log(clipboardText);
+        } catch (err) {
+            console.log(`Click anywhere on Page`);
+        }
     }
 
     async function init() {
