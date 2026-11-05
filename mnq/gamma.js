@@ -55,13 +55,32 @@ const { userName, password, apiKey } = config;
                 const quote = data.quotes[0];
                 if (quote.l) {
                     liveNqPrice = parseFloat(quote.l);
-                    console.log("MNQ:", liveNqPrice.toFixed(2));
+                    // console.log("MNQ:", liveNqPrice.toFixed(2));
+                    await copyLevels();
+                    await calculateLevels();
                 }
             }
         } catch (error) {
             console.error("Fetch Error:", error.response?.data || error.message);
             bearerToken = null;
         }
+    }
+
+    async function copyLevels() {
+        const copyBtn = document.querySelector('[aria-label="Copy levels to clipboard"]');
+        if (copyBtn) {
+            copyBtn.click();
+            try {
+                const clipboardText = await navigator.clipboard.readText();
+                console.log(clipboardText);
+            } catch (clipErr) {
+                console.log(`Click anywhere on Page`);
+            }
+        }
+    }
+
+    async function calculateLevels() {
+
     }
 
     async function init() {
