@@ -103,7 +103,7 @@ const { userName, password, apiKey } = config;
 
             console.log(`MNQ: ${liveNqPrice}`);
             parsedLevels.forEach(item => {
-                let nqLevel = (item.val * multiplier).toFixed(2);
+                let nqLevel = Math.round(item.val * multiplier);
                 console.log(`(QQQ: ${item.val}) - ${item.key}: NQ ${nqLevel}`);
             });
         } catch (err) {
