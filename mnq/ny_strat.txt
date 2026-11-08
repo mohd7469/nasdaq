@@ -17,6 +17,7 @@ float longLockPoints = input.float(2.0, "Long protected SL: points ABOVE entry",
 float shortLockPoints = input.float(2.0, "Short protected SL: points BELOW entry", minval=0, step=0.25, group="Breakeven")
 bool showBox = input.bool(true, "Show first 15m range box", group="Display")
 bool showLogs = input.bool(true, "Enable Pine Logs", group="Display")
+bool showNewSetupLog = input.bool(true, "Show NEW_SETUP logs at candle close", group="Display")
 // Initial capital, commission and slippage are at the top in strategy().
 
 // Distances are PRICE POINTS, not ticks or dollars.
@@ -139,6 +140,9 @@ if closedBar
         beMoved := false
         activeSL := longSignal ? orLow : orHigh
         plannedEntry := math.round_to_mintick(longSignal ? orHigh + longEntryOffset : orLow - shortEntryOffset)
+        // Log setup direction NOW, on this candle's closing execution.
+        if showLogs and showNewSetupLog
+            log.info("\nNEW_SETUP: \"" + (longSignal ? "LONG" : "SHORT") + "\"\nTP: null\nSL: null")
         int tpTicks = math.max(1, int(math.round(tpPoints / syminfo.mintick)))
         // Confirmation comes FIRST. Orders never fill on an earlier candle.
         // If price is already beyond the level, use a retracement limit.
