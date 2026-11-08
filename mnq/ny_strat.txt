@@ -11,6 +11,7 @@ strategy("NY 15m ORB | Configurable Entry and Breakeven", overlay=true,
 float longEntryOffset = input.float(1.0, "Long entry: points above range HIGH", minval=0, step=0.25, group="Entry")
 float shortEntryOffset = input.float(1.0, "Short entry: points below range LOW", minval=0, step=0.25, group="Entry")
 int tradeQty = input.int(1, "Contracts / units per trade", minval=1, group="Entry")
+bool allowOppositeAfterBreakeven = input.bool(true, "Allow opposite setup after breakeven SL exit", group="Entry")
 float tpPoints = input.float(100.0, "Take profit (price points)", minval=0.25, step=0.25, group="Exit")
 float beTrigger = input.float(40.0, "Breakeven trigger (favorable points)", minval=0.25, step=0.25, group="Breakeven")
 float longLockPoints = input.float(2.0, "Long protected SL: points ABOVE entry", minval=0, step=0.25, group="Breakeven")
@@ -61,6 +62,10 @@ varip float orHigh = na
 varip float orLow = na
 varip bool rangeReady = false
 varip int tradedDate = na
+varip int permissionDate = na
+varip bool setupAvailable = true
+varip int allowedDirection = 0  // 0 = either direction; 1 = long only; -1 = short only.
+varip int rearmAfterTime = na
 varip bool pendingEntry = false
 varip float plannedEntry = na
 varip int lastProcessedBar = na
@@ -72,6 +77,13 @@ varip float activeTP = na
 varip bool beMoved = false
 varip int entryBar = na
 var box rangeBox = na
+
+// A new NY date starts a fresh permission cycle; the opening range resets below.
+if na(permissionDate) or permissionDate != dateKey
+    permissionDate := dateKey
+    setupAvailable := true
+    allowedDirection := 0
+    rearmAfterTime := na
 
 // Fill callbacks must not use a historical bar's final OHLC for new signals.
 bool fillEvent = strategy.position_size != seenPosition or strategy.closedtrades != loggedClosed
@@ -88,8 +100,20 @@ if strategy.position_size != 0 and seenPosition == 0
 // Use actual exit fills, including gaps, stop fills and session-end closes.
 if strategy.closedtrades > loggedClosed
     for tradeNo = loggedClosed to strategy.closedtrades - 1
-        string exitEvent = strategy.closedtrades.entry_id(tradeNo) == "Long" ? "LONG_EXIT" : "SHORT_EXIT"
+        bool exitedLong = strategy.closedtrades.entry_id(tradeNo) == "Long"
+        string exitEvent = exitedLong ? "LONG_EXIT" : "SHORT_EXIT"
         f_log(exitEvent, strategy.closedtrades.exit_price(tradeNo), na, na)
+        // Use the order's exit reason, not its P&L: a TP after moving SL is still TP.
+        string exitReason = strategy.closedtrades.exit_comment(tradeNo)
+        int tradeEntryTime = strategy.closedtrades.entry_time(tradeNo)
+        int tradeExitTime = strategy.closedtrades.exit_time(tradeNo)
+        int entryDate = year(tradeEntryTime, TZ) * 10000 + month(tradeEntryTime, TZ) * 100 + dayofmonth(tradeEntryTime, TZ)
+        int exitDate = year(tradeExitTime, TZ) * 10000 + month(tradeExitTime, TZ) * 100 + dayofmonth(tradeExitTime, TZ)
+        if entryDate == dateKey and exitDate == dateKey
+            bool canRearm = allowOppositeAfterBreakeven and exitReason == "BE_STOP" and inNY and tradeExitTime < forceCloseTime and time < forceCloseTime
+            setupAvailable := canRearm
+            allowedDirection := canRearm ? (exitedLong ? -1 : 1) : 0
+            rearmAfterTime := canRearm ? tradeExitTime : na
     loggedClosed := strategy.closedtrades
     if strategy.position_size == 0
         entryPrice := na
@@ -132,12 +156,13 @@ if closedBar
             rangeReady := rangeBars == 15
 
     // Create no new orders on candles closing at/after today's force-close time.
-    bool mayEnter = inNY and time >= rangeEnd and time_close < forceCloseTime and rangeReady and not pendingEntry and strategy.position_size == 0 and strategy.opentrades == 0 and (na(tradedDate) or tradedDate != dateKey) and strategy.equity > 0
-    bool longSignal = mayEnter and close > orHigh and close > open
-    bool shortSignal = mayEnter and close < orLow and close < open
+    bool mayEnter = inNY and time >= rangeEnd and time_close < forceCloseTime and rangeReady and setupAvailable and not pendingEntry and strategy.position_size == 0 and strategy.opentrades == 0 and (na(rearmAfterTime) or time_close > rearmAfterTime) and strategy.equity > 0
+    bool longSignal = mayEnter and allowedDirection >= 0 and close > orHigh and close > open
+    bool shortSignal = mayEnter and allowedDirection <= 0 and close < orLow and close < open
 
     if longSignal or shortSignal
-        // Reserve today's single setup while its order waits for a fill.
+        // Reserve this setup until its order expires or its trade closes.
+        setupAvailable := false
         tradedDate := dateKey
         pendingEntry := true
         beMoved := false
@@ -156,13 +181,13 @@ if closedBar
                 strategy.entry("Long", strategy.long, qty=tradeQty, limit=plannedEntry)
             else
                 strategy.entry("Long", strategy.long, qty=tradeQty, stop=plannedEntry, limit=plannedEntry)
-            strategy.exit("Long Exit", "Long", stop=activeSL, profit=tpTicks)
+            strategy.exit("Long Exit", "Long", stop=activeSL, profit=tpTicks, comment_profit="TP", comment_loss="INITIAL_SL")
         else
             if close <= plannedEntry
                 strategy.entry("Short", strategy.short, qty=tradeQty, limit=plannedEntry)
             else
                 strategy.entry("Short", strategy.short, qty=tradeQty, stop=plannedEntry, limit=plannedEntry)
-            strategy.exit("Short Exit", "Short", stop=activeSL, profit=tpTicks)
+            strategy.exit("Short Exit", "Short", stop=activeSL, profit=tpTicks, comment_profit="TP", comment_loss="INITIAL_SL")
 
 // Evaluate after a new setup updates tradedDate, so yesterday cannot cancel today.
 bool staleSetupDay = not na(tradedDate) and tradedDate != dateKey
@@ -181,15 +206,19 @@ if strategy.position_size != 0 and not fillEvent and inNY and not cutoffReached 
 
 // Update the existing bracket; a breakeven move keeps the original TP.
 if strategy.position_size > 0
-    strategy.exit("Long Exit", "Long", stop=activeSL, limit=activeTP)
+    strategy.exit("Long Exit", "Long", stop=activeSL, limit=activeTP, comment_profit="TP", comment_loss=beMoved ? "BE_STOP" : "INITIAL_SL")
 else if strategy.position_size < 0
-    strategy.exit("Short Exit", "Short", stop=activeSL, limit=activeTP)
+    strategy.exit("Short Exit", "Short", stop=activeSL, limit=activeTP, comment_profit="TP", comment_loss=beMoved ? "BE_STOP" : "INITIAL_SL")
 
 // Default: flatten at the close of the 15:44 candle (15:45 New York).
 // Cancel unfilled entries too, so the setup cannot continue past today's cutoff.
 // Outside-session/stale-day checks also handle the first available bar after gaps.
 if (pendingEntry or strategy.position_size != 0) and (cutoffReached or not inNY or staleSetupDay)
     strategy.cancel_all()
+    if tradedDate == dateKey
+        setupAvailable := false
+        allowedDirection := 0
+        rearmAfterTime := na
     pendingEntry := false
     plannedEntry := na
     if strategy.position_size != 0
@@ -210,7 +239,7 @@ var table stats = table.new(position.top_right, 2, 5, border_width=1)
 if barstate.islast
     float winRate = strategy.closedtrades > 0 ? 100.0 * strategy.wintrades / strategy.closedtrades : na
     table.cell(stats, 0, 0, "NY ORB", bgcolor=color.navy, text_color=color.white)
-    table.cell(stats, 1, 0, "1 trade / day", bgcolor=color.navy, text_color=color.white)
+    table.cell(stats, 1, 0, allowOppositeAfterBreakeven ? "BE -> opposite setup" : "1 trade / day", bgcolor=color.navy, text_color=color.white)
     table.cell(stats, 0, 1, "Closed trades")
     table.cell(stats, 1, 1, str.tostring(strategy.closedtrades))
     table.cell(stats, 0, 2, "Winning trades")
