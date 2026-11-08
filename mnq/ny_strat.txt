@@ -37,7 +37,7 @@ f_price(float value) =>
 
 f_log(string eventName, float price, float tp, float sl) =>
     if showLogs
-        log.info(eventName + ": " + f_price(price) + "\nTP: " + (na(tp) ? "null" : f_price(tp)) + "\nSL: " + (na(sl) ? "null" : f_price(sl)))
+        log.info("\n" + eventName + ": " + f_price(price) + "\nTP: " + (na(tp) ? "null" : f_price(tp)) + "\nSL: " + (na(sl) ? "null" : f_price(sl)))
 
 int yy = year(time, TZ)
 int mm = month(time, TZ)
