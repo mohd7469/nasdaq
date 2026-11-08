@@ -15,6 +15,7 @@ float tpPoints = input.float(100.0, "Take profit (price points)", minval=0.25, s
 float beTrigger = input.float(40.0, "Breakeven trigger (favorable points)", minval=0.25, step=0.25, group="Breakeven")
 float longLockPoints = input.float(2.0, "Long protected SL: points ABOVE entry", minval=0, step=0.25, group="Breakeven")
 float shortLockPoints = input.float(2.0, "Short protected SL: points BELOW entry", minval=0, step=0.25, group="Breakeven")
+int forceClosingTime = input.int(15, "Force close: minutes before 4 PM NY", minval=0, maxval=374, group="Session")
 bool showBox = input.bool(true, "Show first 15m range box", group="Display")
 bool showLogs = input.bool(true, "Enable Pine Logs", group="Display")
 bool showNewSetupLog = input.bool(true, "Show NEW_SETUP logs at candle close", group="Display")
@@ -47,6 +48,7 @@ int dateKey = yy * 10000 + mm * 100 + dd
 int sessionStart = timestamp(TZ, yy, mm, dd, 9, 30)
 int rangeEnd = timestamp(TZ, yy, mm, dd, 9, 45)
 int sessionEnd = timestamp(TZ, yy, mm, dd, 16, 0)
+int forceCloseTime = sessionEnd - forceClosingTime * 60 * 1000
 int dow = dayofweek(time, TZ)
 bool weekday = dow >= dayofweek.monday and dow <= dayofweek.friday
 bool inNY = weekday and time >= sessionStart and time < sessionEnd
@@ -99,6 +101,7 @@ if strategy.closedtrades > loggedClosed
 
 // Process each closed 1m candle once. No entries on order-fill callbacks.
 bool closedBar = barstate.isconfirmed and not fillEvent and (na(lastProcessedBar) or lastProcessedBar != bar_index)
+bool cutoffReached = time >= forceCloseTime or (closedBar and time_close >= forceCloseTime)
 if closedBar
     lastProcessedBar := bar_index
     if na(rangeDate) or rangeDate != dateKey
@@ -116,7 +119,7 @@ if closedBar
         orHigh := high
         orLow := low
         if showBox
-            rangeBox := box.new(left=sessionStart, top=orHigh, right=sessionEnd, bottom=orLow, xloc=xloc.bar_time, border_color=color.aqua, bgcolor=color.new(color.aqua, 90))
+            rangeBox := box.new(left=sessionStart, top=orHigh, right=forceCloseTime, bottom=orLow, xloc=xloc.bar_time, border_color=color.aqua, bgcolor=color.new(color.aqua, 90))
 
     if weekday and time >= sessionStart and time < rangeEnd and rangeStartSeen == sessionStart
         orHigh := math.max(orHigh, high)
@@ -128,8 +131,8 @@ if closedBar
         if time_close == rangeEnd
             rangeReady := rangeBars == 15
 
-    // Last entry candle can close at 15:59, never at/after 16:00 NY.
-    bool mayEnter = inNY and time >= rangeEnd and time_close < sessionEnd and rangeReady and not pendingEntry and strategy.position_size == 0 and strategy.opentrades == 0 and (na(tradedDate) or tradedDate != dateKey) and strategy.equity > 0
+    // Create no new orders on candles closing at/after today's force-close time.
+    bool mayEnter = inNY and time >= rangeEnd and time_close < forceCloseTime and rangeReady and not pendingEntry and strategy.position_size == 0 and strategy.opentrades == 0 and (na(tradedDate) or tradedDate != dateKey) and strategy.equity > 0
     bool longSignal = mayEnter and close > orHigh and close > open
     bool shortSignal = mayEnter and close < orLow and close < open
 
@@ -161,11 +164,14 @@ if closedBar
                 strategy.entry("Short", strategy.short, qty=tradeQty, stop=plannedEntry, limit=plannedEntry)
             strategy.exit("Short Exit", "Short", stop=activeSL, profit=tpTicks)
 
+// Evaluate after a new setup updates tradedDate, so yesterday cannot cancel today.
+bool staleSetupDay = not na(tradedDate) and tradedDate != dateKey
+
 // A pending entry may fill mid-candle. Ignore that candle's cumulative high/low,
 // which can include prices from BEFORE the fill. Its close is safe to inspect.
 // With normal historical execution, this runs at bar close, not retrospectively
 // at the intrabar trigger. Live execution uses only ticks AFTER the entry fill.
-if strategy.position_size != 0 and not fillEvent
+if strategy.position_size != 0 and not fillEvent and inNY and not cutoffReached and not staleSetupDay
     float favorablePrice = barstate.isrealtime or bar_index == entryBar ? close : (strategy.position_size > 0 ? high : low)
     bool hitTrigger = strategy.position_size > 0 ? favorablePrice >= entryPrice + beTrigger : favorablePrice <= entryPrice - beTrigger
     if not beMoved and hitTrigger
@@ -179,21 +185,22 @@ if strategy.position_size > 0
 else if strategy.position_size < 0
     strategy.exit("Short Exit", "Short", stop=activeSL, limit=activeTP)
 
-// Flatten at the close of the 15:59 candle (16:00 NY).
-// The outside-session branch is a fallback when the last session bar is missing.
-if closedBar and (pendingEntry or strategy.position_size != 0) and (not inNY or time_close >= sessionEnd)
+// Default: flatten at the close of the 15:44 candle (15:45 New York).
+// Cancel unfilled entries too, so the setup cannot continue past today's cutoff.
+// Outside-session/stale-day checks also handle the first available bar after gaps.
+if (pendingEntry or strategy.position_size != 0) and (cutoffReached or not inNY or staleSetupDay)
     strategy.cancel_all()
     pendingEntry := false
     plannedEntry := na
     if strategy.position_size != 0
-        strategy.close_all(comment="NY_SESSION_END", immediately=true)
+        strategy.close_all(comment="NY_DAILY_FORCE_CLOSE", immediately=true)
     else
         activeSL := na
 
 seenPosition := strategy.position_size
 
-plot(inNY and rangeReady ? orHigh : na, "15m High", color.aqua, style=plot.style_linebr)
-plot(inNY and rangeReady ? orLow : na, "15m Low", color.aqua, style=plot.style_linebr)
+plot(inNY and time < forceCloseTime and rangeReady ? orHigh : na, "15m High", color.aqua, style=plot.style_linebr)
+plot(inNY and time < forceCloseTime and rangeReady ? orLow : na, "15m Low", color.aqua, style=plot.style_linebr)
 plot(pendingEntry ? plannedEntry : na, "Pending entry level", color.orange, style=plot.style_linebr)
 plot(strategy.position_size != 0 ? entryPrice : na, "Entry", color.gray, style=plot.style_linebr)
 plot(strategy.position_size != 0 ? activeSL : na, "Active SL", color.red, style=plot.style_linebr)
