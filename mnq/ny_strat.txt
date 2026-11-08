@@ -1,0 +1,210 @@
+//@version=6
+strategy("NY 15m ORB | Configurable Entry and Breakeven", overlay=true,
+     initial_capital=1000, currency=currency.USD,
+     default_qty_type=strategy.fixed, default_qty_value=1, pyramiding=0,
+     margin_long=0, margin_short=0,
+     commission_type=strategy.commission.cash_per_contract, commission_value=0,
+     slippage=0, process_orders_on_close=true,
+     calc_on_order_fills=true, calc_on_every_tick=true, max_boxes_count=100)
+
+// ========== EDIT VALUES ==========
+float longEntryOffset = input.float(1.0, "Long entry: points above range HIGH", minval=0, step=0.25, group="Entry")
+float shortEntryOffset = input.float(1.0, "Short entry: points below range LOW", minval=0, step=0.25, group="Entry")
+int tradeQty = input.int(1, "Contracts / units per trade", minval=1, group="Entry")
+float tpPoints = input.float(100.0, "Take profit (price points)", minval=0.25, step=0.25, group="Exit")
+float beTrigger = input.float(40.0, "Breakeven trigger (favorable points)", minval=0.25, step=0.25, group="Breakeven")
+float longLockPoints = input.float(2.0, "Long protected SL: points ABOVE entry", minval=0, step=0.25, group="Breakeven")
+float shortLockPoints = input.float(2.0, "Short protected SL: points BELOW entry", minval=0, step=0.25, group="Breakeven")
+bool showBox = input.bool(true, "Show first 15m range box", group="Display")
+bool showLogs = input.bool(true, "Enable Pine Logs", group="Display")
+// Initial capital, commission and slippage are at the top in strategy().
+
+// Distances are PRICE POINTS, not ticks or dollars.
+// Margin=0 allows a $1000 futures rule-test; broker margin is NOT modeled.
+// Historical BE updates on 1m close; realtime BE updates on incoming ticks.
+// Leave "On history bar tick" OFF: entries require fully closed 1m bars.
+const string TZ = "America/New_York"
+
+if not timeframe.isminutes or timeframe.multiplier != 1
+    runtime.error("Use this strategy on a standard 1-minute candle chart.")
+if not chart.is_standard
+    runtime.error("Use standard candles, not Heikin Ashi, Renko or other synthetic charts.")
+if longLockPoints >= beTrigger or shortLockPoints >= beTrigger or beTrigger >= tpPoints
+    runtime.error("Required: each protected SL offset < breakeven trigger < take profit.")
+
+f_price(float value) =>
+    str.tostring(value, format.mintick)
+
+f_log(string eventName, float price, float tp, float sl) =>
+    if showLogs
+        log.info(eventName + ": " + f_price(price) + "\nTP: " + (na(tp) ? "null" : f_price(tp)) + "\nSL: " + (na(sl) ? "null" : f_price(sl)))
+
+int yy = year(time, TZ)
+int mm = month(time, TZ)
+int dd = dayofmonth(time, TZ)
+int dateKey = yy * 10000 + mm * 100 + dd
+int sessionStart = timestamp(TZ, yy, mm, dd, 9, 30)
+int rangeEnd = timestamp(TZ, yy, mm, dd, 9, 45)
+int sessionEnd = timestamp(TZ, yy, mm, dd, 16, 0)
+int dow = dayofweek(time, TZ)
+bool weekday = dow >= dayofweek.monday and dow <= dayofweek.friday
+bool inNY = weekday and time >= sessionStart and time < sessionEnd
+
+// varip prevents duplicate events and lost stop changes on realtime ticks.
+varip int rangeDate = na
+varip int rangeStartSeen = na
+varip int rangeBars = 0
+varip float orHigh = na
+varip float orLow = na
+varip bool rangeReady = false
+varip int tradedDate = na
+varip bool pendingEntry = false
+varip float plannedEntry = na
+varip int lastProcessedBar = na
+varip float seenPosition = 0.0
+varip int loggedClosed = 0
+varip float entryPrice = na
+varip float activeSL = na
+varip float activeTP = na
+varip bool beMoved = false
+varip int entryBar = na
+var box rangeBox = na
+
+// Fill callbacks must not use a historical bar's final OHLC for new signals.
+bool fillEvent = strategy.position_size != seenPosition or strategy.closedtrades != loggedClosed
+
+// Log actual broker-emulator entry fills, rather than requested order prices.
+if strategy.position_size != 0 and seenPosition == 0
+    pendingEntry := false
+    entryPrice := strategy.position_avg_price
+    entryBar := strategy.opentrades.entry_bar_index(0)
+    beMoved := false
+    activeTP := math.round_to_mintick(entryPrice + (strategy.position_size > 0 ? tpPoints : -tpPoints))
+    f_log(strategy.position_size > 0 ? "LONG_ENTRY" : "SHORT_ENTRY", entryPrice, activeTP, activeSL)
+
+// Use actual exit fills, including gaps, stop fills and session-end closes.
+if strategy.closedtrades > loggedClosed
+    for tradeNo = loggedClosed to strategy.closedtrades - 1
+        string exitEvent = strategy.closedtrades.entry_id(tradeNo) == "Long" ? "LONG_EXIT" : "SHORT_EXIT"
+        f_log(exitEvent, strategy.closedtrades.exit_price(tradeNo), na, na)
+    loggedClosed := strategy.closedtrades
+    if strategy.position_size == 0
+        entryPrice := na
+        activeSL := na
+        activeTP := na
+        entryBar := na
+        beMoved := false
+        plannedEntry := na
+
+// Process each closed 1m candle once. No entries on order-fill callbacks.
+bool closedBar = barstate.isconfirmed and not fillEvent and (na(lastProcessedBar) or lastProcessedBar != bar_index)
+if closedBar
+    lastProcessedBar := bar_index
+    if na(rangeDate) or rangeDate != dateKey
+        rangeDate := dateKey
+        rangeStartSeen := na
+        rangeBars := 0
+        orHigh := na
+        orLow := na
+        rangeReady := false
+        rangeBox := na
+
+    // Build 09:30:00-09:44:59 exclusively from closed 1m candles.
+    if weekday and time == sessionStart
+        rangeStartSeen := sessionStart
+        orHigh := high
+        orLow := low
+        if showBox
+            rangeBox := box.new(left=sessionStart, top=orHigh, right=sessionEnd, bottom=orLow, xloc=xloc.bar_time, border_color=color.aqua, bgcolor=color.new(color.aqua, 90))
+
+    if weekday and time >= sessionStart and time < rangeEnd and rangeStartSeen == sessionStart
+        orHigh := math.max(orHigh, high)
+        orLow := math.min(orLow, low)
+        rangeBars += 1
+        if not na(rangeBox)
+            box.set_top(rangeBox, orHigh)
+            box.set_bottom(rangeBox, orLow)
+        if time_close == rangeEnd
+            rangeReady := rangeBars == 15
+
+    // Last entry candle can close at 15:59, never at/after 16:00 NY.
+    bool mayEnter = inNY and time >= rangeEnd and time_close < sessionEnd and rangeReady and not pendingEntry and strategy.position_size == 0 and strategy.opentrades == 0 and (na(tradedDate) or tradedDate != dateKey) and strategy.equity > 0
+    bool longSignal = mayEnter and close > orHigh and close > open
+    bool shortSignal = mayEnter and close < orLow and close < open
+
+    if longSignal or shortSignal
+        // Reserve today's single setup while its order waits for a fill.
+        tradedDate := dateKey
+        pendingEntry := true
+        beMoved := false
+        activeSL := longSignal ? orLow : orHigh
+        plannedEntry := math.round_to_mintick(longSignal ? orHigh + longEntryOffset : orLow - shortEntryOffset)
+        int tpTicks = math.max(1, int(math.round(tpPoints / syminfo.mintick)))
+        // Confirmation comes FIRST. Orders never fill on an earlier candle.
+        // If price is already beyond the level, use a retracement limit.
+        // Otherwise activate a same-price stop-limit when the level is reached.
+        // Limit/stop-limit fills may be at the requested level or a better price.
+        if longSignal
+            if close >= plannedEntry
+                strategy.entry("Long", strategy.long, qty=tradeQty, limit=plannedEntry)
+            else
+                strategy.entry("Long", strategy.long, qty=tradeQty, stop=plannedEntry, limit=plannedEntry)
+            strategy.exit("Long Exit", "Long", stop=activeSL, profit=tpTicks)
+        else
+            if close <= plannedEntry
+                strategy.entry("Short", strategy.short, qty=tradeQty, limit=plannedEntry)
+            else
+                strategy.entry("Short", strategy.short, qty=tradeQty, stop=plannedEntry, limit=plannedEntry)
+            strategy.exit("Short Exit", "Short", stop=activeSL, profit=tpTicks)
+
+// A pending entry may fill mid-candle. Ignore that candle's cumulative high/low,
+// which can include prices from BEFORE the fill. Its close is safe to inspect.
+// With normal historical execution, this runs at bar close, not retrospectively
+// at the intrabar trigger. Live execution uses only ticks AFTER the entry fill.
+if strategy.position_size != 0 and not fillEvent
+    float favorablePrice = barstate.isrealtime or bar_index == entryBar ? close : (strategy.position_size > 0 ? high : low)
+    bool hitTrigger = strategy.position_size > 0 ? favorablePrice >= entryPrice + beTrigger : favorablePrice <= entryPrice - beTrigger
+    if not beMoved and hitTrigger
+        beMoved := true
+        activeSL := math.round_to_mintick(entryPrice + (strategy.position_size > 0 ? longLockPoints : -shortLockPoints))
+        f_log(strategy.position_size > 0 ? "LONG_BREAKEVEN" : "SHORT_BREAKEVEN", activeSL, na, na)
+
+// Update the existing bracket; a breakeven move keeps the original TP.
+if strategy.position_size > 0
+    strategy.exit("Long Exit", "Long", stop=activeSL, limit=activeTP)
+else if strategy.position_size < 0
+    strategy.exit("Short Exit", "Short", stop=activeSL, limit=activeTP)
+
+// Flatten at the close of the 15:59 candle (16:00 NY).
+// The outside-session branch is a fallback when the last session bar is missing.
+if closedBar and (pendingEntry or strategy.position_size != 0) and (not inNY or time_close >= sessionEnd)
+    strategy.cancel_all()
+    pendingEntry := false
+    plannedEntry := na
+    if strategy.position_size != 0
+        strategy.close_all(comment="NY_SESSION_END", immediately=true)
+    else
+        activeSL := na
+
+seenPosition := strategy.position_size
+
+plot(inNY and rangeReady ? orHigh : na, "15m High", color.aqua, style=plot.style_linebr)
+plot(inNY and rangeReady ? orLow : na, "15m Low", color.aqua, style=plot.style_linebr)
+plot(pendingEntry ? plannedEntry : na, "Pending entry level", color.orange, style=plot.style_linebr)
+plot(strategy.position_size != 0 ? entryPrice : na, "Entry", color.gray, style=plot.style_linebr)
+plot(strategy.position_size != 0 ? activeSL : na, "Active SL", color.red, style=plot.style_linebr)
+plot(strategy.position_size != 0 ? activeTP : na, "TP", color.lime, style=plot.style_linebr)
+
+var table stats = table.new(position.top_right, 2, 5, border_width=1)
+if barstate.islast
+    float winRate = strategy.closedtrades > 0 ? 100.0 * strategy.wintrades / strategy.closedtrades : na
+    table.cell(stats, 0, 0, "NY ORB", bgcolor=color.navy, text_color=color.white)
+    table.cell(stats, 1, 0, "1 trade / day", bgcolor=color.navy, text_color=color.white)
+    table.cell(stats, 0, 1, "Closed trades")
+    table.cell(stats, 1, 1, str.tostring(strategy.closedtrades))
+    table.cell(stats, 0, 2, "Winning trades")
+    table.cell(stats, 1, 2, str.tostring(strategy.wintrades))
+    table.cell(stats, 0, 3, "Win rate")
+    table.cell(stats, 1, 3, na(winRate) ? "N/A" : str.tostring(winRate, "#.##") + "%")
+    table.cell(stats, 0, 4, "Net profit USD")
+    table.cell(stats, 1, 4, str.tostring(strategy.netprofit, "#.##"))
