@@ -177,7 +177,7 @@ if strategy.position_size != 0 and not fillEvent and inNY and not cutoffReached 
     if not beMoved and hitTrigger
         beMoved := true
         activeSL := math.round_to_mintick(entryPrice + (strategy.position_size > 0 ? longLockPoints : -shortLockPoints))
-        f_log(strategy.position_size > 0 ? "LONG_BREAKEVEN" : "SHORT_BREAKEVEN", activeSL, na, na)
+        f_log(strategy.position_size > 0 ? "LONG_BREAKEVEN" : "SHORT_BREAKEVEN", activeSL, activeTP, activeSL)
 
 // Update the existing bracket; a breakeven move keeps the original TP.
 if strategy.position_size > 0
